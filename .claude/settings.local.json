@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:efficiencyiseverything.com)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:gameanalytics.com)",
+      "WebFetch(domain:blog.kongregate.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.gamedeveloper.com)"
+    ]
+  }
+}

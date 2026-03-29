@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Match Madness - Efficiency Is Everything</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+
+:root {
+  --neon-green: #39ff14;
+  --neon-blue: #00f0ff;
+  --neon-pink: #ff006e;
+  --neon-yellow: #ffe600;
+  --neon-orange: #ff6a00;
+  --dark-bg: #0a0a1a;
+  --card-bg: #12122a;
+  --card-hover: #1a1a3a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark-bg);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(57,255,20,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(0,240,255,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(255,0,110,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+a { color: var(--neon-blue); text-decoration: none; }
+a:hover { text-shadow: 0 0 10px var(--neon-blue); }
+
+.back-link {
+  position: fixed;
+  top: 15px;
+  left: 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  z-index: 100;
+  padding: 6px 16px;
+  border: 1px solid var(--neon-blue);
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+.back-link:hover {
+  background: rgba(0,240,255,0.1);
+  box-shadow: 0 0 15px rgba(0,240,255,0.3);
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex-direction: column; align-items: center; padding: 20px; position: relative; z-index: 1; }
+.screen.active { display: flex; }
+
+/* ── MODE SELECT ── */
+#mode-select { justify-content: center; min-height: 100vh; gap: 30px; }
+
+.title-block { text-align: center; }
+.title-block h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(57,255,20,0.4));
+}
+.title-block p {
+  font-size: 1.15rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 6px;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1040px;
+  width: 100%;
+}
+
+.mode-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 28px 24px;
+  cursor: pointer;
+  transition: all 0.35s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--neon-green), var(--neon-blue), var(--neon-pink));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.mode-card:hover::before { opacity: 1; }
+.mode-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,240,255,0.15);
+}
+
+.mode-card .icon { font-size: 2.5rem; margin-bottom: 10px; }
+.mode-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.mode-card p { color: rgba(255,255,255,0.55); font-size: 0.95rem; line-height: 1.4; }
+.mode-card .badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.mode-card:nth-child(1) .badge { background: rgba(57,255,20,0.15); color: var(--neon-green); }
+.mode-card:nth-child(2) .badge { background: rgba(0,240,255,0.15); color: var(--neon-blue); }
+.mode-card:nth-child(3) .badge { background: rgba(255,230,0,0.15); color: var(--neon-yellow); }
+.mode-card:nth-child(4) .badge { background: rgba(255,0,110,0.15); color: var(--neon-pink); }
+
+.high-score-note {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 10px;
+}
+
+/* ── GAME SCREEN ── */
+#game-screen { padding-top: 60px; min-height: 100vh; }
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 860px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.game-header h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3rem;
+  color: var(--neon-green);
+}
+.game-controls { display: flex; gap: 10px; }
+.game-controls button {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 6px 16px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.game-controls button:hover {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 12px rgba(0,240,255,0.2);
+}
+
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stat-item {
+  text-align: center;
+  min-width: 80px;
+}
+.stat-item .label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.stat-item .value {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem;
+  color: var(--neon-blue);
+}
+.stat-item .value.timer-warn { color: var(--neon-orange); }
+.stat-item .value.timer-danger { color: var(--neon-pink); animation: pulse-text 0.5s infinite alternate; }
+@keyframes pulse-text { to { opacity: 0.5; } }
+
+.combo-display {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  height: 28px;
+  margin-bottom: 12px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 12px rgba(255,230,0,0.5);
+  transition: all 0.3s;
+}
+
+/* ── CARD GRID ── */
+.card-grid {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 860px;
+  justify-items: center;
+  perspective: 1200px;
+}
+.card-grid.grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+.card-grid.grid-6x4 { grid-template-columns: repeat(6, 1fr); }
+
+.card-cell {
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 3/4;
+  perspective: 800px;
+  cursor: pointer;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.card-cell.flipped .card-inner,
+.card-cell.matched .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+/* ── CARD BACK ── */
+.card-back {
+  background: var(--card-bg);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.card-cell:hover .card-back {
+  border-color: rgba(0,240,255,0.3);
+  box-shadow: 0 0 20px rgba(0,240,255,0.1);
+}
+.card-back .question {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--neon-blue);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: 0 0 10px rgba(0,240,255,0.4), 0 0 30px rgba(0,240,255,0.2); }
+  50% { text-shadow: 0 0 20px rgba(0,240,255,0.8), 0 0 50px rgba(0,240,255,0.4); }
+}
+
+/* shimmer on hover */
+.card-back::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+  transition: transform 0.6s;
+  transform: translateX(-100%);
+}
+.card-cell:hover .card-back::after { transform: translateX(100%); }
+
+/* ── CARD FRONT ── */
+.card-front {
+  background: var(--card-bg);
+  transform: rotateY(180deg);
+}
+.card-front .emoji { font-size: 1.8rem; margin-bottom: 4px; }
+.card-front .food-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.65rem, 1.8vw, 0.9rem);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--neon-green);
+  text-shadow: 0 0 8px rgba(57,255,20,0.4);
+}
+.card-front .stat-text {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(0.6rem, 1.6vw, 0.85rem);
+  text-align: center;
+  line-height: 1.35;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px rgba(255,230,0,0.3);
+}
+.card-front .stat-label {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+
+/* ── MATCHED / WRONG ── */
+.card-cell.matched .card-front {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 20px rgba(57,255,20,0.3);
+  animation: match-glow 1.5s ease-in-out infinite alternate;
+}
+@keyframes match-glow {
+  from { box-shadow: 0 0 15px rgba(57,255,20,0.2); }
+  to { box-shadow: 0 0 25px rgba(57,255,20,0.45); }
+}
+
+.card-cell.wrong .card-front {
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 25px rgba(255,0,110,0.5);
+  animation: wrong-flash 0.15s ease-in-out 3;
+}
+@keyframes wrong-flash {
+  50% { transform: rotateY(180deg) scale(1.04); }
+}
+
+/* ── TIP TOAST ── */
+.tip-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--card-bg);
+  border: 1px solid var(--neon-green);
+  border-radius: 12px;
+  padding: 14px 24px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.85);
+  box-shadow: 0 0 30px rgba(57,255,20,0.2);
+  z-index: 200;
+  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s;
+  opacity: 0;
+  pointer-events: none;
+}
+.tip-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.tip-toast .tip-food {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--neon-green);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+/* ── PARTICLES ── */
+.particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 300;
+  animation: particle-fly 0.8s ease-out forwards;
+}
+@keyframes particle-fly {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+}
+
+/* ── COMPLETION SCREEN ── */
+#complete-screen { justify-content: center; min-height: 100vh; gap: 20px; }
+
+.complete-box {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 36px 40px;
+  max-width: 560px;
+  width: 90%;
+  text-align: center;
+}
+.complete-box h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  color: var(--neon-green);
+  margin-bottom: 6px;
+}
+.stars { font-size: 2.5rem; margin: 10px 0; }
+.star { color: rgba(255,255,255,0.15); }
+.star.earned { color: var(--neon-yellow); filter: drop-shadow(0 0 6px rgba(255,230,0,0.5)); }
+
+.final-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.final-stat .num {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.6rem;
+  color: var(--neon-blue);
+}
+.final-stat .lbl {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+}
+
+.bonus-line {
+  font-size: 1rem;
+  color: var(--neon-orange);
+  margin: 8px 0;
+}
+
+.ranking-table {
+  width: 100%;
+  margin: 20px 0 10px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.ranking-table th {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-align: center;
+}
+.ranking-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+}
+.ranking-table td:first-child { text-align: left; color: var(--neon-green); font-weight: 600; }
+.ranking-table .highlight-row td { color: #fff; background: rgba(57,255,20,0.06); }
+
+.shopping-tip {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(57,255,20,0.05);
+  border: 1px solid rgba(57,255,20,0.15);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+.shopping-tip strong { color: var(--neon-green); }
+
+.complete-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 10px 28px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--neon-green), #20c700);
+  color: #000;
+}
+.btn-primary:hover { box-shadow: 0 0 25px rgba(57,255,20,0.4); transform: translateY(-2px); }
+.btn-secondary {
+  background: transparent;
+  color: var(--neon-blue);
+  border: 1px solid var(--neon-blue);
+}
+.btn-secondary:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 700px) {
+  .card-grid.grid-6x4 { grid-template-columns: repeat(4, 1fr); }
+  .card-cell { max-width: 140px; }
+  .stats-bar { gap: 14px; }
+  .game-header { justify-content: center; }
+}
+@media (max-width: 480px) {
+  .card-grid.grid-4x4 { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .card-grid.grid-6x4 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .card-cell { max-width: 120px; }
+  .mode-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">&larr; Back to Hub</a>
+
+<!-- ── MODE SELECT ── -->
+<div id="mode-select" class="screen active">
+  <div class="title-block">
+    <h1>Meal Match Madness</h1>
+    <p>Match foods with their efficiency stats &mdash; learn while you play!</p>
+  </div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startGame('classic')">
+      <div class="icon">&#127828;</div>
+      <h3>Classic Match</h3>
+      <p>Match foods with their Calories/$ rating. 4&times;4 grid, 8 pairs.</p>
+      <span class="badge">BEGINNER</span>
+      <div class="high-score-note" id="hs-classic"></div>
+    </div>
+    <div class="mode-card" onclick="startGame('protein')">
+      <div class="icon">&#128170;</div>
+      <h3>Protein Match</h3>
+      <p>Match foods with their Protein/$ rating. 4&times;4 grid, 8 pairs.</p>
+      <span class="badge">INTERMEDIATE</span>
+      <div class="high-score-note" id="hs-protein"></div>
+    </div>
+    <div class="mode-card" onclick="startGame('expert')">
+      <div class="icon">&#129504;</div>
+      <h3>Expert Mode</h3>
+      <p>Match foods with both Cal/$ AND Protein/$. 6&times;4 grid, 12 pairs.</p>
+      <span class="badge">ADVANCED</span>
+      <div class="high-score-note" id="hs-expert"></div>
+    </div>
+    <div class="mode-card" onclick="startGame('speed')">
+      <div class="icon">&#9889;</div>
+      <h3>Speed Round</h3>
+      <p>Classic match rules but you only have 60 seconds. Go!</p>
+      <span class="badge">CHALLENGE</span>
+      <div class="high-score-note" id="hs-speed"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME SCREEN ── -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <h2 id="mode-title">Classic Match</h2>
+    <div class="game-controls">
+      <button onclick="restartGame()">Restart</button>
+      <button onclick="backToMenu()">Menu</button>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="label">Moves</div><div class="value" id="stat-moves">0</div></div>
+    <div class="stat-item"><div class="label">Time</div><div class="value" id="stat-time">0:00</div></div>
+    <div class="stat-item"><div class="label">Matches</div><div class="value" id="stat-matches">0 / 0</div></div>
+    <div class="stat-item"><div class="label">Accuracy</div><div class="value" id="stat-accuracy">100%</div></div>
+    <div class="stat-item" id="timer-container" style="display:none"><div class="label">Remaining</div><div class="value" id="stat-remaining">1:00</div></div>
+    <div class="stat-item"><div class="label">Score</div><div class="value" id="stat-score">0</div></div>
+  </div>
+  <div class="combo-display" id="combo-display"></div>
+  <div class="card-grid" id="card-grid"></div>
+</div>
+
+<!-- ── COMPLETE SCREEN ── -->
+<div id="complete-screen" class="screen">
+  <div class="complete-box" id="complete-box"></div>
+</div>
+
+<div class="tip-toast" id="tip-toast">
+  <div class="tip-food" id="tip-food"></div>
+  <div id="tip-text"></div>
+</div>
+
+<script>
+/* ── DATA ── */
+const FOODS = [
+  { name: 'Flour', emoji: '\uD83C\uDF5E', cal: 4464, protein: 80, tip: 'Flour is the king of calories-per-dollar. Make bread, tortillas, and pizza dough for pennies!' },
+  { name: 'Rice', emoji: '\uD83C\uDF5A', cal: 2320, protein: 42, tip: 'Buy rice in 20-lb bags for the best price. A staple that feeds billions for a reason.' },
+  { name: 'Oats', emoji: '\uD83E\uDD63', cal: 2148, protein: 72, tip: 'Oats are a protein powerhouse. Overnight oats take 2 minutes to prep the night before.' },
+  { name: 'Ramen', emoji: '\uD83C\uDF5C', cal: 1949, protein: 45, tip: 'Upgrade instant ramen with an egg and frozen veggies for a complete cheap meal.' },
+  { name: 'Pasta', emoji: '\uD83C\uDF5D', cal: 1600, protein: 56, tip: 'Store-brand pasta is basically identical to name-brand. Save 40% easy.' },
+  { name: 'Peanut Butter', emoji: '\uD83E\uDD5C', cal: 1487, protein: 52, tip: 'Peanut butter needs no refrigeration and lasts forever. Great emergency food.' },
+  { name: 'Lentils', emoji: '\uD83E\uDED8', cal: 929, protein: 73, tip: 'Lentils cook in 20 min with no soaking. One of the cheapest protein sources on Earth.' },
+  { name: 'Eggs (Costco)', emoji: '\uD83E\uDD5A', cal: 802, protein: 70, tip: 'Eggs from Costco are only about $3.59 for 24! Hard-boil a batch for grab-and-go protein.' },
+  { name: 'Pinto Beans', emoji: '\uD83E\uDED8', cal: 880, protein: 80, tip: 'Dried pinto beans cost ~$1/lb and expand 2.5x when cooked. Incredible protein-per-dollar.' },
+  { name: 'Potatoes', emoji: '\uD83E\uDD54', cal: 780, protein: 20, tip: 'Potatoes have more potassium than bananas and cost a fraction of the price.' },
+  { name: 'Chicken', emoji: '\uD83C\uDF57', cal: 239, protein: 38, tip: 'Buy whole chickens or bone-in thighs for the best price per pound of meat.' },
+  { name: 'Canned Tuna', emoji: '\uD83D\uDC1F', cal: 300, protein: 55, tip: 'Canned tuna is shelf-stable, high-protein, and versatile. Stock up when on sale.' }
+];
+
+const MODE_CONFIG = {
+  classic:  { title: 'Classic Match', pairs: 8, gridClass: 'grid-4x4', statType: 'cal', timed: false },
+  protein:  { title: 'Protein Match', pairs: 8, gridClass: 'grid-4x4', statType: 'protein', timed: false },
+  expert:   { title: 'Expert Mode',   pairs: 12, gridClass: 'grid-6x4', statType: 'both', timed: false },
+  speed:    { title: 'Speed Round',   pairs: 8, gridClass: 'grid-4x4', statType: 'cal', timed: true, timeLimit: 60 }
+};
+
+/* ── STATE ── */
+let currentMode = null;
+let cards = [];
+let flippedCards = [];
+let matchedCount = 0;
+let totalPairs = 0;
+let moves = 0;
+let correctMoves = 0;
+let timerInterval = null;
+let elapsedSeconds = 0;
+let remainingSeconds = 60;
+let isLocked = false;
+let combo = 0;
+let maxCombo = 0;
+let score = 0;
+let gameActive = false;
+let usedFoods = [];
+
+/* ── HELPERS ── */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function formatTime(s) {
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function getHighScores() {
+  try { return JSON.parse(localStorage.getItem('mealMatchScores') || '{}'); } catch { return {}; }
+}
+function saveHighScore(mode, data) {
+  const scores = getHighScores();
+  if (!scores[mode] || data.score > scores[mode].score) {
+    scores[mode] = data;
+    localStorage.setItem('mealMatchScores', JSON.stringify(scores));
+  }
+}
+
+function refreshHighScoreDisplay() {
+  const scores = getHighScores();
+  for (const mode of ['classic', 'protein', 'expert', 'speed']) {
+    const el = document.getElementById('hs-' + mode);
+    if (scores[mode]) {
+      el.textContent = 'Best: ' + scores[mode].score + ' pts | ' + formatTime(scores[mode].time);
+    } else {
+      el.textContent = '';
+    }
+  }
+}
+
+/* ── CARD GENERATION ── */
+function buildCards(mode) {
+  const cfg = MODE_CONFIG[mode];
+  const foods = shuffle([...FOODS]).slice(0, cfg.pairs);
+  usedFoods = foods;
+  const pairs = [];
+
+  foods.forEach((food, i) => {
+    // Food name card
+    pairs.push({ pairId: i, type: 'name', food });
+    // Stat card
+    pairs.push({ pairId: i, type: 'stat', food, statType: cfg.statType });
+  });
+
+  return shuffle(pairs);
+}
+
+function renderCardFront(card) {
+  if (card.type === 'name') {
+    return `<div class="emoji">${card.food.emoji}</div><div class="food-name">${card.food.name}</div>`;
+  }
+  if (card.statType === 'cal') {
+    return `<div class="stat-text">${card.food.cal.toLocaleString()}</div><div class="stat-label">cal/$</div>`;
+  }
+  if (card.statType === 'protein') {
+    return `<div class="stat-text">${card.food.protein}g</div><div class="stat-label">protein/$</div>`;
+  }
+  // both
+  return `<div class="stat-text">${card.food.cal.toLocaleString()} cal/$</div><div class="stat-text" style="margin-top:2px">${card.food.protein}g prot/$</div>`;
+}
+
+/* ── START GAME ── */
+function startGame(mode) {
+  currentMode = mode;
+  const cfg = MODE_CONFIG[mode];
+
+  // Reset state
+  cards = buildCards(mode);
+  flippedCards = [];
+  matchedCount = 0;
+  totalPairs = cfg.pairs;
+  moves = 0;
+  correctMoves = 0;
+  combo = 0;
+  maxCombo = 0;
+  score = 0;
+  elapsedSeconds = 0;
+  remainingSeconds = cfg.timed ? cfg.timeLimit : 0;
+  isLocked = false;
+  gameActive = true;
+  clearInterval(timerInterval);
+
+  // UI
+  document.getElementById('mode-title').textContent = cfg.title;
+  document.getElementById('stat-moves').textContent = '0';
+  document.getElementById('stat-time').textContent = '0:00';
+  document.getElementById('stat-matches').textContent = '0 / ' + totalPairs;
+  document.getElementById('stat-accuracy').textContent = '100%';
+  document.getElementById('stat-score').textContent = '0';
+  document.getElementById('combo-display').textContent = '';
+
+  const timerCont = document.getElementById('timer-container');
+  timerCont.style.display = cfg.timed ? '' : 'none';
+  if (cfg.timed) document.getElementById('stat-remaining').textContent = formatTime(cfg.timeLimit);
+
+  // Build grid
+  const grid = document.getElementById('card-grid');
+  grid.className = 'card-grid ' + cfg.gridClass;
+  grid.innerHTML = '';
+
+  cards.forEach((card, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'card-cell';
+    cell.dataset.index = idx;
+    cell.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back"><span class="question">?</span></div>
+        <div class="card-face card-front">${renderCardFront(card)}</div>
+      </div>`;
+    cell.addEventListener('click', () => onCardClick(idx, cell));
+    grid.appendChild(cell);
+  });
+
+  // Start timer
+  timerInterval = setInterval(() => {
+    if (!gameActive) return;
+    elapsedSeconds++;
+    document.getElementById('stat-time').textContent = formatTime(elapsedSeconds);
+    if (cfg.timed) {
+      remainingSeconds = cfg.timeLimit - elapsedSeconds;
+      if (remainingSeconds <= 0) {
+        remainingSeconds = 0;
+        gameActive = false;
+        clearInterval(timerInterval);
+        endGame(false);
+      }
+      const remEl = document.getElementById('stat-remaining');
+      remEl.textContent = formatTime(Math.max(0, remainingSeconds));
+      remEl.className = 'value' + (remainingSeconds <= 10 ? ' timer-danger' : remainingSeconds <= 20 ? ' timer-warn' : '');
+    }
+  }, 1000);
+
+  showScreen('game-screen');
+}
+
+/* ── CARD CLICK ── */
+function onCardClick(idx, cell) {
+  if (isLocked || !gameActive) return;
+  if (cell.classList.contains('flipped') || cell.classList.contains('matched')) return;
+  if (flippedCards.length >= 2) return;
+
+  cell.classList.add('flipped');
+  flippedCards.push({ idx, cell });
+
+  if (flippedCards.length === 2) {
+    moves++;
+    document.getElementById('stat-moves').textContent = moves;
+    isLocked = true;
+
+    const [a, b] = flippedCards;
+    const cardA = cards[a.idx];
+    const cardB = cards[b.idx];
+
+    if (cardA.pairId === cardB.pairId && a.idx !== b.idx) {
+      // Match!
+      correctMoves++;
+      matchedCount++;
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+
+      const comboBonus = combo > 1 ? (combo - 1) * 50 : 0;
+      const basePoints = 100;
+      score += basePoints + comboBonus;
+      document.getElementById('stat-score').textContent = score;
+
+      document.getElementById('stat-matches').textContent = matchedCount + ' / ' + totalPairs;
+      updateAccuracy();
+      updateCombo();
+
+      setTimeout(() => {
+        a.cell.classList.add('matched');
+        b.cell.classList.add('matched');
+        spawnParticles(a.cell);
+        spawnParticles(b.cell);
+        showTip(cardA.food);
+        flippedCards = [];
+        isLocked = false;
+
+        if (matchedCount === totalPairs) {
+          gameActive = false;
+          clearInterval(timerInterval);
+          setTimeout(() => endGame(true), 800);
+        }
+      }, 400);
+    } else {
+      // Wrong
+      combo = 0;
+      updateCombo();
+      updateAccuracy();
+
+      setTimeout(() => {
+        a.cell.classList.add('wrong');
+        b.cell.classList.add('wrong');
+      }, 200);
+
+      setTimeout(() => {
+        a.cell.classList.remove('flipped', 'wrong');
+        b.cell.classList.remove('flipped', 'wrong');
+        flippedCards = [];
+        isLocked = false;
+      }, 1100);
+    }
+  }
+}
+
+function updateAccuracy() {
+  const pct = moves > 0 ? Math.round((correctMoves / moves) * 100) : 100;
+  document.getElementById('stat-accuracy').textContent = pct + '%';
+}
+
+function updateCombo() {
+  const el = document.getElementById('combo-display');
+  if (combo > 1) {
+    el.textContent = 'COMBO x' + combo + '!  (+' + ((combo - 1) * 50) + ' bonus)';
+    el.style.transform = 'scale(1.15)';
+    setTimeout(() => el.style.transform = 'scale(1)', 200);
+  } else {
+    el.textContent = '';
+  }
+}
+
+/* ── TIPS ── */
+function showTip(food) {
+  const toast = document.getElementById('tip-toast');
+  document.getElementById('tip-food').textContent = food.emoji + ' ' + food.name;
+  document.getElementById('tip-text').textContent = food.tip;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+/* ── PARTICLES ── */
+function spawnParticles(cell) {
+  const rect = cell.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['var(--neon-green)', 'var(--neon-blue)', 'var(--neon-yellow)', 'var(--neon-pink)'];
+
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 80;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    p.style.width = (3 + Math.random() * 5) + 'px';
+    p.style.height = p.style.width;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 850);
+  }
+}
+
+/* ── END GAME ── */
+function endGame(won) {
+  const cfg = MODE_CONFIG[currentMode];
+  const box = document.getElementById('complete-box');
+
+  // Star rating (based on moves relative to pairs)
+  const perfectMoves = totalPairs;
+  let stars = 1;
+  if (moves <= perfectMoves + 2) stars = 3;
+  else if (moves <= perfectMoves + 6) stars = 2;
+
+  if (!won) stars = 0;
+
+  // Build stars HTML
+  const starsHtml = [1, 2, 3].map(i =>
+    `<span class="star ${i <= stars ? 'earned' : ''}">\u2605</span>`
+  ).join('');
+
+  // Time bonus
+  const timeBonus = won ? Math.max(0, (cfg.timed ? cfg.timeLimit : 120) - elapsedSeconds) * 5 : 0;
+  const finalScore = score + timeBonus;
+
+  // Save high score
+  if (won) {
+    saveHighScore(currentMode, { score: finalScore, time: elapsedSeconds, moves, stars });
+  }
+
+  // Ranking table
+  const sorted = [...FOODS].sort((a, b) => b.cal - a.cal);
+  let tableRows = sorted.map(f => {
+    const isUsed = usedFoods.find(uf => uf.name === f.name);
+    return `<tr class="${isUsed ? 'highlight-row' : ''}">
+      <td>${f.emoji} ${f.name}</td>
+      <td>${f.cal.toLocaleString()}</td>
+      <td>${f.protein}g</td>
+    </tr>`;
+  }).join('');
+
+  box.innerHTML = `
+    <h2>${won ? 'You Did It!' : 'Time\'s Up!'}</h2>
+    <div class="stars">${starsHtml}</div>
+    <div class="final-stats">
+      <div class="final-stat"><div class="num">${finalScore}</div><div class="lbl">Score</div></div>
+      <div class="final-stat"><div class="num">${moves}</div><div class="lbl">Moves</div></div>
+      <div class="final-stat"><div class="num">${formatTime(elapsedSeconds)}</div><div class="lbl">Time</div></div>
+      <div class="final-stat"><div class="num">${Math.round((correctMoves / Math.max(moves, 1)) * 100)}%</div><div class="lbl">Accuracy</div></div>
+    </div>
+    ${timeBonus > 0 ? `<div class="bonus-line">Time bonus: +${timeBonus} pts | Max combo: x${maxCombo}</div>` : `<div class="bonus-line">Max combo: x${maxCombo}</div>`}
+    <table class="ranking-table">
+      <tr><th>Food</th><th>Cal/$</th><th>Protein/$</th></tr>
+      ${tableRows}
+    </table>
+    <div class="shopping-tip">
+      <strong>Shopping Tip:</strong> Buy staples like flour, rice, and oats in bulk. Pair cheap calorie sources with protein-dense foods like eggs, lentils, and pinto beans for balanced, budget-friendly meals.
+    </div>
+    <div class="complete-buttons">
+      <button class="btn btn-primary" onclick="startGame('${currentMode}')">Play Again</button>
+      <button class="btn btn-secondary" onclick="backToMenu()">Back to Modes</button>
+    </div>
+  `;
+
+  showScreen('complete-screen');
+}
+
+/* ── CONTROLS ── */
+function restartGame() {
+  clearInterval(timerInterval);
+  startGame(currentMode);
+}
+
+function backToMenu() {
+  clearInterval(timerInterval);
+  gameActive = false;
+  refreshHighScoreDisplay();
+  showScreen('mode-select');
+}
+
+/* ── INIT ── */
+refreshHighScoreDisplay();
+</script>
+</body>
+</html>

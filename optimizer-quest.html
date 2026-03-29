@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Optimizer Quest - Efficiency RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2694;</text></svg>">
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+<style>
+:root {
+  --neon-green: #39ff14;
+  --neon-blue: #00f0ff;
+  --neon-pink: #ff006e;
+  --neon-yellow: #ffe600;
+  --neon-orange: #ff6a00;
+  --dark-bg: #0a0a1a;
+  --card-bg: #12122a;
+  --card-hover: #1a1a3a;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark-bg);
+  color: #e0e0e0;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.hub-link {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1000;
+  color: var(--neon-blue);
+  text-decoration: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  padding: 8px 16px;
+  border: 1px solid var(--neon-blue);
+  border-radius: 4px;
+  transition: all 0.3s;
+  background: rgba(0, 240, 255, 0.05);
+}
+.hub-link:hover {
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+}
+
+/* SCREENS */
+.screen {
+  display: none;
+  width: 100%;
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+}
+.screen.active { display: flex; }
+
+/* TITLE SCREEN */
+#title-screen {
+  text-align: center;
+  gap: 30px;
+}
+.title-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--neon-green), var(--neon-blue), var(--neon-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.3));
+  animation: titlePulse 3s ease-in-out infinite;
+}
+@keyframes titlePulse {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.3)); }
+  50% { filter: drop-shadow(0 0 40px rgba(57, 255, 20, 0.6)); }
+}
+.title-subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.3rem;
+  color: var(--neon-blue);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.title-tagline {
+  color: #888;
+  font-size: 1rem;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+/* BUTTONS */
+.btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  padding: 12px 28px;
+  border: 2px solid var(--neon-green);
+  background: rgba(57, 255, 20, 0.05);
+  color: var(--neon-green);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+.btn:hover {
+  background: rgba(57, 255, 20, 0.15);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+  transform: translateY(-2px);
+}
+.btn:active { transform: translateY(0); }
+.btn.pink { border-color: var(--neon-pink); color: var(--neon-pink); background: rgba(255, 0, 110, 0.05); }
+.btn.pink:hover { background: rgba(255, 0, 110, 0.15); box-shadow: 0 0 20px rgba(255, 0, 110, 0.3); }
+.btn.blue { border-color: var(--neon-blue); color: var(--neon-blue); background: rgba(0, 240, 255, 0.05); }
+.btn.blue:hover { background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); }
+.btn.orange { border-color: var(--neon-orange); color: var(--neon-orange); background: rgba(255, 106, 0, 0.05); }
+.btn.orange:hover { background: rgba(255, 106, 0, 0.15); box-shadow: 0 0 20px rgba(255, 106, 0, 0.3); }
+.btn.yellow { border-color: var(--neon-yellow); color: var(--neon-yellow); background: rgba(255, 230, 0, 0.05); }
+.btn.yellow:hover { background: rgba(255, 230, 0, 0.15); box-shadow: 0 0 20px rgba(255, 230, 0, 0.3); }
+.btn:disabled { opacity: 0.3; pointer-events: none; }
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* CHARACTER CREATION */
+#create-screen { gap: 20px; text-align: center; }
+.class-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 10px 0; }
+.class-card {
+  background: var(--card-bg);
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 24px;
+  width: 220px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+.class-card:hover, .class-card.selected {
+  border-color: var(--neon-green);
+  background: var(--card-hover);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
+  transform: translateY(-4px);
+}
+.class-card .emoji { font-size: 3rem; margin-bottom: 10px; }
+.class-card .name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--neon-green);
+  margin-bottom: 8px;
+}
+.class-card .desc { color: #aaa; font-size: 0.85rem; line-height: 1.4; }
+.class-card .stats-preview {
+  margin-top: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--neon-blue);
+  text-align: left;
+}
+
+.name-input {
+  background: var(--card-bg);
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: 10px 20px;
+  color: var(--neon-green);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  text-align: center;
+  width: 280px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.name-input:focus { border-color: var(--neon-green); }
+.name-input::placeholder { color: #555; }
+
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: var(--neon-blue);
+  margin-bottom: 5px;
+}
+
+/* DUNGEON MAP */
+#map-screen { gap: 20px; }
+.map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+  position: relative;
+}
+.floor-node {
+  background: var(--card-bg);
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 16px 30px;
+  width: 350px;
+  cursor: default;
+  transition: all 0.3s;
+  text-align: center;
+  position: relative;
+  opacity: 0.4;
+}
+.floor-node.available {
+  opacity: 1;
+  cursor: pointer;
+  border-color: var(--neon-green);
+  animation: nodePulse 2s ease-in-out infinite;
+}
+.floor-node.completed {
+  opacity: 0.7;
+  border-color: #555;
+}
+.floor-node.completed .floor-name { color: #888; }
+.floor-connector {
+  width: 2px;
+  height: 30px;
+  background: #333;
+}
+.floor-connector.lit { background: var(--neon-green); box-shadow: 0 0 8px rgba(57, 255, 20, 0.3); }
+@keyframes nodePulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(57, 255, 20, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(57, 255, 20, 0.3); }
+}
+.floor-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--neon-green);
+}
+.floor-desc { color: #888; font-size: 0.8rem; margin-top: 4px; }
+.floor-progress { color: var(--neon-blue); font-size: 0.75rem; margin-top: 6px; font-family: 'Space Mono', monospace; }
+
+/* PLAYER HUD (on map) */
+.player-hud {
+  background: var(--card-bg);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+}
+.hud-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hud-label { color: #666; font-size: 0.65rem; text-transform: uppercase; }
+.hud-val { font-weight: bold; }
+.hud-val.green { color: var(--neon-green); }
+.hud-val.blue { color: var(--neon-blue); }
+.hud-val.pink { color: var(--neon-pink); }
+.hud-val.yellow { color: var(--neon-yellow); }
+.hud-val.orange { color: var(--neon-orange); }
+
+/* COMBAT SCREEN */
+#combat-screen {
+  padding: 10px;
+  gap: 0;
+  justify-content: flex-start;
+  padding-top: 50px;
+}
+
+.combat-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.combat-arena {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  min-height: 220px;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.combatant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  width: 200px;
+}
+
+.combatant-sprite {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 15px rgba(57, 255, 20, 0.3));
+  transition: transform 0.1s;
+  position: relative;
+}
+.combatant.enemy .combatant-sprite {
+  filter: drop-shadow(0 0 15px rgba(255, 0, 110, 0.3));
+}
+
+.combatant-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: var(--neon-green);
+}
+.combatant.enemy .combatant-name { color: var(--neon-pink); }
+
+.hp-bar-container {
+  width: 160px;
+  height: 14px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+.hp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-green), #00ff88);
+  border-radius: 7px;
+  transition: width 0.4s ease;
+  position: relative;
+}
+.hp-bar.low { background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow)); }
+.hp-bar.critical { background: linear-gradient(90deg, var(--neon-pink), var(--neon-orange)); animation: hpFlash 0.5s infinite; }
+@keyframes hpFlash { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.hp-bar.enemy-bar { background: linear-gradient(90deg, var(--neon-pink), #ff4488); }
+.hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: white;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.combat-vs {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 20px rgba(255, 230, 0, 0.3);
+}
+
+/* Status effects display */
+.status-effects {
+  display: flex;
+  gap: 4px;
+  min-height: 20px;
+  justify-content: center;
+}
+.status-icon {
+  font-size: 0.9rem;
+  padding: 2px;
+  background: var(--card-bg);
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+/* Combat log */
+.combat-log {
+  width: 100%;
+  max-width: 800px;
+  height: 90px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: #888;
+  scroll-behavior: smooth;
+}
+.combat-log .log-line { margin-bottom: 3px; }
+.log-damage { color: var(--neon-pink); }
+.log-heal { color: var(--neon-green); }
+.log-buff { color: var(--neon-blue); }
+.log-info { color: var(--neon-yellow); }
+.log-enemy { color: var(--neon-orange); }
+
+/* Ability buttons */
+.ability-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 8px;
+}
+.ability-btn {
+  background: var(--card-bg);
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  min-width: 120px;
+  flex: 1;
+  max-width: 160px;
+  position: relative;
+  overflow: hidden;
+}
+.ability-btn:hover:not(:disabled) {
+  border-color: var(--neon-green);
+  background: var(--card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(57, 255, 20, 0.15);
+}
+.ability-btn:disabled { opacity: 0.3; cursor: default; }
+.ability-btn .ab-emoji { font-size: 1.3rem; }
+.ability-btn .ab-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  color: var(--neon-green);
+  margin-top: 4px;
+}
+.ability-btn .ab-desc {
+  font-size: 0.6rem;
+  color: #777;
+  margin-top: 2px;
+}
+.ability-btn .ab-cost {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  color: var(--neon-yellow);
+  margin-top: 4px;
+}
+.ability-btn.type-attack { border-color: #441122; }
+.ability-btn.type-attack:hover:not(:disabled) { border-color: var(--neon-pink); box-shadow: 0 4px 15px rgba(255,0,110,0.15); }
+.ability-btn.type-attack .ab-name { color: var(--neon-pink); }
+.ability-btn.type-defense { border-color: #112244; }
+.ability-btn.type-defense:hover:not(:disabled) { border-color: var(--neon-blue); box-shadow: 0 4px 15px rgba(0,240,255,0.15); }
+.ability-btn.type-defense .ab-name { color: var(--neon-blue); }
+.ability-btn.type-heal { border-color: #114422; }
+.ability-btn.type-heal:hover:not(:disabled) { border-color: var(--neon-green); }
+.ability-btn.type-buff { border-color: #443311; }
+.ability-btn.type-buff:hover:not(:disabled) { border-color: var(--neon-yellow); box-shadow: 0 4px 15px rgba(255,230,0,0.15); }
+.ability-btn.type-buff .ab-name { color: var(--neon-yellow); }
+
+/* Floating damage numbers */
+.float-number {
+  position: absolute;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  pointer-events: none;
+  z-index: 100;
+  animation: floatUp 1.2s ease-out forwards;
+  text-shadow: 0 0 10px currentColor;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  20% { transform: translateY(-20px) scale(1.3); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+}
+
+/* Screen shake */
+@keyframes shake {
+  0%,100% { transform: translate(0); }
+  10% { transform: translate(-8px, 4px); }
+  20% { transform: translate(6px, -6px); }
+  30% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  50% { transform: translate(-2px, 4px); }
+  60% { transform: translate(2px, -1px); }
+  70% { transform: translate(-1px, 1px); }
+}
+.shake { animation: shake 0.4s ease; }
+
+/* Attack flash */
+@keyframes attackFlash {
+  0% { filter: brightness(1); }
+  20% { filter: brightness(3) hue-rotate(30deg); }
+  100% { filter: brightness(1); }
+}
+
+/* REWARD SCREEN */
+#reward-screen { gap: 20px; text-align: center; }
+.reward-card {
+  background: var(--card-bg);
+  border: 2px solid var(--neon-yellow);
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 0 30px rgba(255, 230, 0, 0.1);
+}
+.reward-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  color: var(--neon-yellow);
+  margin-bottom: 15px;
+}
+.reward-xp {
+  color: var(--neon-green);
+  font-family: 'Space Mono', monospace;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+.reward-gold {
+  color: var(--neon-yellow);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+.knowledge-box {
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid var(--neon-blue);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 15px 0;
+}
+.knowledge-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  color: var(--neon-blue);
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+.knowledge-fact {
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.loot-box {
+  background: rgba(255, 106, 0, 0.05);
+  border: 1px solid var(--neon-orange);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+}
+.loot-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: var(--neon-orange);
+}
+.loot-desc { color: #aaa; font-size: 0.8rem; margin-top: 4px; }
+
+/* LEVEL UP */
+.level-up-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 500;
+  animation: fadeIn 0.3s;
+}
+.level-up-card {
+  background: var(--card-bg);
+  border: 2px solid var(--neon-green);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(57, 255, 20, 0.2);
+  animation: levelPop 0.5s ease;
+}
+@keyframes levelPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.level-up-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2rem;
+  color: var(--neon-green);
+  margin-bottom: 10px;
+}
+.level-up-stats {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--neon-blue);
+  margin: 15px 0;
+  line-height: 1.8;
+}
+
+@keyframes fadeIn { 0%{opacity:0} 100%{opacity:1} }
+
+/* GAME OVER / WIN */
+#gameover-screen, #win-screen { gap: 20px; text-align: center; }
+.gameover-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--neon-pink);
+  text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
+}
+.win-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--neon-green), var(--neon-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 30px rgba(57, 255, 20, 0.5));
+}
+.win-stats {
+  font-family: 'Space Mono', monospace;
+  color: var(--neon-blue);
+  font-size: 0.85rem;
+  line-height: 2;
+}
+
+/* Inventory screen */
+#inventory-screen { gap: 15px; text-align: center; }
+.inventory-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 600px;
+}
+.inv-item {
+  background: var(--card-bg);
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  min-width: 140px;
+}
+.inv-item .inv-emoji { font-size: 1.3rem; }
+.inv-item .inv-name { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; color: var(--neon-orange); margin-top: 4px; }
+.inv-item .inv-effect { color: #888; font-size: 0.7rem; margin-top: 2px; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .title-logo { font-size: 2rem; }
+  .combat-arena { flex-direction: column; gap: 20px; min-height: auto; }
+  .combat-vs { display: none; }
+  .ability-btn { min-width: 90px; }
+  .class-card { width: 90%; }
+  .floor-node { width: 90%; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark-bg); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="hub-link">&#9664; Back to Hub</a>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen active">
+  <div class="title-logo">THE OPTIMIZER QUEST</div>
+  <div class="title-subtitle">Efficiency RPG</div>
+  <div class="title-tagline">Fight waste bosses with the power of knowledge. Learn real efficiency hacks from EfficiencyIsEverything.com while battling through 5 treacherous floors of the Dungeon of Waste.</div>
+  <div class="btn-row">
+    <button class="btn" onclick="showScreen('create-screen')">New Game</button>
+    <button class="btn blue" id="continue-btn" onclick="loadGame()" style="display:none">Continue</button>
+  </div>
+</div>
+
+<!-- CHARACTER CREATION -->
+<div id="create-screen" class="screen">
+  <div class="section-title">Choose Your Class</div>
+  <div class="class-cards">
+    <div class="class-card" onclick="selectClass('chef')" id="card-chef">
+      <div class="emoji">&#x1F468;&#x200D;&#x1F373;</div>
+      <div class="name">Budget Chef</div>
+      <div class="desc">Master of frugal food. Knows that Flour delivers 4,464 cal/$ and MSG is the ultimate flavor hack.</div>
+      <div class="stats-preview">HP: 90 | KNW: 14 | EFF: 8 | SPD: 8</div>
+    </div>
+    <div class="class-card" onclick="selectClass('hacker')" id="card-hacker">
+      <div class="emoji">&#x23F1;&#xFE0F;</div>
+      <div class="name">Time Hacker</div>
+      <div class="desc">Reclaim your life. Biphasic sleep saves 624 hrs/year. Speed is the ultimate resource.</div>
+      <div class="stats-preview">HP: 80 | KNW: 8 | EFF: 8 | SPD: 14</div>
+    </div>
+    <div class="class-card" onclick="selectClass('analyst')" id="card-analyst">
+      <div class="emoji">&#x1F4CA;</div>
+      <div class="name">Data Analyst</div>
+      <div class="desc">Balanced optimizer. Every decision backed by data. Efficiency in all things.</div>
+      <div class="stats-preview">HP: 100 | KNW: 10 | EFF: 10 | SPD: 10</div>
+    </div>
+  </div>
+  <input type="text" class="name-input" id="player-name" placeholder="Enter your name" maxlength="16">
+  <button class="btn" id="start-btn" onclick="startGame()" disabled>Begin Quest</button>
+</div>
+
+<!-- DUNGEON MAP -->
+<div id="map-screen" class="screen">
+  <div class="section-title" id="map-title">Dungeon of Waste</div>
+  <div class="player-hud" id="map-hud"></div>
+  <div class="map-container" id="map-container"></div>
+  <div class="btn-row">
+    <button class="btn blue" onclick="showInventory()">Inventory</button>
+    <button class="btn orange" onclick="saveGame()">Save Game</button>
+  </div>
+</div>
+
+<!-- COMBAT SCREEN -->
+<div id="combat-screen" class="screen">
+  <div class="combat-header" id="combat-header">Floor 1 - Grocery Store</div>
+  <div class="combat-arena" id="combat-arena">
+    <div class="combatant player" id="player-combatant">
+      <div class="combatant-sprite" id="player-sprite">&#x1F468;&#x200D;&#x1F373;</div>
+      <div class="combatant-name" id="player-combat-name">Player</div>
+      <div class="status-effects" id="player-statuses"></div>
+      <div class="hp-bar-container">
+        <div class="hp-bar" id="player-hp-bar" style="width:100%"></div>
+        <div class="hp-text" id="player-hp-text">100/100</div>
+      </div>
+    </div>
+    <div class="combat-vs">VS</div>
+    <div class="combatant enemy" id="enemy-combatant">
+      <div class="combatant-sprite" id="enemy-sprite">&#x1F47E;</div>
+      <div class="combatant-name" id="enemy-combat-name">Enemy</div>
+      <div class="status-effects" id="enemy-statuses"></div>
+      <div class="hp-bar-container">
+        <div class="hp-bar enemy-bar" id="enemy-hp-bar" style="width:100%"></div>
+        <div class="hp-text" id="enemy-hp-text">50/50</div>
+      </div>
+    </div>
+  </div>
+  <div class="combat-log" id="combat-log"></div>
+  <div class="ability-bar" id="ability-bar"></div>
+</div>
+
+<!-- REWARD SCREEN -->
+<div id="reward-screen" class="screen">
+  <div class="reward-card" id="reward-card"></div>
+  <button class="btn" id="reward-continue-btn">Continue</button>
+</div>
+
+<!-- INVENTORY SCREEN -->
+<div id="inventory-screen" class="screen">
+  <div class="section-title">Inventory</div>
+  <div class="player-hud" id="inv-hud"></div>
+  <div class="inventory-grid" id="inv-grid"></div>
+  <button class="btn blue" onclick="showScreen('map-screen'); renderMap();">Back to Map</button>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover-screen" class="screen">
+  <div class="gameover-title">DEFEATED</div>
+  <div style="color:#888;max-width:400px;text-align:center">The forces of inefficiency have overwhelmed you. But every failure is data for the next attempt.</div>
+  <div class="btn-row">
+    <button class="btn pink" onclick="location.reload()">Try Again</button>
+  </div>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="win-screen" class="screen">
+  <div class="win-title">VICTORY!</div>
+  <div style="color:#ccc;max-width:500px;text-align:center;margin-bottom:10px">You have defeated the Inefficiency King and mastered the ways of optimization!</div>
+  <div class="win-stats" id="win-stats"></div>
+  <div class="btn-row">
+    <button class="btn" onclick="location.reload()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ============================
+// GAME DATA
+// ============================
+
+const CLASS_DATA = {
+  chef:    { name: 'Budget Chef',   sprite: '\u{1F468}\u200D\u{1F373}', hp: 90,  knowledge: 14, efficiency: 8,  speed: 8  },
+  hacker:  { name: 'Time Hacker',   sprite: '\u23F1\uFE0F',            hp: 80,  knowledge: 8,  efficiency: 8,  speed: 14 },
+  analyst: { name: 'Data Analyst',  sprite: '\u{1F4CA}',               hp: 100, knowledge: 10, efficiency: 10, speed: 10 },
+};
+
+const FLOORS = [
+  {
+    name: 'Floor 1: Grocery Store', short: 'Grocery Store',
+    enemies: [
+      { name: 'Impulse Buy Sprite', sprite: '\u{1F6D2}', hp: 35, atk: 6, def: 2, spd: 5, xp: 15, gold: 8 },
+      { name: 'Brand Name Golem', sprite: '\u{1F3F7}\uFE0F', hp: 50, atk: 8, def: 5, spd: 3, xp: 20, gold: 12 },
+      { name: 'Convenience Fee', sprite: '\u{1F4B8}', hp: 40, atk: 7, def: 3, spd: 6, xp: 18, gold: 10 },
+    ],
+    boss: { name: 'The Markup Manager', sprite: '\u{1F9DF}', hp: 100, atk: 12, def: 6, spd: 5, xp: 60, gold: 40, isBoss: true },
+  },
+  {
+    name: 'Floor 2: The Kitchen', short: 'The Kitchen',
+    enemies: [
+      { name: 'Takeout Demon', sprite: '\u{1F47F}', hp: 50, atk: 10, def: 4, spd: 6, xp: 22, gold: 14 },
+      { name: 'Food Waste Ghost', sprite: '\u{1F47B}', hp: 45, atk: 8, def: 3, spd: 8, xp: 20, gold: 12 },
+      { name: 'Burned Meal', sprite: '\u{1F525}', hp: 55, atk: 12, def: 2, spd: 4, xp: 25, gold: 15 },
+    ],
+    boss: { name: 'Chef Overpriced', sprite: '\u{1F9D1}\u200D\u{1F373}', hp: 140, atk: 15, def: 7, spd: 6, xp: 80, gold: 55, isBoss: true },
+  },
+  {
+    name: 'Floor 3: The Morning', short: 'The Morning',
+    enemies: [
+      { name: 'Snooze Button Vampire', sprite: '\u{1F9DB}', hp: 60, atk: 11, def: 5, spd: 4, xp: 28, gold: 18 },
+      { name: 'Coffee Shop Drain', sprite: '\u2615', hp: 55, atk: 9, def: 6, spd: 7, xp: 25, gold: 16 },
+      { name: 'Traffic Jam Troll', sprite: '\u{1F9CC}', hp: 70, atk: 13, def: 7, spd: 3, xp: 30, gold: 20 },
+    ],
+    boss: { name: 'The Morning Dread', sprite: '\u{1F319}', hp: 180, atk: 18, def: 9, spd: 7, xp: 100, gold: 70, isBoss: true },
+  },
+  {
+    name: 'Floor 4: The Night', short: 'The Night',
+    enemies: [
+      { name: 'Subscription Hydra', sprite: '\u{1F40D}', hp: 80, atk: 14, def: 6, spd: 6, xp: 35, gold: 22 },
+      { name: 'Late Night Delivery', sprite: '\u{1F355}', hp: 65, atk: 16, def: 4, spd: 8, xp: 32, gold: 20 },
+      { name: 'Energy Drink Fiend', sprite: '\u{1F9E0}', hp: 70, atk: 13, def: 5, spd: 10, xp: 33, gold: 21 },
+    ],
+    boss: { name: 'The Debt Collector', sprite: '\u{1F480}', hp: 220, atk: 20, def: 10, spd: 8, xp: 130, gold: 90, isBoss: true },
+  },
+  {
+    name: 'Floor 5: The Final Boss', short: 'Final Boss',
+    enemies: [
+      { name: 'Waste Sentinel', sprite: '\u{1F916}', hp: 90, atk: 16, def: 8, spd: 7, xp: 40, gold: 25 },
+      { name: 'Procrastination Wraith', sprite: '\u{1F47E}', hp: 85, atk: 18, def: 6, spd: 9, xp: 38, gold: 24 },
+      { name: 'FOMO Phantom', sprite: '\u{1F440}', hp: 95, atk: 15, def: 9, spd: 8, xp: 42, gold: 28 },
+    ],
+    boss: { name: 'The Inefficiency King', sprite: '\u{1F451}', hp: 350, atk: 24, def: 12, spd: 10, xp: 200, gold: 150, isBoss: true, phases: 3 },
+  },
+];
+
+const ABILITIES = [
+  { id: 'rice', name: 'Rice Strike', emoji: '\u{1F35A}', type: 'attack', power: 1.0, desc: 'Basic attack', cost: 0, fact: 'Rice delivers 2,320 cal/$ - one of the most efficient staples!' },
+  { id: 'flour', name: 'Flour Bomb', emoji: '\u{1F4A5}', type: 'attack', power: 1.4, desc: 'Heavy attack', cost: 0, fact: 'Flour is king at 4,464 cal/$. Bread, tortillas, pancakes - endless options.' },
+  { id: 'msg', name: 'MSG Bomb', emoji: '\u{1F9C2}', type: 'attack', power: 1.8, desc: 'AoE umami blast', cost: 0, fact: 'MSG is pure umami. It makes cheap food taste amazing and is perfectly safe to use.', unlockLevel: 3 },
+  { id: 'lentil', name: 'Lentil Shield', emoji: '\u{1F6E1}\uFE0F', type: 'defense', power: 0, desc: 'DEF +50% 3 turns', cost: 0, fact: 'Lentils deliver 73g protein/$ and 929 cal/$. A budget protein powerhouse.' },
+  { id: 'mealprep', name: 'Meal Prep', emoji: '\u{1F371}', type: 'heal', power: 0.35, desc: 'Heal 35% HP', cost: 0, fact: 'Batch cooking saves about 150 hours per year. Cook once, eat all week.' },
+  { id: 'caffeine', name: 'Caffeine Boost', emoji: '\u2615', type: 'buff', power: 0, desc: 'SPD +60% 3 turns', cost: 0, fact: 'Caffeine pills deliver 5,000mg/$. That\'s 166x more efficient than Starbucks at 30mg/$!' },
+  { id: 'biphasic', name: 'Biphasic Sleep', emoji: '\u{1F634}', type: 'buff', power: 0, desc: 'KNW +40% 3 turns', cost: 0, unlockLevel: 5, fact: 'Biphasic sleep saves 624 hours/year. A 20-min afternoon nap replaces an hour of night sleep.' },
+  { id: 'sear', name: 'High Heat Sear', emoji: '\u{1F525}', type: 'attack', power: 2.2, desc: 'Critical strike', cost: 0, unlockLevel: 7, fact: 'High heat searing creates the Maillard reaction - complex flavors from simple, cheap ingredients.' },
+];
+
+const LOOT_TABLE = [
+  { name: 'Bulk Buying Badge', emoji: '\u{1F3F7}\uFE0F', effect: '+10% Savings', stat: 'savings_mult', value: 0.1 },
+  { name: 'Rice Cooker', emoji: '\u{1F35A}', effect: '+3 Knowledge', stat: 'knowledge', value: 3 },
+  { name: 'Slow Cooker', emoji: '\u{1F372}', effect: '+2 Efficiency', stat: 'efficiency', value: 2 },
+  { name: 'Instant Pot', emoji: '\u{1FA D5}', effect: '+2 Speed', stat: 'speed', value: 2 },
+  { name: 'Caffeine Stash', emoji: '\u{1F48A}', effect: '+3 Speed', stat: 'speed', value: 3 },
+  { name: 'Meal Prep Container', emoji: '\u{1F4E6}', effect: '+10 Max HP', stat: 'maxHp', value: 10 },
+  { name: 'Spreadsheet of Power', emoji: '\u{1F4CA}', effect: '+3 Knowledge', stat: 'knowledge', value: 3 },
+  { name: 'Efficiency Manual', emoji: '\u{1F4D6}', effect: '+2 All Stats', stat: 'all', value: 2 },
+  { name: 'Protein Powder', emoji: '\u{1F4AA}', effect: '+15 Max HP', stat: 'maxHp', value: 15 },
+  { name: 'Timer Watch', emoji: '\u23F1\uFE0F', effect: '+4 Speed', stat: 'speed', value: 4 },
+  { name: 'Budget Planner', emoji: '\u{1F4B0}', effect: '+15% Savings', stat: 'savings_mult', value: 0.15 },
+  { name: 'Cast Iron Pan', emoji: '\u{1F373}', effect: '+4 Knowledge', stat: 'knowledge', value: 4 },
+];
+
+const KNOWLEDGE_FACTS = [
+  'Flour delivers 4,464 calories per dollar - the most efficient food on Earth.',
+  'Rice at 2,320 cal/$ is the world\'s most popular staple for good reason.',
+  'Oats (2,148 cal/$) make the cheapest and healthiest breakfast possible.',
+  'Ramen noodles deliver 1,949 cal/$ - cheap but add eggs and veggies!',
+  'Pasta at 1,600 cal/$ is a versatile base for hundreds of cheap meals.',
+  'Peanut Butter delivers 1,487 cal/$ and is packed with protein and healthy fats.',
+  'Lentils deliver 929 cal/$ and 73g protein per dollar. A true superfood.',
+  'Eggs deliver 802 cal/$ and 70g protein/$. Nature\'s perfect food.',
+  'Beans deliver 880 cal/$ and 80g protein/$. Combine with rice for complete protein.',
+  'Chicken at 239 cal/$ is the most efficient meat by a wide margin.',
+  'White Bread leads protein efficiency at 103g/$. Surprised?',
+  'Turkey delivers 78g protein per dollar - perfect for meal prep.',
+  'Biphasic sleep (nap + shorter night) saves 624 hours per year.',
+  'Watching videos at 2x speed saves 200+ hours per year.',
+  'Meal prepping saves about 150 hours per year vs daily cooking.',
+  'A morning routine saves ~100 hours/year of decision fatigue.',
+  'Packing lunch saves ~80 hours and $2,000+ per year vs eating out.',
+  'Caffeine pills: 5,000mg per dollar. Energy drinks: only 80mg/$.',
+  'Instant coffee delivers 1,200mg caffeine per dollar.',
+  'Starbucks delivers only 30mg caffeine per dollar. 166x less than pills.',
+  'MSG (monosodium glutamate) makes cheap food taste expensive. It\'s the umami secret.',
+  'Adding acid (lemon, vinegar) at the end brightens any dish dramatically.',
+  'Salt early in cooking seasons food through and through, not just the surface.',
+  'Fat equals flavor. A little butter or oil carries taste compounds to your tongue.',
+  'High heat searing creates Maillard reaction - restaurant flavor at home.',
+];
+
+// ============================
+// GAME STATE
+// ============================
+
+let G = {
+  player: null,
+  currentFloor: 0,
+  currentEncounter: 0,
+  combatState: null,
+  inventory: [],
+  factsLearned: [],
+  totalDamageDealt: 0,
+  totalGoldEarned: 0,
+  enemiesDefeated: 0,
+};
+
+// ============================
+// UI HELPERS
+// ============================
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function $(id) { return document.getElementById(id); }
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+// ============================
+// CHARACTER CREATION
+// ============================
+
+let selectedClass = null;
+
+function selectClass(cls) {
+  selectedClass = cls;
+  document.querySelectorAll('.class-card').forEach(c => c.classList.remove('selected'));
+  $('card-' + cls).classList.add('selected');
+  $('start-btn').disabled = false;
+}
+
+function startGame() {
+  const name = $('player-name').value.trim() || 'Optimizer';
+  const cd = CLASS_DATA[selectedClass];
+  G.player = {
+    name, class: selectedClass, className: cd.name, sprite: cd.sprite,
+    level: 1, xp: 0, xpToNext: 40,
+    hp: cd.hp, maxHp: cd.hp,
+    knowledge: cd.knowledge, efficiency: cd.efficiency, speed: cd.speed,
+    gold: 20,
+    savings_mult: 1.0,
+  };
+  G.currentFloor = 0;
+  G.currentEncounter = 0;
+  G.inventory = [];
+  G.factsLearned = [];
+  G.totalDamageDealt = 0;
+  G.totalGoldEarned = 0;
+  G.enemiesDefeated = 0;
+  showScreen('map-screen');
+  renderMap();
+}
+
+// ============================
+// MAP
+// ============================
+
+function renderMap() {
+  const p = G.player;
+  $('map-hud').innerHTML = `
+    <div class="hud-stat"><div class="hud-label">Name</div><div class="hud-val green">${p.name}</div></div>
+    <div class="hud-stat"><div class="hud-label">Class</div><div class="hud-val blue">${p.className}</div></div>
+    <div class="hud-stat"><div class="hud-label">Lv</div><div class="hud-val yellow">${p.level}</div></div>
+    <div class="hud-stat"><div class="hud-label">HP</div><div class="hud-val green">${p.hp}/${p.maxHp}</div></div>
+    <div class="hud-stat"><div class="hud-label">KNW</div><div class="hud-val blue">${p.knowledge}</div></div>
+    <div class="hud-stat"><div class="hud-label">EFF</div><div class="hud-val pink">${p.efficiency}</div></div>
+    <div class="hud-stat"><div class="hud-label">SPD</div><div class="hud-val orange">${p.speed}</div></div>
+    <div class="hud-stat"><div class="hud-label">Gold</div><div class="hud-val yellow">$${p.gold}</div></div>
+    <div class="hud-stat"><div class="hud-label">XP</div><div class="hud-val green">${p.xp}/${p.xpToNext}</div></div>
+  `;
+
+  let html = '';
+  FLOORS.forEach((floor, i) => {
+    const totalEncounters = floor.enemies.length + 1; // enemies + boss
+    const isCompleted = i < G.currentFloor;
+    const isCurrent = i === G.currentFloor;
+    const encountersDone = isCompleted ? totalEncounters : (isCurrent ? G.currentEncounter : 0);
+
+    let cls = '';
+    if (isCompleted) cls = 'completed';
+    else if (isCurrent) cls = 'available';
+
+    html += `<div class="floor-node ${cls}" ${isCurrent ? `onclick="enterFloor(${i})"` : ''}>
+      <div class="floor-name">${floor.name}</div>
+      <div class="floor-desc">${isCurrent ? 'Click to enter' : (isCompleted ? 'Cleared!' : 'Locked')}</div>
+      <div class="floor-progress">${encountersDone}/${totalEncounters} encounters</div>
+    </div>`;
+    if (i < FLOORS.length - 1) {
+      html += `<div class="floor-connector ${isCompleted ? 'lit' : ''}"></div>`;
+    }
+  });
+  $('map-container').innerHTML = html;
+}
+
+function enterFloor(floorIdx) {
+  const floor = FLOORS[floorIdx];
+  const enc = G.currentEncounter;
+  const totalEnemies = floor.enemies.length;
+
+  let enemy;
+  if (enc < totalEnemies) {
+    enemy = { ...floor.enemies[enc] };
+  } else {
+    enemy = { ...floor.boss };
+  }
+
+  // Scale enemies slightly with floor
+  const scale = 1 + (floorIdx * 0.05) + (G.player.level * 0.02);
+  enemy.hp = Math.floor(enemy.hp * scale);
+  enemy.maxHp = enemy.hp;
+  enemy.atk = Math.floor(enemy.atk * scale);
+  enemy.def = Math.floor(enemy.def * scale);
+  enemy.spd = Math.floor(enemy.spd * scale);
+  enemy.buffs = [];
+
+  startCombat(enemy);
+}
+
+// ============================
+// COMBAT
+// ============================
+
+function startCombat(enemy) {
+  const p = G.player;
+  G.combatState = {
+    enemy,
+    turn: 'player',
+    playerBuffs: [],
+    enemyBuffs: [],
+    turnCount: 0,
+    bossPhase: 1,
+  };
+
+  showScreen('combat-screen');
+  $('combat-header').textContent = FLOORS[G.currentFloor].short + ' - Encounter ' + (G.currentEncounter + 1);
+
+  // Player display
+  $('player-sprite').textContent = p.sprite;
+  $('player-combat-name').textContent = p.name + ' Lv.' + p.level;
+  updateHpBar('player', p.hp, p.maxHp);
+
+  // Enemy display
+  $('enemy-sprite').textContent = enemy.sprite;
+  $('enemy-combat-name').textContent = enemy.name;
+  updateHpBar('enemy', enemy.hp, enemy.maxHp);
+
+  $('combat-log').innerHTML = '';
+  logCombat(`${enemy.name} appears!`, 'info');
+  if (enemy.isBoss) logCombat('BOSS FIGHT!', 'info');
+
+  updateStatusDisplay();
+  renderAbilities();
+}
+
+function updateHpBar(who, hp, maxHp) {
+  const pct = Math.max(0, (hp / maxHp) * 100);
+  const bar = $(who + '-hp-bar');
+  const text = $(who + '-hp-text');
+  bar.style.width = pct + '%';
+  text.textContent = Math.max(0, hp) + '/' + maxHp;
+
+  bar.classList.remove('low', 'critical');
+  if (who === 'player') {
+    if (pct < 25) bar.classList.add('critical');
+    else if (pct < 50) bar.classList.add('low');
+  }
+}
+
+function logCombat(msg, cls = '') {
+  const log = $('combat-log');
+  log.innerHTML += `<div class="log-line ${cls ? 'log-' + cls : ''}">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateStatusDisplay() {
+  const cs = G.combatState;
+  $('player-statuses').innerHTML = cs.playerBuffs.map(b => `<span class="status-icon" title="${b.name} (${b.turns}t)">${b.emoji}</span>`).join('');
+  $('enemy-statuses').innerHTML = cs.enemyBuffs.map(b => `<span class="status-icon" title="${b.name} (${b.turns}t)">${b.emoji}</span>`).join('');
+}
+
+function renderAbilities() {
+  const p = G.player;
+  let html = '';
+  ABILITIES.forEach(ab => {
+    if (ab.unlockLevel && p.level < ab.unlockLevel) return;
+    html += `<button class="ability-btn type-${ab.type}" onclick="useAbility('${ab.id}')" id="ab-${ab.id}">
+      <div class="ab-emoji">${ab.emoji}</div>
+      <div class="ab-name">${ab.name}</div>
+      <div class="ab-desc">${ab.desc}</div>
+    </button>`;
+  });
+  $('ability-bar').innerHTML = html;
+}
+
+function setAbilitiesEnabled(enabled) {
+  document.querySelectorAll('.ability-btn').forEach(b => b.disabled = !enabled);
+}
+
+function getBuffedStat(base, buffs, stat) {
+  let mult = 1;
+  buffs.forEach(b => {
+    if (b.stat === stat) mult += b.value;
+  });
+  return Math.floor(base * mult);
+}
+
+function tickBuffs(buffs) {
+  return buffs.filter(b => {
+    b.turns--;
+    return b.turns > 0;
+  });
+}
+
+function floatNumber(targetId, text, color) {
+  const target = $(targetId);
+  const rect = target.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'float-number';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = (rect.left + rect.width / 2 - 30 + rand(-20, 20)) + 'px';
+  el.style.top = (rect.top - 10) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function screenShake() {
+  const arena = $('combat-arena');
+  arena.classList.remove('shake');
+  void arena.offsetWidth;
+  arena.classList.add('shake');
+}
+
+function flashSprite(id) {
+  const el = $(id);
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = 'attackFlash 0.3s ease';
+}
+
+async function useAbility(abId) {
+  const ab = ABILITIES.find(a => a.id === abId);
+  const cs = G.combatState;
+  const p = G.player;
+  const e = cs.enemy;
+
+  setAbilitiesEnabled(false);
+
+  // Player turn
+  const pKnw = getBuffedStat(p.knowledge, cs.playerBuffs, 'knowledge');
+  const pEff = getBuffedStat(p.efficiency, cs.playerBuffs, 'efficiency');
+  const pSpd = getBuffedStat(p.speed, cs.playerBuffs, 'speed');
+
+  if (ab.type === 'attack') {
+    const baseDmg = Math.floor(pKnw * ab.power * (1 + Math.random() * 0.3));
+    const eDef = getBuffedStat(e.def, cs.enemyBuffs, 'defense');
+    const dmg = Math.max(1, baseDmg - Math.floor(eDef * 0.5));
+    const crit = Math.random() < 0.15;
+    const finalDmg = crit ? Math.floor(dmg * 1.8) : dmg;
+
+    e.hp -= finalDmg;
+    G.totalDamageDealt += finalDmg;
+    logCombat(`${ab.emoji} ${ab.name}! ${crit ? 'CRITICAL! ' : ''}Dealt ${finalDmg} damage!`, 'damage');
+    floatNumber('enemy-sprite', (crit ? 'CRIT! ' : '-') + finalDmg, crit ? '#ffe600' : '#ff006e');
+    flashSprite('enemy-sprite');
+    screenShake();
+    updateHpBar('enemy', e.hp, e.maxHp);
+
+  } else if (ab.type === 'defense') {
+    cs.playerBuffs.push({ name: 'Lentil Shield', emoji: '\u{1F6E1}\uFE0F', stat: 'efficiency', value: 0.5, turns: 4 });
+    logCombat(`${ab.emoji} ${ab.name}! Defense +50% for 3 turns.`, 'buff');
+    floatNumber('player-sprite', 'DEF UP', '#00f0ff');
+
+  } else if (ab.type === 'heal') {
+    const heal = Math.floor(p.maxHp * ab.power);
+    p.hp = Math.min(p.maxHp, p.hp + heal);
+    logCombat(`${ab.emoji} ${ab.name}! Healed ${heal} HP!`, 'heal');
+    floatNumber('player-sprite', '+' + heal, '#39ff14');
+    updateHpBar('player', p.hp, p.maxHp);
+
+  } else if (ab.type === 'buff') {
+    if (ab.id === 'caffeine') {
+      cs.playerBuffs.push({ name: 'Caffeine Boost', emoji: '\u2615', stat: 'speed', value: 0.6, turns: 4 });
+      logCombat(`${ab.emoji} ${ab.name}! Speed +60% for 3 turns.`, 'buff');
+      floatNumber('player-sprite', 'SPD UP', '#ffe600');
+    } else if (ab.id === 'biphasic') {
+      cs.playerBuffs.push({ name: 'Biphasic Sleep', emoji: '\u{1F634}', stat: 'knowledge', value: 0.4, turns: 4 });
+      logCombat(`${ab.emoji} ${ab.name}! Knowledge +40% for 3 turns.`, 'buff');
+      floatNumber('player-sprite', 'KNW UP', '#00f0ff');
+    }
+  }
+
+  updateStatusDisplay();
+
+  // Check enemy death
+  if (e.hp <= 0) {
+    // Boss phase check
+    if (e.isBoss && e.phases && cs.bossPhase < e.phases) {
+      cs.bossPhase++;
+      e.hp = Math.floor(e.maxHp * 0.6);
+      e.atk = Math.floor(e.atk * 1.15);
+      logCombat(`${e.name} enters PHASE ${cs.bossPhase}! It grows stronger!`, 'info');
+      floatNumber('enemy-sprite', 'PHASE ' + cs.bossPhase, '#ff6a00');
+      updateHpBar('enemy', e.hp, e.maxHp);
+    } else {
+      await delay(600);
+      endCombatVictory();
+      return;
+    }
+  }
+
+  // Enemy turn after short delay
+  await delay(700);
+  enemyTurn();
+}
+
+function enemyTurn() {
+  const cs = G.combatState;
+  const p = G.player;
+  const e = cs.enemy;
+
+  const eAtk = getBuffedStat(e.atk, cs.enemyBuffs, 'attack');
+  const pEff = getBuffedStat(p.efficiency, cs.playerBuffs, 'efficiency');
+
+  // Enemy might buff occasionally
+  if (e.isBoss && Math.random() < 0.2 && cs.turnCount > 0) {
+    cs.enemyBuffs.push({ name: 'Rage', emoji: '\u{1F4A2}', stat: 'attack', value: 0.3, turns: 3 });
+    logCombat(`${e.sprite} ${e.name} enters a rage! ATK UP!`, 'enemy');
+    floatNumber('enemy-sprite', 'ATK UP', '#ff6a00');
+  } else {
+    const baseDmg = Math.floor(eAtk * (0.85 + Math.random() * 0.3));
+    const dmg = Math.max(1, baseDmg - Math.floor(pEff * 0.4));
+    p.hp -= dmg;
+    logCombat(`${e.sprite} ${e.name} attacks! Dealt ${dmg} damage!`, 'enemy');
+    floatNumber('player-sprite', '-' + dmg, '#ff006e');
+    flashSprite('player-sprite');
+    screenShake();
+    updateHpBar('player', p.hp, p.maxHp);
+  }
+
+  // Tick buffs
+  cs.playerBuffs = tickBuffs(cs.playerBuffs);
+  cs.enemyBuffs = tickBuffs(cs.enemyBuffs);
+  cs.turnCount++;
+  updateStatusDisplay();
+
+  if (p.hp <= 0) {
+    setTimeout(() => showScreen('gameover-screen'), 800);
+    return;
+  }
+
+  setAbilitiesEnabled(true);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================
+// VICTORY & REWARDS
+// ============================
+
+function endCombatVictory() {
+  const e = G.combatState.enemy;
+  G.enemiesDefeated++;
+
+  const goldEarned = Math.floor(e.gold * G.player.savings_mult);
+  G.player.gold += goldEarned;
+  G.totalGoldEarned += goldEarned;
+
+  const xpEarned = e.xp;
+  G.player.xp += xpEarned;
+
+  // Pick a random fact
+  const fact = e.isBoss
+    ? KNOWLEDGE_FACTS[G.currentFloor * 5 + rand(0, 4)]
+    : KNOWLEDGE_FACTS[rand(0, KNOWLEDGE_FACTS.length - 1)];
+  if (!G.factsLearned.includes(fact)) G.factsLearned.push(fact);
+
+  // Loot
+  let loot = null;
+  const lootChance = e.isBoss ? 1.0 : 0.4;
+  if (Math.random() < lootChance) {
+    loot = LOOT_TABLE[rand(0, LOOT_TABLE.length - 1)];
+    G.inventory.push({ ...loot });
+    applyLoot(loot);
+  }
+
+  // Heal a bit after each fight
+  G.player.hp = Math.min(G.player.maxHp, G.player.hp + Math.floor(G.player.maxHp * 0.2));
+
+  // Build reward card
+  let html = `
+    <div class="reward-title">${e.isBoss ? '\u{1F451} Boss Defeated!' : '\u2694\uFE0F Victory!'}</div>
+    <div class="reward-xp">+${xpEarned} XP</div>
+    <div class="reward-gold">+$${goldEarned} Gold</div>
+    <div class="knowledge-box">
+      <div class="knowledge-label">\u{1F4A1} Knowledge Gained</div>
+      <div class="knowledge-fact">${fact}</div>
+    </div>
+  `;
+  if (loot) {
+    html += `<div class="loot-box">
+      <div class="loot-name">${loot.emoji} ${loot.name}</div>
+      <div class="loot-desc">${loot.effect}</div>
+    </div>`;
+  }
+  $('reward-card').innerHTML = html;
+
+  // Advance encounter
+  const floor = FLOORS[G.currentFloor];
+  const totalEncounters = floor.enemies.length + 1;
+  G.currentEncounter++;
+
+  const isFloorDone = G.currentEncounter >= totalEncounters;
+
+  showScreen('reward-screen');
+
+  // Check level up
+  checkLevelUp();
+
+  // Check win condition
+  if (isFloorDone && G.currentFloor >= FLOORS.length - 1) {
+    $('reward-continue-btn').textContent = 'Claim Victory!';
+    $('reward-continue-btn').onclick = () => showWinScreen();
+  } else if (isFloorDone) {
+    G.currentFloor++;
+    G.currentEncounter = 0;
+    // Heal more between floors
+    G.player.hp = Math.min(G.player.maxHp, G.player.hp + Math.floor(G.player.maxHp * 0.3));
+    $('reward-continue-btn').textContent = 'Next Floor';
+    $('reward-continue-btn').onclick = () => { showScreen('map-screen'); renderMap(); };
+  } else {
+    $('reward-continue-btn').textContent = 'Continue';
+    $('reward-continue-btn').onclick = () => { showScreen('map-screen'); renderMap(); };
+  }
+}
+
+function applyLoot(loot) {
+  const p = G.player;
+  if (loot.stat === 'knowledge') p.knowledge += loot.value;
+  else if (loot.stat === 'efficiency') p.efficiency += loot.value;
+  else if (loot.stat === 'speed') p.speed += loot.value;
+  else if (loot.stat === 'maxHp') { p.maxHp += loot.value; p.hp += loot.value; }
+  else if (loot.stat === 'savings_mult') p.savings_mult += loot.value;
+  else if (loot.stat === 'all') {
+    p.knowledge += loot.value;
+    p.efficiency += loot.value;
+    p.speed += loot.value;
+  }
+}
+
+function checkLevelUp() {
+  const p = G.player;
+  if (p.xp >= p.xpToNext) {
+    p.xp -= p.xpToNext;
+    p.level++;
+    p.xpToNext = Math.floor(p.xpToNext * 1.5);
+
+    const hpGain = rand(8, 15);
+    const knwGain = rand(1, 3);
+    const effGain = rand(1, 2);
+    const spdGain = rand(1, 2);
+
+    p.maxHp += hpGain;
+    p.hp = p.maxHp;
+    p.knowledge += knwGain;
+    p.efficiency += effGain;
+    p.speed += spdGain;
+
+    // Show level up overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'level-up-overlay';
+    overlay.innerHTML = `
+      <div class="level-up-card">
+        <div class="level-up-title">\u2B50 Level ${p.level}!</div>
+        <div class="level-up-stats">
+          HP +${hpGain} (${p.maxHp})<br>
+          Knowledge +${knwGain} (${p.knowledge})<br>
+          Efficiency +${effGain} (${p.efficiency})<br>
+          Speed +${spdGain} (${p.speed})
+        </div>
+        <button class="btn" onclick="this.closest('.level-up-overlay').remove()">Nice!</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Check again for multi-level
+    if (p.xp >= p.xpToNext) checkLevelUp();
+  }
+}
+
+// ============================
+// INVENTORY
+// ============================
+
+function showInventory() {
+  const p = G.player;
+  $('inv-hud').innerHTML = `
+    <div class="hud-stat"><div class="hud-label">Lv</div><div class="hud-val yellow">${p.level}</div></div>
+    <div class="hud-stat"><div class="hud-label">HP</div><div class="hud-val green">${p.hp}/${p.maxHp}</div></div>
+    <div class="hud-stat"><div class="hud-label">KNW</div><div class="hud-val blue">${p.knowledge}</div></div>
+    <div class="hud-stat"><div class="hud-label">EFF</div><div class="hud-val pink">${p.efficiency}</div></div>
+    <div class="hud-stat"><div class="hud-label">SPD</div><div class="hud-val orange">${p.speed}</div></div>
+    <div class="hud-stat"><div class="hud-label">Gold</div><div class="hud-val yellow">$${p.gold}</div></div>
+    <div class="hud-stat"><div class="hud-label">Facts</div><div class="hud-val blue">${G.factsLearned.length}</div></div>
+  `;
+
+  if (G.inventory.length === 0) {
+    $('inv-grid').innerHTML = '<div style="color:#666">No items yet. Defeat enemies to find loot!</div>';
+  } else {
+    $('inv-grid').innerHTML = G.inventory.map(item => `
+      <div class="inv-item">
+        <div class="inv-emoji">${item.emoji}</div>
+        <div class="inv-name">${item.name}</div>
+        <div class="inv-effect">${item.effect}</div>
+      </div>
+    `).join('');
+  }
+  showScreen('inventory-screen');
+}
+
+// ============================
+// WIN SCREEN
+// ============================
+
+function showWinScreen() {
+  const p = G.player;
+  $('win-stats').innerHTML = `
+    Final Level: ${p.level}<br>
+    Enemies Defeated: ${G.enemiesDefeated}<br>
+    Total Damage Dealt: ${G.totalDamageDealt}<br>
+    Gold Earned: $${G.totalGoldEarned}<br>
+    Items Found: ${G.inventory.length}<br>
+    Facts Learned: ${G.factsLearned.length}/${KNOWLEDGE_FACTS.length}
+  `;
+  showScreen('win-screen');
+  localStorage.removeItem('optimizerQuest');
+}
+
+// ============================
+// SAVE / LOAD
+// ============================
+
+function saveGame() {
+  const data = {
+    player: G.player,
+    currentFloor: G.currentFloor,
+    currentEncounter: G.currentEncounter,
+    inventory: G.inventory,
+    factsLearned: G.factsLearned,
+    totalDamageDealt: G.totalDamageDealt,
+    totalGoldEarned: G.totalGoldEarned,
+    enemiesDefeated: G.enemiesDefeated,
+  };
+  localStorage.setItem('optimizerQuest', JSON.stringify(data));
+  alert('Game saved!');
+}
+
+function loadGame() {
+  try {
+    const data = JSON.parse(localStorage.getItem('optimizerQuest'));
+    if (!data || !data.player) return;
+    G.player = data.player;
+    G.currentFloor = data.currentFloor;
+    G.currentEncounter = data.currentEncounter;
+    G.inventory = data.inventory || [];
+    G.factsLearned = data.factsLearned || [];
+    G.totalDamageDealt = data.totalDamageDealt || 0;
+    G.totalGoldEarned = data.totalGoldEarned || 0;
+    G.enemiesDefeated = data.enemiesDefeated || 0;
+    showScreen('map-screen');
+    renderMap();
+  } catch (e) {
+    console.error('Failed to load save:', e);
+  }
+}
+
+// Check for save on load
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('optimizerQuest')) {
+    $('continue-btn').style.display = 'inline-block';
+  }
+});
+</script>
+</body>
+</html>

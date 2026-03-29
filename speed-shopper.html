@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speed Shopper - Endless Runner</title>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+<style>
+:root {
+    --neon-green: #39ff14;
+    --neon-blue: #00f0ff;
+    --neon-pink: #ff006e;
+    --neon-yellow: #ffe600;
+    --neon-orange: #ff6a00;
+    --dark-bg: #0a0a1a;
+    --card-bg: #12122a;
+}
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    background: var(--dark-bg);
+    font-family: 'Rajdhani', sans-serif;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+#gameContainer {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    max-width: 100vw;
+    max-height: 80vh;
+}
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--neon-blue);
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(0,240,255,0.3), inset 0 0 30px rgba(0,240,255,0.05);
+}
+#hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 10;
+}
+.hud-item {
+    text-shadow: 0 0 10px var(--neon-blue);
+    color: var(--neon-blue);
+}
+.hud-item.savings { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+.hud-item.lives { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+.hud-item.speed-display { color: var(--neon-orange); text-shadow: 0 0 10px var(--neon-orange); }
+.hud-item.highscore { color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); }
+
+#overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,26,0.92);
+    z-index: 20;
+    text-align: center;
+}
+#overlay.hidden { display: none; }
+#overlay h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--neon-green);
+    text-shadow: 0 0 30px var(--neon-green), 0 0 60px var(--neon-green);
+    margin-bottom: 10px;
+}
+#overlay h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 15px var(--neon-blue);
+    margin-bottom: 20px;
+}
+#overlay .subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    color: #aaa;
+    margin-bottom: 30px;
+    max-width: 500px;
+    line-height: 1.4;
+}
+#overlay button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 50px;
+    border: 2px solid var(--neon-green);
+    background: transparent;
+    color: var(--neon-green);
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    margin: 8px;
+}
+#overlay button:hover {
+    background: var(--neon-green);
+    color: var(--dark-bg);
+    box-shadow: 0 0 30px var(--neon-green);
+}
+.controls-info {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #666;
+    margin-top: 20px;
+    line-height: 1.8;
+}
+#quizOverlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,26,0.95);
+    z-index: 25;
+    text-align: center;
+}
+#quizOverlay.hidden { display: none; }
+#quizOverlay h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 15px var(--neon-yellow);
+    margin-bottom: 20px;
+}
+#quizOverlay .quiz-question {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #fff;
+}
+#quizOverlay .quiz-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 12px 40px;
+    margin: 8px;
+    border: 2px solid var(--neon-blue);
+    background: transparent;
+    color: var(--neon-blue);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 200px;
+}
+#quizOverlay .quiz-btn:hover {
+    background: var(--neon-blue);
+    color: var(--dark-bg);
+    box-shadow: 0 0 20px var(--neon-blue);
+}
+#quizOverlay .quiz-timer {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    color: var(--neon-orange);
+    margin-top: 15px;
+}
+.back-link {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neon-blue);
+    text-decoration: none;
+    z-index: 100;
+    padding: 6px 16px;
+    border: 1px solid var(--neon-blue);
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+.back-link:hover {
+    background: var(--neon-blue);
+    color: var(--dark-bg);
+    box-shadow: 0 0 15px var(--neon-blue);
+}
+#powerupIndicator {
+    position: absolute;
+    top: 40px; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 15px var(--neon-yellow);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+#powerupIndicator.active { opacity: 1; }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-link">&larr; Back to Hub</a>
+
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="hud">
+        <div class="hud-item" id="hudDistance">0m</div>
+        <div class="hud-item savings" id="hudSavings">$0.00</div>
+        <div class="hud-item speed-display" id="hudSpeed">1.0x</div>
+        <div class="hud-item lives" id="hudLives"></div>
+        <div class="hud-item highscore" id="hudHigh">HI: $0.00</div>
+    </div>
+    <div id="powerupIndicator"></div>
+
+    <div id="overlay">
+        <h1>SPEED SHOPPER</h1>
+        <h2>Endless Grocery Runner</h2>
+        <p class="subtitle">Sprint through the aisles! Collect high-efficiency foods, dodge overpriced items, and maximize your savings per calorie.</p>
+        <button id="startBtn">START RUN</button>
+        <div class="controls-info">
+            Arrow Keys / A,D / Swipe: Change Lane<br>
+            Space / Up / Swipe Up: Jump<br>
+            Collect green items, dodge red ones!
+        </div>
+    </div>
+
+    <div id="quizOverlay" class="hidden">
+        <h2>EFFICIENCY QUIZ!</h2>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div id="quizOptions"></div>
+        <div class="quiz-timer" id="quizTimer"></div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const quizOverlay = document.getElementById('quizOverlay');
+const startBtn = document.getElementById('startBtn');
+const powerupInd = document.getElementById('powerupIndicator');
+
+const W = 800, H = 600;
+const LANE_Y = 420;
+const LANE_WIDTH = 140;
+const LANE_CENTERS = [W/2 - LANE_WIDTH, W/2, W/2 + LANE_WIDTH];
+const GROUND_Y = 480;
+const PLAYER_SIZE = 44;
+
+const GOOD_ITEMS = [
+    {name:'Rice',cal:2320,emoji:'🍚'},{name:'Flour',cal:4464,emoji:'🌾'},
+    {name:'Oats',cal:2148,emoji:'🥣'},{name:'Ramen',cal:1949,emoji:'🍜'},
+    {name:'Pasta',cal:1600,emoji:'🍝'},{name:'PB',cal:1487,emoji:'🥜'},
+    {name:'Lentils',cal:929,emoji:'🫘'},{name:'Eggs',cal:802,emoji:'🥚'},
+    {name:'Beans',cal:880,emoji:'🫘'},{name:'Potatoes',cal:780,emoji:'🥔'}
+];
+const BAD_ITEMS = [
+    {name:'Starbucks',desc:'$5 for 30mg caffeine',emoji:'☕'},
+    {name:'Energy Drink',desc:'$3 for 80mg caffeine',emoji:'🥫'},
+    {name:'Fancy Cheese',desc:'Premium markup',emoji:'🧀'},
+    {name:'Organic Premium',desc:'Label tax',emoji:'🏷️'},
+    {name:'Pre-cut Fruit',desc:'Markup trap',emoji:'🍓'}
+];
+const POWERUPS = [
+    {name:'2x Speed',desc:'Double points 10s',emoji:'⚡',type:'double',duration:10000},
+    {name:'Meal Prep',desc:'Magnet pull',emoji:'🧲',type:'magnet',duration:8000},
+    {name:'Biphasic Sleep',desc:'Extra life!',emoji:'💤',type:'life',duration:0}
+];
+const OBSTACLE_EMOJI = '🛒';
+
+const QUIZZES = [
+    {q:'Which has more cal/$?',a:'Rice (2320)',b:'Fancy Cheese (~400)',correct:'a'},
+    {q:'Better bulk buy?',a:'Flour (4464 cal/$)',b:'Energy Drink',correct:'a'},
+    {q:'Cheaper caffeine source?',a:'Coffee grounds',b:'Starbucks latte',correct:'a'},
+    {q:'More efficient protein?',a:'Lentils & Eggs',b:'Pre-cut deli meat',correct:'a'},
+    {q:'Better breakfast deal?',a:'Oats (2148 cal/$)',b:'Cereal brand ($8/box)',correct:'a'},
+    {q:'Smart carb choice?',a:'Pasta (1600 cal/$)',b:'Organic quinoa ($6/lb)',correct:'a'},
+    {q:'Which is the savings trap?',a:'Bulk rice bag',b:'Pre-cut fruit cups',correct:'b'},
+    {q:'Better snack value?',a:'Peanut Butter (1487)',b:'Protein bars ($3 each)',correct:'a'},
+];
+
+let game = null;
+let highScore = parseFloat(localStorage.getItem('speedShopperHigh')) || 0;
+document.getElementById('hudHigh').textContent = `HI: $${highScore.toFixed(2)}`;
+
+class Particle {
+    constructor(x,y,color,vx,vy,life){
+        this.x=x;this.y=y;this.color=color;this.vx=vx;this.vy=vy;
+        this.life=life;this.maxLife=life;this.size=Math.random()*4+2;
+    }
+    update(dt){
+        this.x+=this.vx*dt;this.y+=this.vy*dt;this.life-=dt;
+        this.vy+=200*dt;
+    }
+    draw(ctx){
+        let a=Math.max(0,this.life/this.maxLife);
+        ctx.globalAlpha=a;
+        ctx.fillStyle=this.color;
+        ctx.fillRect(this.x-this.size/2,this.y-this.size/2,this.size,this.size);
+        ctx.globalAlpha=1;
+    }
+}
+
+class FloatingText {
+    constructor(x,y,text,color){
+        this.x=x;this.y=y;this.text=text;this.color=color;this.life=1.5;this.maxLife=1.5;
+    }
+    update(dt){this.y-=40*dt;this.life-=dt;}
+    draw(ctx){
+        let a=Math.max(0,this.life/this.maxLife);
+        ctx.globalAlpha=a;
+        ctx.font='bold 16px Orbitron';
+        ctx.fillStyle=this.color;
+        ctx.textAlign='center';
+        ctx.shadowColor=this.color;ctx.shadowBlur=10;
+        ctx.fillText(this.text,this.x,this.y);
+        ctx.shadowBlur=0;
+        ctx.globalAlpha=1;
+    }
+}
+
+class Game {
+    constructor(){
+        this.reset();
+    }
+    reset(){
+        this.running=true;
+        this.paused=false;
+        this.distance=0;
+        this.savings=0;
+        this.speed=1;
+        this.baseSpeed=280;
+        this.lives=3;
+        this.lane=1;
+        this.targetLane=1;
+        this.playerX=LANE_CENTERS[1];
+        this.playerY=LANE_Y;
+        this.jumping=false;
+        this.jumpVel=0;
+        this.jumpHeight=0;
+        this.items=[];
+        this.particles=[];
+        this.floatingTexts=[];
+        this.spawnTimer=0;
+        this.coinTimer=0;
+        this.quizDistance=500;
+        this.shelfOffset=0;
+        this.floorOffset=0;
+        this.activePowerup=null;
+        this.powerupTimer=0;
+        this.multiplier=1;
+        this.magnetActive=false;
+        this.invincible=false;
+        this.invincibleTimer=0;
+        this.screenShake=0;
+        this.combo=0;
+        this.comboTimer=0;
+        this.obstacleTimer=0;
+        this.bgStars=[];
+        for(let i=0;i<40;i++){
+            this.bgStars.push({x:Math.random()*W,y:Math.random()*300,s:Math.random()*2+0.5,b:Math.random()});
+        }
+    }
+    spawnItem(){
+        let lane=Math.floor(Math.random()*3);
+        let r=Math.random();
+        let item;
+        if(r<0.08 && this.distance>100){
+            let pu=POWERUPS[Math.floor(Math.random()*POWERUPS.length)];
+            item={type:'powerup',lane,y:-60,data:pu,size:36,x:LANE_CENTERS[lane]};
+        } else if(r<0.35){
+            let bad=BAD_ITEMS[Math.floor(Math.random()*BAD_ITEMS.length)];
+            item={type:'bad',lane,y:-60,data:bad,size:38,x:LANE_CENTERS[lane]};
+        } else {
+            let good=GOOD_ITEMS[Math.floor(Math.random()*GOOD_ITEMS.length)];
+            item={type:'good',lane,y:-60,data:good,size:34,x:LANE_CENTERS[lane]};
+        }
+        this.items.push(item);
+    }
+    spawnObstacle(){
+        let lane=Math.floor(Math.random()*3);
+        this.items.push({type:'obstacle',lane,y:-60,size:40,x:LANE_CENTERS[lane]});
+    }
+    spawnCoin(){
+        let lane=Math.floor(Math.random()*3);
+        this.items.push({type:'coin',lane,y:-60,size:20,x:LANE_CENTERS[lane]});
+    }
+    jump(){
+        if(!this.jumping){
+            this.jumping=true;
+            this.jumpVel=-450;
+        }
+    }
+    moveLane(dir){
+        this.targetLane=Math.max(0,Math.min(2,this.targetLane+dir));
+    }
+    activatePowerup(pu){
+        if(pu.type==='life'){
+            this.lives=Math.min(this.lives+1,5);
+            this.addFloatingText(this.playerX,this.playerY-40,'+1 Life!','#ff006e');
+        } else if(pu.type==='double'){
+            this.multiplier=2;
+            this.activePowerup=pu;
+            this.powerupTimer=pu.duration;
+        } else if(pu.type==='magnet'){
+            this.magnetActive=true;
+            this.activePowerup=pu;
+            this.powerupTimer=pu.duration;
+        }
+    }
+    addParticles(x,y,color,count){
+        for(let i=0;i<count;i++){
+            let angle=Math.random()*Math.PI*2;
+            let speed=Math.random()*150+50;
+            this.particles.push(new Particle(x,y,color,
+                Math.cos(angle)*speed,Math.sin(angle)*speed-100,
+                Math.random()*0.6+0.3));
+        }
+    }
+    addFloatingText(x,y,text,color){
+        this.floatingTexts.push(new FloatingText(x,y,text,color));
+    }
+    hitBad(){
+        if(this.invincible)return;
+        this.savings=Math.max(0,this.savings-5);
+        this.lives--;
+        this.combo=0;
+        this.screenShake=0.3;
+        this.invincible=true;
+        this.invincibleTimer=1.5;
+        this.addParticles(this.playerX,this.playerY,'#ff006e',15);
+        this.addFloatingText(this.playerX,this.playerY-30,'-$5.00','#ff006e');
+        if(this.lives<=0){
+            this.gameOver();
+        }
+    }
+    gameOver(){
+        this.running=false;
+        if(this.savings>highScore){
+            highScore=this.savings;
+            localStorage.setItem('speedShopperHigh',highScore.toFixed(2));
+        }
+        overlay.querySelector('h1').textContent='GAME OVER';
+        overlay.querySelector('h2').textContent=`Final Savings: $${this.savings.toFixed(2)}`;
+        overlay.querySelector('.subtitle').textContent=
+            `Distance: ${Math.floor(this.distance)}m | Speed: ${this.speed.toFixed(1)}x | High Score: $${highScore.toFixed(2)}`;
+        startBtn.textContent='TRY AGAIN';
+        overlay.classList.remove('hidden');
+    }
+    showQuiz(){
+        this.paused=true;
+        let q=QUIZZES[Math.floor(Math.random()*QUIZZES.length)];
+        this.currentQuiz=q;
+        this.quizTime=8;
+        document.getElementById('quizQuestion').textContent=q.q;
+        let opts=document.getElementById('quizOptions');
+        opts.innerHTML='';
+        let btnA=document.createElement('button');
+        btnA.className='quiz-btn';btnA.textContent=q.a;
+        btnA.onclick=()=>this.answerQuiz('a');
+        let btnB=document.createElement('button');
+        btnB.className='quiz-btn';btnB.textContent=q.b;
+        btnB.onclick=()=>this.answerQuiz('b');
+        opts.appendChild(btnA);opts.appendChild(btnB);
+        quizOverlay.classList.remove('hidden');
+        this.quizInterval=setInterval(()=>{
+            this.quizTime--;
+            document.getElementById('quizTimer').textContent=`Time: ${this.quizTime}s`;
+            if(this.quizTime<=0){
+                this.answerQuiz('timeout');
+            }
+        },1000);
+        document.getElementById('quizTimer').textContent=`Time: ${this.quizTime}s`;
+    }
+    answerQuiz(answer){
+        clearInterval(this.quizInterval);
+        quizOverlay.classList.add('hidden');
+        if(answer===this.currentQuiz.correct){
+            this.savings+=10*this.multiplier;
+            this.addFloatingText(W/2,H/2-50,'+$10 BONUS!','#ffe600');
+            this.addParticles(W/2,H/2,'#ffe600',20);
+        } else {
+            this.addFloatingText(W/2,H/2-50,'Wrong!','#ff006e');
+        }
+        this.paused=false;
+        this.quizDistance=this.distance+500;
+    }
+    update(dt){
+        if(!this.running||this.paused)return;
+
+        this.speed=1+this.distance/2000;
+        let spd=this.baseSpeed*this.speed;
+        this.distance+=spd*dt/5;
+
+        // Smooth lane movement
+        let targetX=LANE_CENTERS[this.targetLane];
+        this.playerX+=(targetX-this.playerX)*12*dt;
+        this.lane=this.targetLane;
+
+        // Jump physics
+        if(this.jumping){
+            this.jumpHeight+=this.jumpVel*dt;
+            this.jumpVel+=1200*dt;
+            if(this.jumpHeight>=0){
+                this.jumpHeight=0;
+                this.jumping=false;
+                this.jumpVel=0;
+            }
+        }
+
+        // Invincibility
+        if(this.invincible){
+            this.invincibleTimer-=dt;
+            if(this.invincibleTimer<=0)this.invincible=false;
+        }
+
+        // Screen shake decay
+        if(this.screenShake>0)this.screenShake-=dt*2;
+
+        // Combo decay
+        if(this.comboTimer>0){
+            this.comboTimer-=dt;
+            if(this.comboTimer<=0)this.combo=0;
+        }
+
+        // Powerup timer
+        if(this.powerupTimer>0){
+            this.powerupTimer-=dt*1000;
+            if(this.powerupTimer<=0){
+                this.multiplier=1;
+                this.magnetActive=false;
+                this.activePowerup=null;
+            }
+        }
+
+        // Scroll offsets
+        this.shelfOffset=(this.shelfOffset+spd*dt*0.5)%200;
+        this.floorOffset=(this.floorOffset+spd*dt)%80;
+
+        // Spawn items
+        this.spawnTimer-=dt;
+        if(this.spawnTimer<=0){
+            this.spawnItem();
+            this.spawnTimer=Math.max(0.4, 1.2-this.speed*0.08);
+        }
+        this.coinTimer-=dt;
+        if(this.coinTimer<=0){
+            this.spawnCoin();
+            this.coinTimer=Math.max(0.6, 1.5-this.speed*0.05);
+        }
+        this.obstacleTimer-=dt;
+        if(this.obstacleTimer<=0){
+            this.spawnObstacle();
+            this.obstacleTimer=Math.max(1.5, 3-this.speed*0.15);
+        }
+
+        // Quiz check
+        if(this.distance>=this.quizDistance){
+            this.showQuiz();
+        }
+
+        // Update items
+        for(let i=this.items.length-1;i>=0;i--){
+            let it=this.items[i];
+            it.y+=spd*dt;
+
+            // Magnet effect on good items and coins
+            if(this.magnetActive && (it.type==='good'||it.type==='coin') && it.y>200){
+                let dx=this.playerX-it.x;
+                let dy=(this.playerY+this.jumpHeight)-it.y;
+                let dist=Math.sqrt(dx*dx+dy*dy);
+                if(dist<200){
+                    it.x+=dx/dist*400*dt;
+                    it.y+=dy/dist*400*dt;
+                }
+            }
+
+            // Collision
+            let py=this.playerY+this.jumpHeight;
+            let dx=Math.abs(it.x-this.playerX);
+            let dy=Math.abs(it.y-py);
+            let hitDist=(it.size+PLAYER_SIZE)/2;
+
+            if(dx<hitDist && dy<hitDist){
+                if(it.type==='good'){
+                    let pts=(it.data.cal/100)*this.multiplier;
+                    let cashPts=pts*0.05;
+                    this.savings+=cashPts;
+                    this.combo++;
+                    this.comboTimer=3;
+                    let comboMult=1+Math.floor(this.combo/5)*0.5;
+                    this.addParticles(it.x,it.y,'#39ff14',10);
+                    this.addFloatingText(it.x,it.y-20,
+                        `${it.data.emoji} ${it.data.name} ${it.data.cal} cal/$`+
+                        (this.combo>=5?` x${comboMult.toFixed(1)}`:''),'#39ff14');
+                    this.items.splice(i,1);continue;
+                } else if(it.type==='bad'){
+                    if(!this.jumping||this.jumpHeight>-50){
+                        this.hitBad();
+                        this.addFloatingText(it.x,it.y-20,
+                            `${it.data.emoji} ${it.data.name}!`,'#ff006e');
+                        this.items.splice(i,1);continue;
+                    }
+                } else if(it.type==='obstacle'){
+                    if(!this.jumping||this.jumpHeight>-60){
+                        this.hitBad();
+                        this.items.splice(i,1);continue;
+                    }
+                } else if(it.type==='coin'){
+                    this.savings+=0.25*this.multiplier;
+                    this.addParticles(it.x,it.y,'#ffe600',6);
+                    this.addFloatingText(it.x,it.y-15,'+$0.25','#ffe600');
+                    this.items.splice(i,1);continue;
+                } else if(it.type==='powerup'){
+                    this.activatePowerup(it.data);
+                    this.addParticles(it.x,it.y,'#00f0ff',15);
+                    this.addFloatingText(it.x,it.y-20,
+                        `${it.data.emoji} ${it.data.name}!`,'#00f0ff');
+                    this.items.splice(i,1);continue;
+                }
+            }
+
+            if(it.y>H+60){
+                this.items.splice(i,1);
+            }
+        }
+
+        // Particles
+        for(let i=this.particles.length-1;i>=0;i--){
+            this.particles[i].update(dt);
+            if(this.particles[i].life<=0)this.particles.splice(i,1);
+        }
+        for(let i=this.floatingTexts.length-1;i>=0;i--){
+            this.floatingTexts[i].update(dt);
+            if(this.floatingTexts[i].life<=0)this.floatingTexts.splice(i,1);
+        }
+
+        // Powerup indicator
+        if(this.activePowerup){
+            powerupInd.textContent=`${this.activePowerup.emoji} ${this.activePowerup.name}: ${(this.powerupTimer/1000).toFixed(1)}s`;
+            powerupInd.classList.add('active');
+        } else {
+            powerupInd.classList.remove('active');
+        }
+
+        // HUD
+        document.getElementById('hudDistance').textContent=`${Math.floor(this.distance)}m`;
+        document.getElementById('hudSavings').textContent=`$${this.savings.toFixed(2)}`;
+        document.getElementById('hudSpeed').textContent=`${this.speed.toFixed(1)}x`;
+        let hearts='';for(let i=0;i<this.lives;i++)hearts+='❤️';
+        document.getElementById('hudLives').textContent=hearts;
+        document.getElementById('hudHigh').textContent=`HI: $${highScore.toFixed(2)}`;
+    }
+
+    draw(){
+        ctx.save();
+
+        // Screen shake
+        if(this.screenShake>0){
+            let sx=(Math.random()-0.5)*this.screenShake*20;
+            let sy=(Math.random()-0.5)*this.screenShake*20;
+            ctx.translate(sx,sy);
+        }
+
+        // Background - dark store
+        let grad=ctx.createLinearGradient(0,0,0,H);
+        grad.addColorStop(0,'#050510');
+        grad.addColorStop(0.6,'#0a0a1a');
+        grad.addColorStop(1,'#12122a');
+        ctx.fillStyle=grad;
+        ctx.fillRect(0,0,W,H);
+
+        // Ceiling lights
+        for(let i=0;i<5;i++){
+            let lx=160*i+80-this.shelfOffset*0.5;
+            if(lx<-20)lx+=800;
+            ctx.fillStyle='rgba(0,240,255,0.03)';
+            ctx.beginPath();
+            ctx.ellipse(lx,0,60,150,0,0,Math.PI);
+            ctx.fill();
+            ctx.strokeStyle='rgba(0,240,255,0.2)';
+            ctx.lineWidth=2;
+            ctx.beginPath();
+            ctx.moveTo(lx-15,0);ctx.lineTo(lx-15,15);ctx.lineTo(lx+15,15);ctx.lineTo(lx+15,0);
+            ctx.stroke();
+        }
+
+        // Left shelves
+        this.drawShelves(20,120,true);
+        // Right shelves
+        this.drawShelves(660,120,false);
+
+        // Perspective floor lines
+        ctx.strokeStyle='rgba(0,240,255,0.15)';
+        ctx.lineWidth=1;
+        // Horizontal lines scrolling
+        for(let i=0;i<12;i++){
+            let yy=GROUND_Y+i*12-this.floorOffset*0.15;
+            if(yy<GROUND_Y-5)continue;
+            let a=1-((yy-GROUND_Y)/140);
+            ctx.globalAlpha=Math.max(0,a*0.3);
+            ctx.beginPath();
+            ctx.moveTo(100,yy);ctx.lineTo(700,yy);
+            ctx.stroke();
+        }
+        ctx.globalAlpha=1;
+
+        // Lane dividers (neon lines)
+        for(let i=0;i<4;i++){
+            let lx=W/2-LANE_WIDTH*1.5+LANE_WIDTH*i;
+            ctx.strokeStyle='rgba(0,240,255,0.25)';
+            ctx.lineWidth=2;
+            ctx.setLineDash([15,10]);
+            ctx.beginPath();
+            ctx.moveTo(lx,300);ctx.lineTo(lx,H);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Floor gradient
+        let floorGrad=ctx.createLinearGradient(0,GROUND_Y-20,0,H);
+        floorGrad.addColorStop(0,'rgba(18,18,42,0.0)');
+        floorGrad.addColorStop(0.3,'rgba(18,18,42,0.5)');
+        floorGrad.addColorStop(1,'rgba(18,18,42,0.9)');
+        ctx.fillStyle=floorGrad;
+        ctx.fillRect(0,GROUND_Y-20,W,H-GROUND_Y+20);
+
+        // Ground line
+        ctx.strokeStyle='rgba(57,255,20,0.4)';
+        ctx.lineWidth=2;
+        ctx.shadowColor='#39ff14';ctx.shadowBlur=8;
+        ctx.beginPath();
+        ctx.moveTo(100,GROUND_Y+30);ctx.lineTo(700,GROUND_Y+30);
+        ctx.stroke();
+        ctx.shadowBlur=0;
+
+        // Draw items
+        for(let it of this.items){
+            this.drawItem(it);
+        }
+
+        // Draw player
+        this.drawPlayer();
+
+        // Particles
+        for(let p of this.particles)p.draw(ctx);
+        for(let ft of this.floatingTexts)ft.draw(ctx);
+
+        // Combo display
+        if(this.combo>=3){
+            ctx.font='bold 18px Orbitron';
+            ctx.fillStyle='#ffe600';
+            ctx.textAlign='center';
+            ctx.shadowColor='#ffe600';ctx.shadowBlur=10;
+            ctx.fillText(`COMBO x${this.combo}`,W/2,80);
+            ctx.shadowBlur=0;
+        }
+
+        // Vignette
+        let vign=ctx.createRadialGradient(W/2,H/2,200,W/2,H/2,500);
+        vign.addColorStop(0,'rgba(0,0,0,0)');
+        vign.addColorStop(1,'rgba(0,0,0,0.4)');
+        ctx.fillStyle=vign;
+        ctx.fillRect(0,0,W,H);
+
+        ctx.restore();
+    }
+
+    drawShelves(x,w,isLeft){
+        let shelfCount=6;
+        for(let s=0;s<shelfCount;s++){
+            let sy=60+s*70-this.shelfOffset*0.3;
+            if(sy<30||sy>450)continue;
+            // Shelf board
+            ctx.fillStyle='#1a1a3a';
+            ctx.fillRect(x,sy,w,8);
+            ctx.strokeStyle='rgba(0,240,255,0.15)';
+            ctx.lineWidth=1;
+            ctx.strokeRect(x,sy,w,8);
+            // Items on shelf
+            let itemCount=Math.floor(w/25);
+            for(let i=0;i<itemCount;i++){
+                let ix=x+12+i*22;
+                let ih=15+Math.sin(ix*0.3+sy*0.2)*8;
+                let hue=(ix*3+sy*2)%360;
+                ctx.fillStyle=`hsla(${hue},60%,40%,0.4)`;
+                ctx.fillRect(ix,sy-ih,14,ih);
+                ctx.strokeStyle=`hsla(${hue},80%,60%,0.2)`;
+                ctx.strokeRect(ix,sy-ih,14,ih);
+            }
+        }
+        // Shelf frame
+        ctx.strokeStyle='rgba(0,240,255,0.1)';
+        ctx.lineWidth=2;
+        ctx.strokeRect(x,50,w,420);
+    }
+
+    drawItem(it){
+        let glow, emoji, label;
+        let bobble=Math.sin(Date.now()*0.005+it.y*0.02)*3;
+
+        if(it.type==='good'){
+            glow='#39ff14';emoji=it.data.emoji;label=it.data.name;
+        } else if(it.type==='bad'){
+            glow='#ff006e';emoji=it.data.emoji;label=it.data.name;
+        } else if(it.type==='coin'){
+            glow='#ffe600';emoji='🪙';label='';
+        } else if(it.type==='powerup'){
+            glow='#00f0ff';emoji=it.data.emoji;label=it.data.name;
+        } else if(it.type==='obstacle'){
+            glow='#ff6a00';emoji='📦';label='';
+        }
+
+        // Glow circle
+        ctx.shadowColor=glow;
+        ctx.shadowBlur=20;
+        ctx.beginPath();
+        ctx.arc(it.x,it.y+bobble,it.size/2+4,0,Math.PI*2);
+        ctx.strokeStyle=glow;
+        ctx.globalAlpha=0.4;
+        ctx.lineWidth=2;
+        ctx.stroke();
+        ctx.globalAlpha=1;
+        ctx.shadowBlur=0;
+
+        // Emoji
+        ctx.font=`${it.size}px serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(emoji,it.x,it.y+bobble);
+
+        // Label
+        if(label){
+            ctx.font='bold 11px Rajdhani';
+            ctx.fillStyle=glow;
+            ctx.shadowColor=glow;ctx.shadowBlur=6;
+            ctx.fillText(label,it.x,it.y+bobble+it.size/2+12);
+            ctx.shadowBlur=0;
+        }
+    }
+
+    drawPlayer(){
+        let px=this.playerX;
+        let py=this.playerY+this.jumpHeight;
+
+        // Blink if invincible
+        if(this.invincible && Math.floor(Date.now()/100)%2===0)return;
+
+        // Shadow on ground
+        if(this.jumping){
+            let shadowScale=1+this.jumpHeight/200;
+            ctx.globalAlpha=0.2;
+            ctx.fillStyle='#000';
+            ctx.beginPath();
+            ctx.ellipse(px,this.playerY+15,20*shadowScale,6*shadowScale,0,0,Math.PI*2);
+            ctx.fill();
+            ctx.globalAlpha=1;
+        }
+
+        // Cart glow
+        ctx.shadowColor='#00f0ff';
+        ctx.shadowBlur=15;
+        ctx.font=`${PLAYER_SIZE}px serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText('🛒',px,py);
+        ctx.shadowBlur=0;
+
+        // Neon outline circle
+        ctx.strokeStyle='rgba(0,240,255,0.3)';
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.arc(px,py,PLAYER_SIZE/2+6,0,Math.PI*2);
+        ctx.stroke();
+    }
+}
+
+function gameLoop(timestamp){
+    if(!game)return;
+    if(!game._lastTime)game._lastTime=timestamp;
+    let dt=Math.min((timestamp-game._lastTime)/1000,0.05);
+    game._lastTime=timestamp;
+
+    game.update(dt);
+    game.draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+startBtn.addEventListener('click',()=>{
+    overlay.classList.add('hidden');
+    game=new Game();
+    game._lastTime=0;
+    requestAnimationFrame(gameLoop);
+});
+
+// Keyboard
+document.addEventListener('keydown',(e)=>{
+    if(!game||!game.running)return;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')game.moveLane(-1);
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')game.moveLane(1);
+    if(e.key===' '||e.key==='ArrowUp'||e.key==='w'||e.key==='W'){
+        e.preventDefault();
+        game.jump();
+    }
+});
+
+// Touch / Swipe
+let touchStartX=0, touchStartY=0, touchStartTime=0;
+canvas.addEventListener('touchstart',(e)=>{
+    e.preventDefault();
+    touchStartX=e.touches[0].clientX;
+    touchStartY=e.touches[0].clientY;
+    touchStartTime=Date.now();
+},{passive:false});
+canvas.addEventListener('touchend',(e)=>{
+    e.preventDefault();
+    if(!game||!game.running)return;
+    let dx=e.changedTouches[0].clientX-touchStartX;
+    let dy=e.changedTouches[0].clientY-touchStartY;
+    let dt=Date.now()-touchStartTime;
+    if(dt>500)return;
+    if(Math.abs(dx)>Math.abs(dy)){
+        if(Math.abs(dx)>30){
+            game.moveLane(dx>0?1:-1);
+        }
+    } else {
+        if(dy<-30)game.jump();
+    }
+},{passive:false});
+
+// Initial draw
+ctx.fillStyle='#0a0a1a';
+ctx.fillRect(0,0,W,H);
+</script>
+</body>
+</html>

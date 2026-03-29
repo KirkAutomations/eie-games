@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen Alchemist - Cooking Science Simulator</title>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+<style>
+:root {
+  --neon-green: #39ff14;
+  --neon-blue: #00f0ff;
+  --neon-pink: #ff006e;
+  --neon-yellow: #ffe600;
+  --neon-orange: #ff6a00;
+  --dark-bg: #0a0a1a;
+  --card-bg: #12122a;
+  --card-hover: #1a1a3a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--dark-bg);
+  color: #e0e0e0;
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(57,255,20,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0,240,255,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(255,0,110,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.back-link {
+  position: fixed;
+  top: 15px;
+  left: 20px;
+  color: var(--neon-blue);
+  text-decoration: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  z-index: 1000;
+  padding: 8px 16px;
+  border: 1px solid rgba(0,240,255,0.3);
+  border-radius: 4px;
+  transition: all 0.3s;
+  background: rgba(0,240,255,0.05);
+}
+.back-link:hover {
+  background: rgba(0,240,255,0.15);
+  box-shadow: 0 0 15px rgba(0,240,255,0.3);
+}
+
+/* ============ TITLE SCREEN ============ */
+#title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 20px;
+}
+
+.title-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--neon-orange), var(--neon-yellow), var(--neon-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255,106,0,0.4));
+  margin-bottom: 10px;
+  animation: titlePulse 3s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%, 100% { filter: drop-shadow(0 0 20px rgba(255,106,0,0.4)); }
+  50% { filter: drop-shadow(0 0 35px rgba(255,106,0,0.7)); }
+}
+
+.title-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem;
+  color: var(--neon-blue);
+  margin-bottom: 40px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.pot-icon {
+  font-size: 5rem;
+  margin-bottom: 30px;
+  animation: potBubble 2s ease-in-out infinite;
+}
+
+@keyframes potBubble {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+
+.start-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3rem;
+  padding: 16px 50px;
+  background: linear-gradient(135deg, var(--neon-orange), var(--neon-pink));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(255,106,0,0.5);
+}
+.start-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  animation: btnShine 3s ease-in-out infinite;
+}
+@keyframes btnShine {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.title-stats {
+  margin-top: 30px;
+  display: flex;
+  gap: 30px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+}
+.title-stats span {
+  color: var(--neon-green);
+}
+
+/* ============ CHALLENGE SELECT ============ */
+#challenge-select {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  padding: 80px 20px 40px;
+}
+
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.challenge-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.challenge-card:hover {
+  background: var(--card-hover);
+  border-color: var(--neon-blue);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,240,255,0.15);
+}
+.challenge-card.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.challenge-card.locked:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(0,240,255,0.15);
+}
+.challenge-card.completed {
+  border-color: var(--neon-green);
+}
+
+.challenge-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  color: var(--neon-blue);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.challenge-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.challenge-desc {
+  font-size: 0.9rem;
+  color: #888;
+  line-height: 1.4;
+}
+
+.challenge-stars {
+  margin-top: 12px;
+  font-size: 1.2rem;
+}
+.challenge-stars .star { color: #333; }
+.challenge-stars .star.earned { color: var(--neon-yellow); }
+
+.lock-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+/* ============ GAME SCREEN ============ */
+#game-screen {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  padding: 60px 15px 20px;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+.game-header h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  color: var(--neon-orange);
+  margin-bottom: 4px;
+}
+.game-header p {
+  color: var(--neon-blue);
+  font-size: 0.9rem;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .game-layout { grid-template-columns: 1fr; }
+}
+
+/* Cooking Area */
+.cooking-area {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pot-zone {
+  flex: 1;
+  border: 2px dashed rgba(255,106,0,0.3);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 200px;
+  transition: all 0.3s;
+  background: rgba(255,106,0,0.02);
+  margin-bottom: 15px;
+}
+.pot-zone.drag-over {
+  border-color: var(--neon-orange);
+  background: rgba(255,106,0,0.08);
+  box-shadow: 0 0 30px rgba(255,106,0,0.15);
+}
+
+.pot-visual {
+  font-size: 4rem;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.pot-label {
+  color: #555;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.added-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+  min-height: 30px;
+}
+.added-item {
+  background: rgba(57,255,20,0.1);
+  border: 1px solid rgba(57,255,20,0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  color: var(--neon-green);
+  font-family: 'Space Mono', monospace;
+  animation: popIn 0.3s ease-out;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.added-item:hover {
+  background: rgba(255,0,110,0.15);
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+}
+.added-item.technique {
+  background: rgba(0,240,255,0.1);
+  border-color: rgba(0,240,255,0.3);
+  color: var(--neon-blue);
+}
+.added-item.technique:hover {
+  background: rgba(255,0,110,0.15);
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Effects container on the pot */
+.effects-container {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+/* Particle effects */
+.particle {
+  position: absolute;
+  pointer-events: none;
+  animation-fill-mode: forwards;
+}
+.particle-flame {
+  width: 8px; height: 12px;
+  background: radial-gradient(ellipse, var(--neon-orange), transparent);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flameRise 0.8s ease-out forwards;
+}
+.particle-steam {
+  width: 10px; height: 10px;
+  background: radial-gradient(circle, rgba(200,200,200,0.4), transparent);
+  border-radius: 50%;
+  animation: steamRise 1.5s ease-out forwards;
+}
+.particle-sparkle {
+  width: 6px; height: 6px;
+  background: var(--neon-yellow);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--neon-yellow);
+  animation: sparkleFloat 1s ease-out forwards;
+}
+.particle-bubble {
+  width: 8px; height: 8px;
+  border: 1px solid var(--neon-green);
+  border-radius: 50%;
+  animation: bubbleRise 1.2s ease-out forwards;
+}
+.particle-fat {
+  width: 6px; height: 6px;
+  background: var(--neon-yellow);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: fatSizzle 0.6s ease-out forwards;
+}
+.particle-salt {
+  width: 3px; height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  animation: saltFall 0.8s ease-out forwards;
+}
+
+@keyframes flameRise {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+}
+@keyframes steamRise {
+  0% { transform: translateY(0) scale(0.5); opacity: 0.6; }
+  100% { transform: translateY(-80px) scale(2); opacity: 0; }
+}
+@keyframes sparkleFloat {
+  0% { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+@keyframes bubbleRise {
+  0% { transform: translateY(0) scale(0.5); opacity: 0.8; }
+  100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+}
+@keyframes fatSizzle {
+  0% { transform: translate(0,0) scale(1); opacity: 0.8; }
+  50% { transform: translate(var(--dx), -15px) scale(1.3); }
+  100% { transform: translate(var(--dx2), -5px) scale(0); opacity: 0; }
+}
+@keyframes saltFall {
+  0% { transform: translateY(-20px); opacity: 1; }
+  100% { transform: translateY(20px); opacity: 0; }
+}
+
+/* Meters */
+.meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.meter {
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  padding: 12px;
+}
+.meter-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+.meter-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease, background 0.5s;
+  width: 0%;
+}
+.meter-fill.flavor { background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow)); }
+.meter-fill.cost { background: linear-gradient(90deg, var(--neon-green), var(--neon-pink)); }
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ingredient-shelf, .technique-shelf {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,240,255,0.15);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.shelf-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  color: var(--neon-green);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shelf-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ingredient-card, .technique-card {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-family: 'Space Mono', monospace;
+  cursor: grab;
+  transition: all 0.2s;
+  user-select: none;
+  white-space: nowrap;
+}
+.ingredient-card {
+  background: rgba(57,255,20,0.08);
+  border: 1px solid rgba(57,255,20,0.25);
+  color: var(--neon-green);
+}
+.ingredient-card:hover {
+  background: rgba(57,255,20,0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(57,255,20,0.2);
+}
+.technique-card {
+  background: rgba(0,240,255,0.08);
+  border: 1px solid rgba(0,240,255,0.25);
+  color: var(--neon-blue);
+}
+.technique-card:hover {
+  background: rgba(0,240,255,0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,240,255,0.2);
+}
+.ingredient-card:active, .technique-card:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+.ingredient-card .cost-tag {
+  font-size: 0.65rem;
+  color: var(--neon-yellow);
+  margin-left: 4px;
+}
+
+/* Cook and Clear buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+.cook-btn, .clear-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.cook-btn {
+  background: linear-gradient(135deg, var(--neon-orange), var(--neon-pink));
+  color: #fff;
+}
+.cook-btn:hover {
+  box-shadow: 0 0 25px rgba(255,106,0,0.4);
+  transform: translateY(-2px);
+}
+.clear-btn {
+  background: rgba(255,255,255,0.05);
+  color: #888;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.clear-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: #aaa;
+}
+
+/* ============ RESULT MODAL ============ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+
+.result-modal {
+  background: var(--card-bg);
+  border: 1px solid rgba(0,240,255,0.2);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 550px;
+  width: 100%;
+  text-align: center;
+  animation: modalIn 0.4s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+@keyframes modalIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.result-emoji { font-size: 4rem; margin-bottom: 15px; }
+.result-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+.result-title.great { color: var(--neon-green); }
+.result-title.good { color: var(--neon-yellow); }
+.result-title.ok { color: var(--neon-orange); }
+.result-title.fail { color: var(--neon-pink); }
+
+.result-stars {
+  font-size: 2rem;
+  margin: 10px 0;
+}
+
+.result-flavor, .result-cost, .result-score {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.result-explanation {
+  margin-top: 20px;
+  text-align: left;
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+  padding: 18px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #bbb;
+}
+.result-explanation h4 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: var(--neon-blue);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.result-explanation .tip {
+  margin: 6px 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--neon-green);
+}
+
+.cheat-card-unlock {
+  margin-top: 15px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(255,230,0,0.1), rgba(255,106,0,0.1));
+  border: 1px solid rgba(255,230,0,0.3);
+  border-radius: 10px;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,230,0,0.1); }
+  50% { box-shadow: 0 0 25px rgba(255,230,0,0.3); }
+}
+.cheat-card-unlock h4 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: var(--neon-yellow);
+  margin-bottom: 4px;
+}
+.cheat-card-unlock p {
+  font-size: 0.8rem;
+  color: var(--neon-orange);
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
+}
+.modal-btn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.modal-btn.primary {
+  background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+  color: #000;
+}
+.modal-btn.secondary {
+  background: rgba(255,255,255,0.05);
+  color: #aaa;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.modal-btn:hover { transform: translateY(-2px); }
+
+/* ============ CHEAT CODE COLLECTION ============ */
+#cheatcodes-screen {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  padding: 80px 20px 40px;
+}
+.cheatcodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.cc-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,230,0,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+.cc-card.unlocked {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 15px rgba(255,230,0,0.1);
+}
+.cc-card.locked-card {
+  opacity: 0.3;
+}
+.cc-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--neon-yellow);
+  margin-bottom: 6px;
+}
+.cc-card p {
+  font-size: 0.85rem;
+  color: #999;
+  line-height: 1.5;
+}
+.cc-card .cc-icon { font-size: 2rem; margin-bottom: 8px; }
+
+/* Nav tabs */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.nav-tab {
+  padding: 8px 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #888;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.nav-tab:hover, .nav-tab.active {
+  background: rgba(0,240,255,0.1);
+  border-color: var(--neon-blue);
+  color: var(--neon-blue);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark-bg); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+/* Dragging ghost */
+.dragging {
+  opacity: 0.5;
+}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">&#8592; Back to Hub</a>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="pot-icon">&#x1F372;</div>
+  <h1 class="title-logo">Kitchen Alchemist</h1>
+  <p class="title-sub">Master Cooking Science &bull; Cook Smarter, Not Harder</p>
+  <button class="start-btn" onclick="showChallengeSelect()">Begin Cooking</button>
+  <div class="title-stats">
+    <div>Challenges: <span id="stat-completed">0</span>/10</div>
+    <div>Stars: <span id="stat-stars">0</span>/30</div>
+    <div>Cheat Codes: <span id="stat-codes">0</span>/9</div>
+  </div>
+</div>
+
+<!-- CHALLENGE SELECT -->
+<div id="challenge-select">
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showChallengeSelect()">Challenges</div>
+    <div class="nav-tab" onclick="showCheatCodes()">Cheat Codes</div>
+  </div>
+  <h2 class="section-title">Select Challenge</h2>
+  <div class="challenges-grid" id="challenges-grid"></div>
+</div>
+
+<!-- CHEAT CODES SCREEN -->
+<div id="cheatcodes-screen">
+  <div class="nav-tabs">
+    <div class="nav-tab" onclick="showChallengeSelect()">Challenges</div>
+    <div class="nav-tab active" onclick="showCheatCodes()">Cheat Codes</div>
+  </div>
+  <h2 class="section-title">Cheat Code Collection</h2>
+  <div class="cheatcodes-grid" id="cheatcodes-grid"></div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div class="game-header">
+    <h2 id="challenge-title"></h2>
+    <p id="challenge-hint"></p>
+  </div>
+  <div class="game-layout">
+    <div class="cooking-area">
+      <div class="pot-zone" id="pot-zone">
+        <div class="effects-container" id="effects-container"></div>
+        <div class="pot-visual" id="pot-visual">&#x1F373;</div>
+        <div class="pot-label">Drop ingredients &amp; techniques here</div>
+        <div class="added-items" id="added-items"></div>
+      </div>
+      <div class="meters">
+        <div class="meter">
+          <div class="meter-label">
+            <span>&#x1F525; Flavor</span>
+            <span id="flavor-val">0</span>
+          </div>
+          <div class="meter-bar"><div class="meter-fill flavor" id="flavor-bar"></div></div>
+        </div>
+        <div class="meter">
+          <div class="meter-label">
+            <span>&#x1F4B0; Cost</span>
+            <span id="cost-val">$0.00</span>
+          </div>
+          <div class="meter-bar"><div class="meter-fill cost" id="cost-bar"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="ingredient-shelf">
+        <div class="shelf-title">&#x1F966; Ingredients</div>
+        <div class="shelf-items" id="ingredient-shelf"></div>
+      </div>
+      <div class="technique-shelf">
+        <div class="shelf-title">&#x2728; Techniques</div>
+        <div class="shelf-items" id="technique-shelf"></div>
+      </div>
+      <div class="action-buttons">
+        <button class="cook-btn" onclick="cookDish()">&#x1F525; Cook!</button>
+        <button class="clear-btn" onclick="clearPot()">Clear</button>
+      </div>
+      <button class="clear-btn" style="width:100%" onclick="showChallengeSelect()">&#8592; Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay" id="result-modal">
+  <div class="result-modal">
+    <div class="result-emoji" id="result-emoji"></div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-stars" id="result-stars"></div>
+    <div class="result-flavor" id="result-flavor"></div>
+    <div class="result-cost" id="result-cost-display"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-explanation" id="result-explanation"></div>
+    <div class="cheat-card-unlock" id="cheat-unlock" style="display:none"></div>
+    <div class="modal-buttons">
+      <button class="modal-btn primary" onclick="closeModalAndNext()">Next</button>
+      <button class="modal-btn secondary" onclick="retryChallenge()">Retry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const INGREDIENTS = [
+  { id: 'rice', name: 'Rice', icon: '🍚', cost: 0.15, cal: 2320, type: 'grain' },
+  { id: 'lentils', name: 'Lentils', icon: '🫘', cost: 0.20, cal: 929, type: 'legume' },
+  { id: 'pasta', name: 'Pasta', icon: '🍝', cost: 0.18, cal: 1600, type: 'grain' },
+  { id: 'eggs', name: 'Eggs', icon: '🥚', cost: 0.25, cal: 802, type: 'protein' },
+  { id: 'beans', name: 'Beans', icon: '🫘', cost: 0.20, cal: 880, type: 'legume' },
+  { id: 'potatoes', name: 'Potatoes', icon: '🥔', cost: 0.22, cal: 780, type: 'veggie' },
+  { id: 'chicken', name: 'Chicken', icon: '🍗', cost: 0.80, cal: 239, type: 'protein' },
+  { id: 'butter', name: 'Butter', icon: '🧈', cost: 0.10, cal: 0, type: 'fat' },
+  { id: 'oil', name: 'Olive Oil', icon: '🫒', cost: 0.08, cal: 0, type: 'fat' },
+  { id: 'vinegar', name: 'Vinegar', icon: '🫙', cost: 0.05, cal: 0, type: 'acid' },
+  { id: 'lemon', name: 'Lemon', icon: '🍋', cost: 0.15, cal: 0, type: 'acid' },
+  { id: 'sugar', name: 'Sugar', icon: '🍬', cost: 0.03, cal: 0, type: 'sweet' },
+  { id: 'water', name: 'Water', icon: '💧', cost: 0.00, cal: 0, type: 'liquid' },
+  { id: 'msg', name: 'MSG', icon: '✨', cost: 0.02, cal: 0, type: 'umami' },
+  { id: 'salt', name: 'Salt', icon: '🧂', cost: 0.01, cal: 0, type: 'seasoning' },
+  { id: 'tomato_sauce', name: 'Tomato Sauce', icon: '🍅', cost: 0.30, cal: 0, type: 'sauce' },
+  { id: 'ice', name: 'Ice', icon: '🧊', cost: 0.00, cal: 0, type: 'cold' },
+];
+
+const TECHNIQUES = [
+  { id: 'salt_early', name: 'Salt Early', icon: '🧂⏰', desc: 'Season while cooking' },
+  { id: 'high_heat', name: 'High Heat Sear', icon: '🔥', desc: 'Maillard reaction' },
+  { id: 'add_acid', name: 'Add Acid (end)', icon: '🍋💥', desc: 'Brighten at end' },
+  { id: 'add_fat', name: 'Add Fat', icon: '🧈✨', desc: 'Carry flavor' },
+  { id: 'add_msg', name: 'Add MSG', icon: '⚡', desc: 'Umami boost' },
+  { id: 'cold_temp', name: 'Serve Cold', icon: '❄️', desc: 'Lower ethanol vapor' },
+];
+
+const CHEAT_CODES = [
+  { id: 'msg', name: 'MSG - Umami Bomb', icon: '⚡', desc: 'Safe despite myths. Enhances savory flavor 10x. The secret weapon of restaurant chefs worldwide.' },
+  { id: 'acid', name: 'Acid (Vinegar/Citrus)', icon: '🍋', desc: 'Brightens everything. Add at the end of cooking to preserve its punch. The missing element in most home cooking.' },
+  { id: 'salt_early', name: 'Salt Early', icon: '🧂', desc: 'Season while cooking, not after. Flavors penetrate deeper, creating evenly seasoned food from the inside out.' },
+  { id: 'fat_flavor', name: 'Fat = Flavor', icon: '🧈', desc: 'Olive oil, butter, etc. Fat carries flavor molecules to your taste buds. This is why restaurant food tastes better.' },
+  { id: 'high_heat', name: 'High Heat Sear', icon: '🔥', desc: 'Maillard reaction = complex flavors. Don\'t crowd the pan. The golden-brown crust is where the magic happens.' },
+  { id: 'cold_temp', name: 'Cold Temperature', icon: '❄️', desc: 'Lowers ethanol vapor pressure - less alcohol smell/burn. Makes drinks taste smoother and more refreshing.' },
+  { id: 'citrus', name: 'Citrus Power', icon: '🍊', desc: 'Vitamin C - your body craves it, makes anything taste better. A squeeze of lemon transforms a dish.' },
+  { id: 'salt_taste', name: 'Salt (Taste Factor)', icon: '🧂', desc: 'Sodium needed for blood pressure regulation - enhances all flavors. Your body wants it for a reason.' },
+  { id: 'sugar', name: 'Sugar (Energy Signal)', icon: '🍬', desc: 'Rapid energy signal - the brain\'s favorite reward. A pinch of sugar balances savory dishes too.' },
+];
+
+const CHALLENGES = [
+  {
+    id: 1, name: 'Make Bland Rice Amazing',
+    desc: 'Plain rice is boring. Use the cheat codes to transform it.',
+    hint: 'Think: when to add salt, what boosts umami, and what carries flavor.',
+    requiredIngredients: ['rice'],
+    optimalItems: ['rice', 'salt', 'butter', 'msg'],
+    optimalTechniques: ['salt_early', 'add_fat', 'add_msg'],
+    scoring: { salt_early: 25, add_fat: 20, add_msg: 25, rice: 5, salt: 5, butter: 10, msg: 5, oil: 8 },
+    maxFlavor: 100, budgetTarget: 0.50,
+    explanation: 'The secret to amazing rice: Salt the water EARLY so the grains absorb seasoning throughout. Add butter (fat carries flavor molecules to your taste buds). A pinch of MSG creates umami depth that makes the rice irresistibly savory.',
+    unlocks: ['msg', 'salt_early', 'fat_flavor'],
+    pot: '🍚'
+  },
+  {
+    id: 2, name: 'Fix a Flat Pasta Sauce',
+    desc: 'Your tomato sauce tastes one-dimensional. Make it pop.',
+    hint: 'What brightens flavors? What adds depth?',
+    requiredIngredients: ['pasta', 'tomato_sauce'],
+    optimalItems: ['pasta', 'tomato_sauce', 'vinegar', 'msg'],
+    optimalTechniques: ['add_acid', 'add_msg'],
+    scoring: { add_acid: 30, add_msg: 30, pasta: 5, tomato_sauce: 5, vinegar: 10, msg: 10, lemon: 8, salt_early: 5 },
+    maxFlavor: 100, budgetTarget: 0.60,
+    explanation: 'A splash of vinegar (acid) at the end of cooking brightens the sauce and makes all the tomato flavors pop. MSG adds savory depth (umami) that makes you want another bite. This is literally what Italian grandmothers do - they just call it "a little wine."',
+    unlocks: ['acid'],
+    pot: '🍝'
+  },
+  {
+    id: 3, name: 'Restaurant-Quality Chicken',
+    desc: 'Make cheap chicken breast taste like a $25 entree.',
+    hint: 'Golden crust + proper seasoning + the right cooking medium.',
+    requiredIngredients: ['chicken'],
+    optimalItems: ['chicken', 'oil', 'salt'],
+    optimalTechniques: ['high_heat', 'salt_early', 'add_fat'],
+    scoring: { high_heat: 30, salt_early: 25, add_fat: 20, chicken: 5, oil: 8, salt: 5, butter: 8, lemon: 5 },
+    maxFlavor: 100, budgetTarget: 1.00,
+    explanation: 'The Maillard reaction (high heat sear) creates hundreds of complex flavor compounds in that golden-brown crust. Salting early lets the seasoning penetrate deep into the meat instead of just sitting on the surface. Oil (fat) is the cooking medium that transfers heat evenly and carries all those flavors.',
+    unlocks: ['high_heat'],
+    pot: '🍗'
+  },
+  {
+    id: 4, name: 'Satisfying Cheap Drink',
+    desc: 'Make a refreshing drink that costs almost nothing.',
+    hint: 'Think about the 4 taste factors: temperature, citrus, salt, sugar.',
+    requiredIngredients: ['water'],
+    optimalItems: ['water', 'lemon', 'sugar', 'ice'],
+    optimalTechniques: ['cold_temp'],
+    scoring: { cold_temp: 25, water: 5, lemon: 25, sugar: 20, ice: 15, salt: 5 },
+    maxFlavor: 100, budgetTarget: 0.20,
+    explanation: 'Cold temperature makes drinks taste smoother by reducing ethanol vapor. Citrus (lemon) provides Vitamin C that your body craves. Sugar signals quick energy to your brain. Together these hit 3 of the 4 taste factors, creating a drink that feels premium for pennies.',
+    unlocks: ['cold_temp', 'citrus', 'sugar'],
+    pot: '🥤'
+  },
+  {
+    id: 5, name: 'Upgrade Lentil Soup',
+    desc: 'Lentil soup is cheap and nutritious but often bland. Fix it.',
+    hint: 'Brighten, deepen, and season from the start.',
+    requiredIngredients: ['lentils', 'water'],
+    optimalItems: ['lentils', 'water', 'vinegar', 'msg', 'salt'],
+    optimalTechniques: ['add_acid', 'add_msg', 'salt_early'],
+    scoring: { add_acid: 25, add_msg: 25, salt_early: 20, lentils: 5, water: 2, vinegar: 8, msg: 5, salt: 5, oil: 5 },
+    maxFlavor: 100, budgetTarget: 0.40,
+    explanation: 'Lentil soup has great nutrition (929 cal/$, 73g protein/$) but needs the cheat codes. Salt early lets the lentils absorb seasoning as they cook. MSG adds the savory depth that makes it satisfying. A splash of vinegar at the end brightens everything and makes the flavors sing.',
+    unlocks: ['salt_taste'],
+    pot: '🥣'
+  },
+  {
+    id: 6, name: 'Gourmet Eggs',
+    desc: 'Turn simple eggs into something special.',
+    hint: 'The right fat, timing of salt, and heat control.',
+    requiredIngredients: ['eggs'],
+    optimalItems: ['eggs', 'butter', 'salt'],
+    optimalTechniques: ['add_fat', 'salt_early', 'high_heat'],
+    scoring: { add_fat: 25, salt_early: 25, high_heat: 20, eggs: 5, butter: 10, salt: 5, oil: 8, lemon: 3 },
+    maxFlavor: 100, budgetTarget: 0.40,
+    explanation: 'Butter (fat) is the classic medium for eggs - it carries flavor and creates richness. Salting early breaks down the egg proteins slightly, making them creamier. Proper heat creates that perfect golden exterior while keeping the inside silky.',
+    unlocks: [],
+    pot: '🍳'
+  },
+  {
+    id: 7, name: 'Perfect Stir Fry',
+    desc: 'Make a stir fry with intense flavors and perfect texture.',
+    hint: 'Wok hei needs extreme heat. What boosts umami? What oil?',
+    requiredIngredients: [],
+    optimalItems: ['rice', 'chicken', 'oil', 'msg'],
+    optimalTechniques: ['high_heat', 'add_msg', 'add_fat'],
+    scoring: { high_heat: 30, add_msg: 25, add_fat: 20, oil: 8, msg: 5, rice: 3, chicken: 3, eggs: 3, salt_early: 5 },
+    maxFlavor: 100, budgetTarget: 1.20,
+    explanation: 'Wok hei (breath of the wok) comes from extreme high heat that creates the Maillard reaction rapidly. MSG is the secret of every great stir fry restaurant. Oil (fat) is essential at high temperatures for even heat distribution and flavor.',
+    unlocks: [],
+    pot: '🥘'
+  },
+  {
+    id: 8, name: 'Rescue Over-Salted Soup',
+    desc: 'You went too heavy on salt. Save the dish!',
+    hint: 'What counteracts salt? What absorbs it?',
+    requiredIngredients: [],
+    optimalItems: ['potatoes', 'vinegar', 'water'],
+    optimalTechniques: ['add_acid'],
+    scoring: { add_acid: 35, potatoes: 30, water: 10, vinegar: 10, lemon: 8, sugar: 5 },
+    maxFlavor: 100, budgetTarget: 0.50,
+    explanation: 'Acid (vinegar/citrus) counteracts the perception of saltiness on your tongue. Potatoes absorb excess salt from the liquid as they cook. Adding water dilutes the concentration. This is the classic chef rescue technique.',
+    unlocks: [],
+    pot: '🥣'
+  },
+  {
+    id: 9, name: 'Ultimate Budget Bowl',
+    desc: 'Create the most flavorful meal possible using all 5 cheat codes.',
+    hint: 'Rice + lentils is the cheapest complete protein. Apply ALL cheat codes.',
+    requiredIngredients: ['rice', 'lentils'],
+    optimalItems: ['rice', 'lentils', 'oil', 'vinegar', 'msg', 'salt'],
+    optimalTechniques: ['salt_early', 'high_heat', 'add_acid', 'add_fat', 'add_msg'],
+    scoring: { salt_early: 15, high_heat: 15, add_acid: 15, add_fat: 15, add_msg: 15, rice: 3, lentils: 3, oil: 5, vinegar: 5, msg: 3, salt: 3 },
+    maxFlavor: 100, budgetTarget: 0.60,
+    explanation: 'Rice (2320 cal/$) + Lentils (929 cal/$, 73g protein/$) is the ultimate budget base. Now apply ALL 5 cheat codes: Salt early for deep seasoning. High heat sear the lentils for Maillard complexity. Fat (oil) carries all flavors. MSG for umami depth. Acid (vinegar) at the end to brighten everything.',
+    unlocks: [],
+    pot: '🥘'
+  },
+  {
+    id: 10, name: 'Final: $2 Meal for 4',
+    desc: 'Build a complete, delicious meal for 4 people under $2 total.',
+    hint: 'Budget mastery + all techniques. Think cheap calories + cheat codes.',
+    requiredIngredients: [],
+    optimalItems: ['rice', 'lentils', 'beans', 'oil', 'vinegar', 'msg', 'salt'],
+    optimalTechniques: ['salt_early', 'high_heat', 'add_acid', 'add_fat', 'add_msg'],
+    scoring: { salt_early: 12, high_heat: 12, add_acid: 12, add_fat: 12, add_msg: 12, rice: 5, lentils: 5, beans: 5, potatoes: 4, oil: 5, vinegar: 4, msg: 3, salt: 3, eggs: 3 },
+    maxFlavor: 100, budgetTarget: 2.00,
+    explanation: 'The final exam: combine budget ingredients (rice, lentils, beans) with all 5 cheat codes to create a feast. Rice + lentils + beans provides complete protein and massive calories per dollar. Every cheat code technique transforms these humble ingredients into something that rivals expensive restaurant food.',
+    unlocks: [],
+    pot: '🍽️'
+  }
+];
+
+// ============ STATE ============
+let gameState = loadState();
+let currentChallenge = null;
+let potItems = [];       // { type: 'ingredient'|'technique', id: string }
+let potIngredients = [];
+let potTechniques = [];
+
+function defaultState() {
+  return {
+    completed: {},   // challengeId -> { stars, flavor, cost, score }
+    unlockedCodes: [],
+    highestUnlocked: 1
+  };
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('kitchenAlchemist'));
+    if (s && s.completed) return s;
+  } catch(e) {}
+  return defaultState();
+}
+
+function saveState() {
+  localStorage.setItem('kitchenAlchemist', JSON.stringify(gameState));
+}
+
+function updateTitleStats() {
+  const completedCount = Object.keys(gameState.completed).length;
+  const totalStars = Object.values(gameState.completed).reduce((s, c) => s + c.stars, 0);
+  document.getElementById('stat-completed').textContent = completedCount;
+  document.getElementById('stat-stars').textContent = totalStars;
+  document.getElementById('stat-codes').textContent = gameState.unlockedCodes.length;
+}
+
+// ============ SCREENS ============
+function hideAll() {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('challenge-select').style.display = 'none';
+  document.getElementById('cheatcodes-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+}
+
+function showChallengeSelect() {
+  hideAll();
+  document.getElementById('challenge-select').style.display = 'block';
+  renderChallenges();
+}
+
+function showCheatCodes() {
+  hideAll();
+  document.getElementById('cheatcodes-screen').style.display = 'block';
+  renderCheatCodes();
+}
+
+function renderChallenges() {
+  const grid = document.getElementById('challenges-grid');
+  grid.innerHTML = '';
+  CHALLENGES.forEach(ch => {
+    const completed = gameState.completed[ch.id];
+    const unlocked = ch.id <= gameState.highestUnlocked;
+    const card = document.createElement('div');
+    card.className = 'challenge-card' + (completed ? ' completed' : '') + (!unlocked ? ' locked' : '');
+
+    let starsHtml = '';
+    for (let i = 1; i <= 3; i++) {
+      starsHtml += `<span class="star ${completed && completed.stars >= i ? 'earned' : ''}">&#9733;</span>`;
+    }
+
+    card.innerHTML = `
+      <div class="challenge-number">Challenge ${ch.id}</div>
+      <div class="challenge-name">${ch.name}</div>
+      <div class="challenge-desc">${ch.desc}</div>
+      <div class="challenge-stars">${starsHtml}</div>
+      ${!unlocked ? '<div class="lock-icon">&#x1F512;</div>' : ''}
+    `;
+
+    if (unlocked) {
+      card.onclick = () => startChallenge(ch.id);
+    }
+    grid.appendChild(card);
+  });
+}
+
+function renderCheatCodes() {
+  const grid = document.getElementById('cheatcodes-grid');
+  grid.innerHTML = '';
+  CHEAT_CODES.forEach(cc => {
+    const unlocked = gameState.unlockedCodes.includes(cc.id);
+    const card = document.createElement('div');
+    card.className = 'cc-card ' + (unlocked ? 'unlocked' : 'locked-card');
+    card.innerHTML = `
+      <div class="cc-icon">${cc.icon}</div>
+      <h3>${unlocked ? cc.name : '???'}</h3>
+      <p>${unlocked ? cc.desc : 'Complete challenges to unlock this cheat code.'}</p>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ============ GAME ============
+function startChallenge(id) {
+  currentChallenge = CHALLENGES.find(c => c.id === id);
+  potItems = [];
+  potIngredients = [];
+  potTechniques = [];
+
+  hideAll();
+  document.getElementById('game-screen').style.display = 'block';
+  document.getElementById('challenge-title').textContent = `#${currentChallenge.id}: ${currentChallenge.name}`;
+  document.getElementById('challenge-hint').textContent = currentChallenge.hint;
+  document.getElementById('pot-visual').textContent = currentChallenge.pot;
+
+  renderShelves();
+  updatePot();
+  updateMeters();
+}
+
+function renderShelves() {
+  const iShelf = document.getElementById('ingredient-shelf');
+  const tShelf = document.getElementById('technique-shelf');
+  iShelf.innerHTML = '';
+  tShelf.innerHTML = '';
+
+  INGREDIENTS.forEach(ing => {
+    const card = document.createElement('div');
+    card.className = 'ingredient-card';
+    card.draggable = true;
+    card.dataset.type = 'ingredient';
+    card.dataset.id = ing.id;
+    card.innerHTML = `${ing.icon} ${ing.name} <span class="cost-tag">$${ing.cost.toFixed(2)}</span>`;
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('click', () => addToPot('ingredient', ing.id));
+    iShelf.appendChild(card);
+  });
+
+  TECHNIQUES.forEach(tech => {
+    const card = document.createElement('div');
+    card.className = 'technique-card';
+    card.draggable = true;
+    card.dataset.type = 'technique';
+    card.dataset.id = tech.id;
+    card.innerHTML = `${tech.icon} ${tech.name}`;
+    card.title = tech.desc;
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('click', () => addToPot('technique', tech.id));
+    tShelf.appendChild(card);
+  });
+}
+
+// Drag and drop
+function onDragStart(e) {
+  e.dataTransfer.setData('text/plain', JSON.stringify({
+    type: e.target.dataset.type,
+    id: e.target.dataset.id
+  }));
+  e.target.classList.add('dragging');
+  setTimeout(() => e.target.classList.remove('dragging'), 200);
+}
+
+const potZone = document.getElementById('pot-zone');
+potZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  potZone.classList.add('drag-over');
+});
+potZone.addEventListener('dragleave', () => {
+  potZone.classList.remove('drag-over');
+});
+potZone.addEventListener('drop', e => {
+  e.preventDefault();
+  potZone.classList.remove('drag-over');
+  try {
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    addToPot(data.type, data.id);
+  } catch(err) {}
+});
+
+function addToPot(type, id) {
+  // Check duplicates
+  if (type === 'technique' && potTechniques.includes(id)) return;
+  if (type === 'ingredient' && potIngredients.includes(id)) return;
+
+  potItems.push({ type, id });
+  if (type === 'ingredient') potIngredients.push(id);
+  else potTechniques.push(id);
+
+  spawnEffect(type, id);
+  updatePot();
+  updateMeters();
+}
+
+function removeFromPot(index) {
+  const item = potItems[index];
+  if (item.type === 'ingredient') {
+    potIngredients = potIngredients.filter(i => i !== item.id);
+  } else {
+    potTechniques = potTechniques.filter(i => i !== item.id);
+  }
+  potItems.splice(index, 1);
+  updatePot();
+  updateMeters();
+}
+
+function clearPot() {
+  potItems = [];
+  potIngredients = [];
+  potTechniques = [];
+  updatePot();
+  updateMeters();
+}
+
+function updatePot() {
+  const container = document.getElementById('added-items');
+  container.innerHTML = '';
+  potItems.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'added-item' + (item.type === 'technique' ? ' technique' : '');
+    if (item.type === 'ingredient') {
+      const ing = INGREDIENTS.find(x => x.id === item.id);
+      el.textContent = `${ing.icon} ${ing.name}`;
+    } else {
+      const tech = TECHNIQUES.find(x => x.id === item.id);
+      el.textContent = `${tech.icon} ${tech.name}`;
+    }
+    el.title = 'Click to remove';
+    el.onclick = () => removeFromPot(i);
+    container.appendChild(el);
+  });
+}
+
+function calcFlavor() {
+  if (!currentChallenge) return 0;
+  let score = 0;
+  const scoring = currentChallenge.scoring;
+  potIngredients.forEach(id => { if (scoring[id]) score += scoring[id]; });
+  potTechniques.forEach(id => { if (scoring[id]) score += scoring[id]; });
+  return Math.min(100, score);
+}
+
+function calcCost() {
+  let cost = 0;
+  potIngredients.forEach(id => {
+    const ing = INGREDIENTS.find(x => x.id === id);
+    if (ing) cost += ing.cost;
+  });
+  return cost;
+}
+
+function updateMeters() {
+  const flavor = calcFlavor();
+  const cost = calcCost();
+  document.getElementById('flavor-val').textContent = flavor;
+  document.getElementById('flavor-bar').style.width = flavor + '%';
+  document.getElementById('cost-val').textContent = '$' + cost.toFixed(2);
+  const costPct = Math.min(100, (cost / 3) * 100);
+  document.getElementById('cost-bar').style.width = costPct + '%';
+}
+
+// ============ EFFECTS ============
+function spawnEffect(type, id) {
+  const container = document.getElementById('effects-container');
+  const rect = container.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+
+  let particleClass = 'particle-steam';
+  let count = 8;
+
+  if (type === 'technique') {
+    switch(id) {
+      case 'high_heat': particleClass = 'particle-flame'; count = 15; break;
+      case 'add_acid': particleClass = 'particle-bubble'; count = 12; break;
+      case 'add_msg': particleClass = 'particle-sparkle'; count = 18; break;
+      case 'add_fat': particleClass = 'particle-fat'; count = 10; break;
+      case 'salt_early': particleClass = 'particle-salt'; count = 20; break;
+      case 'cold_temp': particleClass = 'particle-steam'; count = 10; break;
+    }
+  } else {
+    particleClass = 'particle-steam';
+    count = 6;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle ' + particleClass;
+    const x = cx + (Math.random() - 0.5) * 100;
+    const y = cy + (Math.random() - 0.5) * 40;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.setProperty('--dx', (Math.random() - 0.5) * 60 + 'px');
+    p.style.setProperty('--dy', (Math.random() - 0.5) * 60 - 30 + 'px');
+    p.style.setProperty('--dx2', (Math.random() - 0.5) * 40 + 'px');
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 2000);
+  }
+}
+
+// ============ COOK & SCORE ============
+function cookDish() {
+  if (!currentChallenge) return;
+  if (potItems.length === 0) return;
+
+  // Check required ingredients
+  const missingReq = currentChallenge.requiredIngredients.filter(r => !potIngredients.includes(r));
+  if (missingReq.length > 0) {
+    const names = missingReq.map(id => INGREDIENTS.find(x => x.id === id)?.name || id).join(', ');
+    alert(`You need to add: ${names}`);
+    return;
+  }
+
+  // Big cook effect
+  const container = document.getElementById('effects-container');
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      spawnEffect('technique', ['high_heat', 'add_msg', 'add_acid', 'add_fat'][Math.floor(Math.random()*4)]);
+    }, i * 50);
+  }
+
+  setTimeout(() => showResult(), 800);
+}
+
+function showResult() {
+  const flavor = calcFlavor();
+  const cost = calcCost();
+  const budgetTarget = currentChallenge.budgetTarget;
+
+  // Efficiency score: flavor weighted heavily, cost efficiency bonus
+  let efficiency = flavor;
+  if (cost > 0 && cost <= budgetTarget) {
+    efficiency += 10; // budget bonus
+  } else if (cost > budgetTarget * 2) {
+    efficiency -= 15; // overspend penalty
+  }
+  efficiency = Math.max(0, Math.min(100, efficiency));
+
+  // Stars
+  let stars = 0;
+  if (efficiency >= 40) stars = 1;
+  if (efficiency >= 65) stars = 2;
+  if (efficiency >= 85) stars = 3;
+
+  // Determine result text
+  let emoji, title, titleClass;
+  if (stars === 3) { emoji = '🌟'; title = 'Master Chef!'; titleClass = 'great'; }
+  else if (stars === 2) { emoji = '👨‍🍳'; title = 'Well Done!'; titleClass = 'good'; }
+  else if (stars === 1) { emoji = '🍽️'; title = 'Edible!'; titleClass = 'ok'; }
+  else { emoji = '😅'; title = 'Needs Work'; titleClass = 'fail'; }
+
+  let starsHtml = '';
+  for (let i = 1; i <= 3; i++) {
+    starsHtml += `<span style="color:${i <= stars ? 'var(--neon-yellow)' : '#333'}">&#9733;</span>`;
+  }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  const titleEl = document.getElementById('result-title');
+  titleEl.textContent = title;
+  titleEl.className = 'result-title ' + titleClass;
+  document.getElementById('result-stars').innerHTML = starsHtml;
+  document.getElementById('result-flavor').textContent = `Flavor Score: ${flavor}/100`;
+  document.getElementById('result-cost-display').textContent = `Total Cost: $${cost.toFixed(2)} (Target: $${budgetTarget.toFixed(2)})`;
+  document.getElementById('result-score').textContent = `Efficiency: ${efficiency}/100`;
+
+  // Explanation
+  let expHtml = `<h4>The Science</h4><p>${currentChallenge.explanation}</p>`;
+
+  // Show what they got right / missed
+  const optTech = currentChallenge.optimalTechniques;
+  const usedTech = potTechniques;
+  const missed = optTech.filter(t => !usedTech.includes(t));
+  if (missed.length > 0) {
+    const missedNames = missed.map(id => TECHNIQUES.find(t => t.id === id)?.name || id).join(', ');
+    expHtml += `<div class="tip" style="border-color:var(--neon-orange);margin-top:10px;">Try also using: ${missedNames}</div>`;
+  }
+
+  document.getElementById('result-explanation').innerHTML = expHtml;
+
+  // Cheat code unlocks
+  const unlockEl = document.getElementById('cheat-unlock');
+  if (stars >= 1 && currentChallenge.unlocks.length > 0) {
+    const newUnlocks = currentChallenge.unlocks.filter(u => !gameState.unlockedCodes.includes(u));
+    if (newUnlocks.length > 0) {
+      newUnlocks.forEach(u => {
+        if (!gameState.unlockedCodes.includes(u)) gameState.unlockedCodes.push(u);
+      });
+      const ccNames = newUnlocks.map(id => CHEAT_CODES.find(c => c.id === id)?.name || id).join(', ');
+      unlockEl.innerHTML = `<h4>&#x1F513; Cheat Code Unlocked!</h4><p>${ccNames}</p>`;
+      unlockEl.style.display = 'block';
+    } else {
+      unlockEl.style.display = 'none';
+    }
+  } else {
+    unlockEl.style.display = 'none';
+  }
+
+  // Save progress
+  const prev = gameState.completed[currentChallenge.id];
+  if (!prev || stars > prev.stars) {
+    gameState.completed[currentChallenge.id] = { stars, flavor, cost, score: efficiency };
+  }
+  if (stars >= 1 && currentChallenge.id >= gameState.highestUnlocked) {
+    gameState.highestUnlocked = Math.min(10, currentChallenge.id + 1);
+  }
+  saveState();
+  updateTitleStats();
+
+  // Show modal
+  document.getElementById('result-modal').classList.add('active');
+}
+
+function closeModalAndNext() {
+  document.getElementById('result-modal').classList.remove('active');
+  const nextId = currentChallenge.id + 1;
+  if (nextId <= 10 && nextId <= gameState.highestUnlocked) {
+    startChallenge(nextId);
+  } else {
+    showChallengeSelect();
+  }
+}
+
+function retryChallenge() {
+  document.getElementById('result-modal').classList.remove('active');
+  startChallenge(currentChallenge.id);
+}
+
+// ============ INIT ============
+updateTitleStats();
+</script>
+</body>
+</html>

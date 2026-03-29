@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Efficiency Empire - Idle Game</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo+Narrow:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap">
+<style>
+:root {
+  --eie-green: #33CD66;
+  --eie-green-dark: #2AB857;
+  --eie-blue: #0D47A1;
+  --eie-blue-light: #1565c0;
+  --eie-red: #FF3131;
+  --eie-gold: #ffd700;
+  --dark-gray: #5B5753;
+  --light-gray: #9C9D9B;
+  --bg-light: #FAFAFA;
+  --bg-white: #FFFFFF;
+  --black: #000000;
+  /* Game accent variants */
+  --accent-food: #33CD66;
+  --accent-cook: #FF6900;
+  --accent-time: #0693e3;
+  --accent-life: #9b51e0;
+  --accent-auto: #ffd700;
+  --accent-prestige: #FF3131;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Archivo Narrow', Arial, sans-serif;
+  background: var(--bg-light);
+  color: var(--dark-gray);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Floating Particles ── */
+.particles-container {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none; overflow: hidden;
+}
+.particle {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  animation: floatUp linear infinite; opacity: 0.25;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.25; }
+  90% { opacity: 0.25; }
+  100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* ── Real World Impact Top Banner ── */
+.impact-banner {
+  background: linear-gradient(135deg, var(--eie-blue) 0%, var(--eie-blue-light) 100%);
+  color: #fff; padding: 8px 16px;
+  display: flex; justify-content: center; align-items: center;
+  gap: 32px; flex-wrap: wrap; position: relative; z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.impact-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; white-space: nowrap;
+}
+.impact-item .impact-icon { font-size: 1rem; }
+.impact-item .impact-label {
+  font-weight: 400; opacity: 0.8; font-size: 0.75rem;
+}
+.impact-item .impact-val {
+  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ── Layout ── */
+.game-container {
+  position: relative; z-index: 1;
+  max-width: 980px; margin: 0 auto; padding: 10px 16px 40px;
+}
+
+/* Top bar */
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0;
+}
+.back-link {
+  color: var(--eie-blue); text-decoration: none;
+  font-weight: 600; font-size: 0.85rem;
+  border: 1px solid var(--eie-blue); padding: 4px 12px;
+  border-radius: 4px; transition: all 0.2s;
+}
+.back-link:hover { background: var(--eie-blue); color: #fff; }
+
+/* Header */
+.game-header { text-align: center; margin-bottom: 8px; }
+.game-title {
+  font-family: 'Bebas Neue', sans-serif; font-weight: 400;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  color: var(--eie-blue); letter-spacing: 3px;
+  line-height: 1;
+}
+.game-subtitle {
+  font-weight: 400; color: var(--light-gray);
+  font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;
+}
+
+/* ── Stats Row ── */
+.stats-row {
+  display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+  justify-content: center;
+}
+.stat-pill {
+  background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 20px; padding: 6px 16px;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.stat-pill .s-label {
+  font-size: 0.7rem; color: var(--light-gray); text-transform: uppercase;
+  letter-spacing: 1px; font-weight: 600;
+}
+.stat-pill .s-val {
+  font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  font-size: 0.95rem;
+}
+.stat-pill .s-val.green { color: var(--eie-green); }
+.stat-pill .s-val.blue { color: var(--eie-blue); }
+.stat-pill .s-val.red { color: var(--eie-red); }
+.stat-pill .s-val.gold { color: #b8860b; }
+
+/* ── Main Layout ── */
+.game-main {
+  display: grid; grid-template-columns: 200px 1fr;
+  gap: 14px; align-items: start;
+}
+@media (max-width: 700px) {
+  .game-main { grid-template-columns: 1fr; }
+  .click-panel { position: static !important; }
+}
+
+/* ── Click Panel ── */
+.click-panel {
+  background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 10px; padding: 16px 10px; text-align: center;
+  position: sticky; top: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.click-btn {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--eie-green), var(--eie-green-dark));
+  border: 3px solid var(--eie-green-dark);
+  box-shadow: 0 4px 15px rgba(51,205,102,0.3);
+  cursor: pointer; position: relative; transition: all 0.1s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 0 auto 10px; -webkit-user-select: none; user-select: none;
+  color: #fff;
+}
+.click-btn:hover {
+  box-shadow: 0 6px 25px rgba(51,205,102,0.5);
+  transform: translateY(-1px);
+}
+.click-btn:active { transform: scale(0.93) translateY(0); }
+.click-btn .icon { font-size: 2.2rem; }
+.click-btn .label {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem;
+  letter-spacing: 2px;
+}
+.click-power {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: var(--light-gray); margin-bottom: 8px;
+}
+.click-stats { font-size: 0.7rem; color: var(--light-gray); }
+
+/* Number popup */
+.number-popup {
+  position: absolute; pointer-events: none;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  font-size: 0.9rem; color: var(--eie-green);
+  animation: popUp 0.7s ease-out forwards; z-index: 100;
+}
+@keyframes popUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+}
+
+/* Click particles */
+.click-particle {
+  position: absolute; pointer-events: none;
+  width: 3px; height: 3px; border-radius: 50%;
+}
+
+/* ── Facts Ticker ── */
+.facts-ticker {
+  background: #f5f5f5; border: 1px solid #e8e8e8;
+  border-radius: 6px; padding: 8px 10px; margin-top: 10px;
+  min-height: 48px; display: flex; align-items: flex-start; gap: 4px;
+}
+.facts-ticker .ft-label {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem;
+  color: var(--eie-blue); flex-shrink: 0; margin-top: 1px;
+  letter-spacing: 1px;
+}
+.facts-ticker .ft-text {
+  font-size: 0.68rem; color: var(--dark-gray); line-height: 1.3;
+  animation: fadeInFact 0.4s ease;
+}
+@keyframes fadeInFact {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Deep Dive link in ticker */
+.deep-dive-link {
+  display: inline-block; margin-top: 4px;
+  font-family: 'Archivo Narrow', sans-serif; font-weight: 700;
+  font-size: 0.65rem; color: var(--eie-blue);
+  text-decoration: none; padding: 2px 8px;
+  border: 1px solid var(--eie-blue); border-radius: 4px;
+  transition: all 0.2s;
+}
+.deep-dive-link:hover {
+  background: var(--eie-blue); color: #fff;
+}
+.deep-dive-link .dd-bonus {
+  color: var(--eie-green); font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem; margin-left: 3px;
+}
+
+/* Deep Dive bonus bar */
+.dd-bonus-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(135deg, rgba(6,147,227,0.08), rgba(51,205,102,0.08));
+  border: 1px solid rgba(6,147,227,0.15);
+  border-radius: 6px; padding: 6px 10px; margin-top: 8px;
+  font-size: 0.65rem;
+}
+.dd-bonus-bar .dd-label {
+  color: var(--eie-blue); font-weight: 600;
+}
+.dd-bonus-bar .dd-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: var(--eie-green); font-weight: 600;
+}
+
+/* ── Right Panel ── */
+.upgrades-panel { display: flex; flex-direction: column; gap: 6px; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 3px; flex-wrap: wrap;
+  background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 8px; padding: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.tab-btn {
+  font-family: 'Archivo Narrow', sans-serif; font-weight: 600;
+  font-size: 0.75rem; padding: 5px 12px;
+  background: transparent; border: 1px solid transparent;
+  border-radius: 6px; color: var(--light-gray);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn:hover { background: #f5f5f5; color: var(--dark-gray); }
+.tab-btn.active {
+  background: var(--eie-green); color: #fff;
+  border-color: var(--eie-green-dark);
+  box-shadow: 0 2px 6px rgba(51,205,102,0.3);
+}
+.tab-btn.active[data-cat="kitchen"] { background: var(--accent-cook); border-color: #e65100; box-shadow: 0 2px 6px rgba(255,105,0,0.3); }
+.tab-btn.active[data-cat="time"] { background: var(--accent-time); border-color: #0577b5; box-shadow: 0 2px 6px rgba(6,147,227,0.3); }
+.tab-btn.active[data-cat="life"] { background: var(--accent-life); border-color: #7b3db0; box-shadow: 0 2px 6px rgba(155,81,224,0.3); }
+.tab-btn.active[data-cat="auto"] { background: #b8860b; border-color: #8B6914; box-shadow: 0 2px 6px rgba(184,134,11,0.3); }
+.tab-btn.active[data-cat="journal"] { background: var(--eie-blue); border-color: var(--eie-blue-light); box-shadow: 0 2px 6px rgba(13,71,161,0.3); }
+.tab-btn.locked {
+  opacity: 0.35; cursor: default; pointer-events: none;
+}
+.tab-btn .unlock-hint {
+  font-size: 0.6rem; font-weight: 400; opacity: 0.7;
+}
+
+/* Upgrade list */
+.upgrades-list { display: flex; flex-direction: column; gap: 5px; }
+
+/* Upgrade cards */
+.upgrade-card {
+  background: #fff; border: 1px solid #e8e8e8;
+  border-radius: 8px; padding: 8px 10px;
+  display: grid; grid-template-columns: 32px 1fr 70px;
+  gap: 8px; align-items: center;
+  transition: all 0.15s; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.upgrade-card:hover {
+  border-color: var(--eie-green);
+  box-shadow: 0 2px 8px rgba(51,205,102,0.12);
+}
+.upgrade-card.locked {
+  opacity: 0.35; cursor: default;
+  background: #fafafa;
+}
+.upgrade-card.locked:hover {
+  border-color: #e8e8e8; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.upgrade-card.affordable {
+  border-left: 3px solid var(--eie-green);
+}
+
+.upgrade-icon { font-size: 1.4rem; text-align: center; }
+.upgrade-info h3 {
+  font-family: 'Archivo Narrow', sans-serif; font-weight: 700;
+  font-size: 0.8rem; color: var(--black); margin-bottom: 1px;
+}
+.upgrade-info .desc {
+  font-size: 0.68rem; color: var(--light-gray); line-height: 1.2;
+}
+.upgrade-info .production {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  color: var(--eie-green); margin-top: 1px;
+}
+.upgrade-buy { text-align: center; }
+.upgrade-cost {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  color: var(--eie-red); display: block; font-weight: 600;
+}
+.upgrade-card.affordable .upgrade-cost { color: var(--eie-green); }
+.upgrade-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+  color: var(--light-gray);
+}
+
+/* Milestone markers on upgrade cards */
+.milestone-badge {
+  display: inline-block; font-size: 0.5rem; font-weight: 700;
+  background: var(--eie-gold); color: #5B4300; padding: 1px 5px;
+  border-radius: 3px; margin-left: 6px; vertical-align: middle;
+}
+
+/* ── Prestige Panel ── */
+.prestige-section { display: none; margin-top: 10px; }
+.prestige-section.visible { display: block; }
+.prestige-panel {
+  background: linear-gradient(135deg, rgba(255,49,49,0.05), rgba(255,105,0,0.05));
+  border: 1px solid rgba(255,49,49,0.2);
+  border-radius: 8px; padding: 12px; text-align: center;
+}
+.prestige-panel h3 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+  color: var(--eie-red); letter-spacing: 2px;
+}
+.prestige-panel .info {
+  font-size: 0.72rem; color: var(--light-gray); margin-bottom: 6px; line-height: 1.3;
+}
+.prestige-btn {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--eie-red), #FF6900);
+  color: #fff; border: none; padding: 7px 22px;
+  border-radius: 6px; cursor: pointer; letter-spacing: 2px;
+  transition: all 0.2s; box-shadow: 0 2px 10px rgba(255,49,49,0.2);
+}
+.prestige-btn:hover {
+  box-shadow: 0 4px 18px rgba(255,49,49,0.35); transform: translateY(-1px);
+}
+.prestige-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; transform: none; }
+
+/* ── Achievement Popup ── */
+.achievement-popup {
+  position: fixed; top: 60px; right: 16px;
+  background: #fff; border: 2px solid var(--eie-gold);
+  border-radius: 8px; padding: 10px 16px;
+  z-index: 1000; transform: translateX(350px);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  max-width: 260px;
+}
+.achievement-popup.show { transform: translateX(0); }
+.achievement-popup .ach-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.7rem;
+  color: #b8860b; letter-spacing: 2px;
+}
+.achievement-popup .ach-name {
+  font-size: 0.85rem; font-weight: 700; color: var(--black);
+}
+.achievement-popup .ach-desc {
+  font-size: 0.65rem; color: var(--light-gray);
+}
+.achievement-popup .ach-bonus {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  color: var(--eie-green); margin-top: 2px;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%) translateY(70px);
+  background: #fff; border: 1px solid var(--eie-green);
+  border-radius: 6px; padding: 8px 18px;
+  font-size: 0.8rem; color: var(--eie-green); z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none; white-space: nowrap; font-weight: 600;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-light); }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+/* ── Progress Bar on Upgrade Cards ── */
+.upgrade-progress {
+  width: 100%; height: 3px; background: #eee; border-radius: 2px;
+  margin-top: 3px; overflow: hidden; grid-column: 1 / -1;
+}
+.upgrade-progress-fill {
+  height: 100%; border-radius: 2px; transition: width 0.3s;
+  background: linear-gradient(90deg, var(--eie-green), var(--eie-green-dark));
+}
+
+/* ── Buy Toggle ── */
+.buy-toggle {
+  display: flex; gap: 3px; margin-bottom: 6px; justify-content: flex-end;
+}
+.buy-toggle button {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  padding: 3px 10px; border: 1px solid #ddd; border-radius: 4px;
+  background: #fff; color: var(--light-gray); cursor: pointer;
+  transition: all 0.15s; font-weight: 600;
+}
+.buy-toggle button:hover { border-color: var(--eie-green); color: var(--dark-gray); }
+.buy-toggle button.active {
+  background: var(--eie-green); color: #fff; border-color: var(--eie-green-dark);
+}
+
+/* ── Journal Tab ── */
+.journal-header {
+  background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 8px; text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.journal-header .j-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+  color: var(--eie-green); font-weight: 700;
+}
+.journal-header .j-label {
+  font-size: 0.7rem; color: var(--light-gray);
+}
+.journal-cat-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem;
+  color: var(--eie-blue); letter-spacing: 2px; margin: 8px 0 4px;
+  padding-bottom: 2px; border-bottom: 1px solid #e8e8e8;
+}
+.journal-tip {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 6px;
+  padding: 6px 10px; margin-bottom: 4px; font-size: 0.7rem;
+  line-height: 1.3; color: var(--dark-gray);
+}
+.journal-tip.unknown {
+  color: var(--light-gray); font-style: italic; opacity: 0.5;
+}
+.journal-tip .jt-name {
+  font-weight: 700; color: var(--black); margin-right: 4px;
+}
+
+/* ── Golden Events ── */
+.golden-event {
+  position: fixed; z-index: 999;
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  border: 2px solid #b8860b; border-radius: 10px;
+  padding: 10px 18px; cursor: pointer;
+  animation: goldenPulse 0.6s ease-in-out infinite alternate, goldenFadeIn 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+  text-align: center; user-select: none;
+}
+.golden-event:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 30px rgba(255,215,0,0.6);
+}
+.golden-event .ge-icon { font-size: 1.5rem; }
+.golden-event .ge-text {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.8rem;
+  color: #5B4300; letter-spacing: 1px;
+}
+.golden-event .ge-bonus {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+  color: #3d2e00; font-weight: 600;
+}
+@keyframes goldenPulse {
+  0% { box-shadow: 0 4px 20px rgba(255,215,0,0.4); }
+  100% { box-shadow: 0 4px 30px rgba(255,215,0,0.7); }
+}
+@keyframes goldenFadeIn {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Next Unlock Hint ── */
+.next-unlock-hint {
+  font-size: 0.65rem; color: var(--light-gray);
+  text-align: center; padding: 4px 0;
+  font-style: italic;
+}
+.next-unlock-hint strong {
+  color: var(--eie-blue); font-style: normal;
+}
+</style>
+</head>
+<body>
+
+<!-- Real World Impact Banner (always at top) -->
+<div class="impact-banner">
+  <div class="impact-item">
+    <span class="impact-icon">💵</span>
+    <span class="impact-label">$ Saved/yr</span>
+    <span class="impact-val" id="impactMoney">$0</span>
+  </div>
+  <div class="impact-item">
+    <span class="impact-icon">⏱️</span>
+    <span class="impact-label">Hours Saved/yr</span>
+    <span class="impact-val" id="impactTime">0</span>
+  </div>
+  <div class="impact-item">
+    <span class="impact-icon">💡</span>
+    <span class="impact-label">Tips Learned</span>
+    <span class="impact-val" id="impactTips">0</span>
+  </div>
+</div>
+
+<div class="particles-container" id="particles"></div>
+
+<div class="game-container">
+  <div class="top-bar">
+    <a href="index.html" class="back-link">&larr; Back to Hub</a>
+  </div>
+
+  <div class="game-header">
+    <h1 class="game-title">EFFICIENCY EMPIRE</h1>
+    <p class="game-subtitle">From Wasteful to Optimized</p>
+  </div>
+
+  <!-- Game Stats -->
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="s-label">Savings</span>
+      <span class="s-val green" id="statMoney">$0.00</span>
+    </div>
+    <div class="stat-pill">
+      <span class="s-label">Per Sec</span>
+      <span class="s-val blue" id="statPS">$0.00</span>
+    </div>
+    <div class="stat-pill">
+      <span class="s-label">Per Click</span>
+      <span class="s-val gold" id="statClick">$0.01</span>
+    </div>
+    <div class="stat-pill" id="prestigePill" style="display:none;">
+      <span class="s-label">Prestige</span>
+      <span class="s-val red" id="statPrestige">x1.00</span>
+    </div>
+  </div>
+
+  <!-- Main Game -->
+  <div class="game-main">
+    <!-- Left: Click + Facts -->
+    <div class="click-panel">
+      <div class="click-btn" id="clickBtn">
+        <div class="icon">💰</div>
+        <div class="label">SAVE</div>
+      </div>
+      <div class="click-power" id="clickPower">+$0.01 / click</div>
+      <div class="click-stats" id="clickStats">Clicks: 0</div>
+
+      <div class="facts-ticker" style="margin-top:12px;">
+        <div>
+          <div style="display:flex;align-items:flex-start;gap:4px;">
+            <span class="ft-label">TIP</span>
+            <span class="ft-text" id="factText">Click SAVE to start building your Efficiency Empire!</span>
+          </div>
+          <a class="deep-dive-link" id="deepDiveLink" href="#" target="_blank" style="display:none;">
+            📖 Read more on EIE <span class="dd-bonus">(+bonus!)</span>
+          </a>
+        </div>
+      </div>
+      <div class="dd-bonus-bar">
+        <span class="dd-label">📚 Deep Dives Clicked</span>
+        <span class="dd-count" id="ddCount">0 — All production +0%</span>
+      </div>
+
+      <!-- Prestige: hidden until revealed -->
+      <div class="prestige-section" id="prestigeSection">
+        <div class="prestige-panel">
+          <h3>⚡ OPTIMIZE ⚡</h3>
+          <div class="info">Reset for a permanent multiplier to everything!</div>
+          <div class="info" id="prestigeInfo" style="color:var(--eie-red);font-family:'JetBrains Mono',monospace;font-size:0.7rem;"></div>
+          <button class="prestige-btn" id="prestigeBtn" disabled>OPTIMIZE →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Upgrades -->
+    <div class="upgrades-panel">
+      <div class="tab-bar" id="tabBar"></div>
+      <div class="buy-toggle">
+        <button class="active" onclick="setBuyAmount(1)">x1</button>
+        <button onclick="setBuyAmount(10)">x10</button>
+        <button onclick="setBuyAmount(-1)">Max</button>
+      </div>
+      <div class="next-unlock-hint" id="nextUnlockHint"></div>
+      <div class="upgrades-list" id="upgradesList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="achievement-popup" id="achievementPopup">
+  <div class="ach-title">🏆 ACHIEVEMENT</div>
+  <div class="ach-name" id="achName"></div>
+  <div class="ach-desc" id="achDesc"></div>
+  <div class="ach-bonus" id="achBonus"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════
+let state = {
+  money: 0,
+  totalEarned: 0,
+  lifetimeEarned: 0,
+  clicks: 0,
+  clickValue: 0.01,
+  perSecond: 0,
+  prestigeMultiplier: 1,
+  prestigeCount: 0,
+  upgrades: {},       // id -> count
+  achievements: {},   // id -> true
+  tipsLearned: [],    // array of upgrade ids
+  deepDives: [],      // array of unique EIE URLs visited
+  activeTab: 'food',
+  unlockedCats: ['food'],
+  lastTick: Date.now(),
+  lastSave: Date.now()
+};
+
+// ═══════════════════════════════════════════
+// CATEGORIES — unlock thresholds are total upgrade COUNT
+// ═══════════════════════════════════════════
+const categories = [
+  { id: 'food',    name: '🍽️ Food',       color: 'var(--accent-food)',  unlockAt: 0,   unlockText: '' },
+  { id: 'kitchen', name: '🔥 Cooking',     color: 'var(--accent-cook)',  unlockAt: 3,   unlockText: 'Buy 3 upgrades' },
+  { id: 'time',    name: '⏱️ Time',       color: 'var(--accent-time)',  unlockAt: 10,  unlockText: 'Buy 10 upgrades' },
+  { id: 'life',    name: '💡 Lifestyle',   color: 'var(--accent-life)',  unlockAt: 22,  unlockText: 'Buy 22 upgrades' },
+  { id: 'auto',    name: '⚙️ Automation', color: 'var(--accent-auto)',  unlockAt: 40,  unlockText: 'Buy 40 upgrades' },
+  { id: 'journal', name: '📖 Journal', color: 'var(--eie-blue)', unlockAt: 1, unlockText: 'Buy 1 upgrade' },
+];
+
+// ═══════════════════════════════════════════
+// UPGRADE DATA
+// Progression: wasteful/expensive → increasingly efficient
+// Cost scaling: 1.07 (AdCap style — feels generous, ~15-30s between buys)
+// ═══════════════════════════════════════════
+
+const foodUpgrades = [
+  // Tier 1: Expensive/wasteful (what people start with)
+  { id: 'starbucks', name: 'Quit Starbucks', icon: '☕', baseCost: 0.05, basePS: 0.02, costScale: 1.07,
+    desc: '$5/day habit = $1,825/yr wasted.',
+    tip: 'A Starbucks latte costs $5-7. Caffeine pills cost $0.03 for the same 200mg. That\'s a 150x price difference for the same molecule.',
+    moneySave: 1800, timeSave: 25, category: 'food' },
+  { id: 'restaurant', name: 'Cook at Home', icon: '🍳', baseCost: 0.25, basePS: 0.06, costScale: 1.07,
+    desc: 'Restaurants mark up food 300%.',
+    tip: 'A $15 restaurant pasta costs $2 to make at home. You\'re paying $13 for someone to cook and wash dishes. Do it yourself, save $3,000+/yr.',
+    moneySave: 3000, timeSave: 0, category: 'food' },
+  { id: 'energy', name: 'Drop Energy Drinks', icon: '⚡', baseCost: 0.80, basePS: 0.14, costScale: 1.07,
+    desc: '$3/can adds up to $1,000+/yr.',
+    tip: 'Energy drinks are $3+ for ~150mg caffeine. A caffeine pill has 200mg for $0.03. You\'re paying for carbonated water and marketing.',
+    moneySave: 1000, timeSave: 0, category: 'food' },
+  { id: 'brand', name: 'Go Store Brand', icon: '🏷️', baseCost: 2, basePS: 0.30, costScale: 1.07,
+    desc: 'Same factory, same ingredients, 30-50% less.',
+    tip: 'The FDA requires identical ingredients in generic vs brand products. Store brands are often made in the exact same factory. Save 30-50% on every grocery trip.',
+    moneySave: 1200, timeSave: 0, category: 'food' },
+  // Tier 2: Getting smarter
+  { id: 'chicken', name: 'Chicken Strategy', icon: '🍗', baseCost: 5, basePS: 0.65, costScale: 1.07,
+    desc: 'Chicken: 239 cal/$. Buy whole, save more.',
+    tip: 'Buy whole chickens or bone-in thighs — they\'re 40-60% cheaper than boneless skinless. One $5 rotisserie chicken yields 4+ meals.',
+    moneySave: 400, timeSave: 5, category: 'food' },
+  { id: 'eggs', name: 'Egg Optimization', icon: '🥚', baseCost: 12, basePS: 1.4, costScale: 1.07,
+    desc: 'Eggs: 802 cal/$ and 70g protein/$.',
+    tip: 'Eggs are a "complete protein" with all 9 essential amino acids. At 70g protein/$ they\'re one of the best deals in any grocery store.',
+    moneySave: 250, timeSave: 0, category: 'food' },
+  { id: 'tuna', name: 'Canned Tuna Hoard', icon: '🐟', baseCost: 28, basePS: 3, costScale: 1.07,
+    desc: 'Canned tuna: 55g protein per dollar.',
+    tip: 'Canned tuna at $1/can has ~25g protein. Buy when on sale at $0.50/can and you\'re getting 50g protein per dollar. Stock up!',
+    moneySave: 200, timeSave: 0, category: 'food' },
+  { id: 'potato', name: 'Potato Power', icon: '🥔', baseCost: 65, basePS: 6.5, costScale: 1.07,
+    desc: 'Potatoes: 741 cal/$. Versatile and filling.',
+    tip: 'A 10lb bag of potatoes costs ~$4. Baked, mashed, roasted, or fried — potatoes are incredibly versatile and keep you full for hours.',
+    moneySave: 200, timeSave: 0, category: 'food' },
+  // Tier 3: Efficient
+  { id: 'pb', name: 'Peanut Butter Stash', icon: '🥜', baseCost: 150, basePS: 14, costScale: 1.07,
+    desc: 'PB: 1,487 cal/$ and 52g protein/$.',
+    tip: 'Peanut butter is a "dual threat" — top tier in BOTH calories and protein per dollar. Spread on bread = a complete meal for $0.35.',
+    moneySave: 300, timeSave: 0, category: 'food' },
+  { id: 'pasta', name: 'Pasta Empire', icon: '🍝', baseCost: 350, basePS: 30, costScale: 1.07,
+    desc: 'Pasta: 1,600 cal/$ and 56g protein/$.',
+    tip: 'Angel hair pasta is 1,600 cal/$. With canned tomato sauce ($0.80) and garlic, you get a filling meal for under $0.40.',
+    moneySave: 300, timeSave: 0, category: 'food' },
+  { id: 'ramen', name: 'Strategic Ramen', icon: '🍜', baseCost: 800, basePS: 65, costScale: 1.07,
+    desc: 'Ramen: 1,949 cal/$. Upgrade it properly.',
+    tip: 'A pack of ramen costs ~$0.17. Add a boiled egg ($0.12) and frozen veggies ($0.15) for a balanced meal at $0.44 total.',
+    moneySave: 350, timeSave: 0, category: 'food' },
+  { id: 'beans', name: 'Bean Empire', icon: '🫘', baseCost: 1800, basePS: 140, costScale: 1.07,
+    desc: 'Pinto beans: 880 cal/$ and 80g protein/$!',
+    tip: 'Beans are the ultimate superfood: 80-140g protein/$ plus massive fiber. Buy DRY beans — they\'re 3-4x cheaper than canned.',
+    moneySave: 350, timeSave: 0, category: 'food' },
+  { id: 'lentils', name: 'Lentil Mastery', icon: '🍲', baseCost: 4000, basePS: 300, costScale: 1.07,
+    desc: 'Lentils: 929 cal/$ AND 73g protein/$.',
+    tip: 'Lentils cook in 20 minutes with NO soaking. They\'re top-tier in both calories AND protein per dollar. Add cumin and garlic = magic.',
+    moneySave: 350, timeSave: 0, category: 'food' },
+  { id: 'oats', name: 'Oat Domination', icon: '🌾', baseCost: 9000, basePS: 650, costScale: 1.07,
+    desc: 'Oats: 2,148 cal/$. Breakfast solved forever.',
+    tip: 'A 42oz canister of oats is ~$3.50 and lasts weeks. Add a banana ($0.10) + PB ($0.08) = complete breakfast for $0.22.',
+    moneySave: 400, timeSave: 10, category: 'food' },
+  { id: 'rice', name: 'Rice Dynasty', icon: '🍚', baseCost: 20000, basePS: 1400, costScale: 1.07,
+    desc: 'Rice: 2,320 cal/$. The global staple.',
+    tip: 'A 25lb bag of rice costs ~$12 and provides 40,000+ calories. That\'s $0.006 per meal\'s worth of carbs. Billions of people know this.',
+    moneySave: 450, timeSave: 0, category: 'food' },
+  { id: 'bread', name: 'Breadmaking Mastery', icon: '🍞', baseCost: 45000, basePS: 3000, costScale: 1.07,
+    desc: 'White bread: 3,333 cal/$ and 103g protein/$!',
+    tip: 'Store-bought white bread is 3,333 cal/$ and has a surprising 103g protein per dollar. But homemade is even cheaper and tastier.',
+    moneySave: 300, timeSave: 0, category: 'food' },
+  { id: 'flour', name: 'Flour Transcendence', icon: '🌾✨', baseCost: 100000, basePS: 6500, costScale: 1.07,
+    desc: 'Flour: 4,464 cal/$ — THE #1 cal/$ food.',
+    tip: 'Flour is the single most calorie-efficient food on Earth at 4,464 cal/$. Master tortillas, bread, pancakes, and pasta from scratch.',
+    moneySave: 500, timeSave: 0, category: 'food' },
+  { id: 'bulkbuy', name: 'Bulk Buy Everything', icon: '🛒', baseCost: 250000, basePS: 15000, costScale: 1.07,
+    desc: 'Buy staples in largest packages. Save 40-60%.',
+    tip: 'Buy rice, oats, beans, pasta, and spices in the LARGEST package. Cost per unit drops 40-60%. A $20 50lb rice bag beats ten $3 bags.',
+    moneySave: 800, timeSave: 0, category: 'food' },
+  { id: 'salecycle', name: 'Sale Cycle Mastery', icon: '📊', baseCost: 600000, basePS: 35000, costScale: 1.07,
+    desc: 'Sales cycle every 6-8 weeks. Never pay full price.',
+    tip: 'Grocery stores cycle sales every 6-8 weeks. Track when YOUR staples go on sale and stock up. You\'ll rarely pay full price again.',
+    moneySave: 700, timeSave: 0, category: 'food' },
+  { id: 'micronut', name: '44 Micronutrients/$', icon: '🧬', baseCost: 1500000, basePS: 80000, costScale: 1.07,
+    desc: 'Optimize all 44 essential nutrients per dollar.',
+    tip: 'Your body needs 44 micronutrients. Lentils, eggs, and liver cover almost all of them cheaply. EIE ranks every food by each nutrient/$ — check the site!',
+    moneySave: 500, timeSave: 0, category: 'food' },
+];
+
+const cookingUpgrades = [
+  { id: 'salt', name: 'Salt Early', icon: '🧂', baseCost: 1.5, basePS: 0.15, costScale: 1.07,
+    desc: 'Deep flavor from the start, not just the surface.',
+    tip: 'Adding salt at the START of cooking lets it penetrate deeply into food. Late salting only hits the surface. This one trick changes everything.',
+    moneySave: 0, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'acid', name: 'Acid Brightening', icon: '🍋', baseCost: 4, basePS: 0.35, costScale: 1.07,
+    desc: 'Lemon or vinegar makes bland food sing.',
+    tip: 'A squeeze of lemon or splash of vinegar at the end "brightens" flat-tasting food instantly. This is restaurant secret #1.',
+    moneySave: 0, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'fat', name: 'Fat as Flavor Carrier', icon: '🧈', baseCost: 10, basePS: 0.80, costScale: 1.07,
+    desc: 'Even a teaspoon transforms cheap food.',
+    tip: 'Fat distributes flavor molecules across your tongue. A teaspoon of butter or olive oil makes rice go from "meh" to "amazing." Cheap trick, big payoff.',
+    moneySave: 0, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'msg', name: 'MSG Enlightenment', icon: '🧪', baseCost: 25, basePS: 1.8, costScale: 1.07,
+    desc: 'Umami makes $0.50 meals taste like $15 ones.',
+    tip: 'MSG is the sodium salt of glutamic acid — found naturally in tomatoes, parmesan, and soy sauce. A $3 bag lasts a year. It\'s science, not scary.',
+    moneySave: 400, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'maillard', name: 'Maillard Reaction', icon: '🔥', baseCost: 60, basePS: 4, costScale: 1.07,
+    desc: 'High heat = complex flavors for free.',
+    tip: 'The Maillard reaction starts at 280°F — sear on HIGH heat. Don\'t crowd the pan or you\'ll steam instead of sear. Dry the surface first.',
+    moneySave: 0, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'spice', name: 'Bulk Spice Rack', icon: '🌶️', baseCost: 150, basePS: 9, costScale: 1.07,
+    desc: '10 spices that make any cheap food exciting.',
+    tip: 'Cumin, paprika, garlic powder, onion powder, chili, oregano, pepper, cinnamon, turmeric, cayenne. Buy BULK — 90% cheaper than jars.',
+    moneySave: 150, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'slowcook', name: 'Slow Cooker Mastery', icon: '♨️', baseCost: 350, basePS: 22, costScale: 1.07,
+    desc: '5 min prep, zero attention, amazing meal.',
+    tip: 'A $25 slow cooker turns cheap cuts + beans + spices into restaurant-quality stews. 5 minutes of prep, zero attention, dinner in 8 hours.',
+    moneySave: 300, timeSave: 80, category: 'kitchen' },
+  { id: 'mealprep', name: 'Meal Prep Sundays', icon: '📦', baseCost: 800, basePS: 50, costScale: 1.07,
+    desc: 'Batch cook 5 days in 2 hours.',
+    tip: 'Meal prepping 5 lunches takes ~2 hours vs 5+ hours cooking daily. 150+ hours saved/yr. Containers + Sunday afternoon = the whole week done.',
+    moneySave: 500, timeSave: 150, category: 'kitchen' },
+  { id: 'freeze', name: 'Freezer Strategy', icon: '🧊', baseCost: 2000, basePS: 120, costScale: 1.07,
+    desc: 'Americans waste $1,500/yr in food. Not you.',
+    tip: 'The average American wastes $1,500/yr in food. Freeze leftovers in single portions, label with date. Your waste drops to nearly zero.',
+    moneySave: 1500, timeSave: 30, category: 'kitchen' },
+  { id: 'leftovers', name: 'Leftover Engineering', icon: '🔄', baseCost: 5000, basePS: 290, costScale: 1.07,
+    desc: 'Microwave a pre-made meal in 8 minutes flat.',
+    tip: 'Walk to microwave → heat → eat = 8 minutes total for a pre-made meal. Compare that to 30-45 min cooking from scratch every day.',
+    moneySave: 200, timeSave: 120, category: 'kitchen' },
+  { id: 'ricebeans', name: 'Rice + Beans Combo', icon: '🍚🫘', baseCost: 12000, basePS: 700, costScale: 1.07,
+    desc: 'Complete protein, all amino acids, <$0.50/meal.',
+    tip: 'Rice + beans together form a COMPLETE protein with all essential amino acids. This combo has fed billions of people for centuries. Under $0.50/meal.',
+    moneySave: 400, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'kitchenscience', name: 'Full Kitchen Science', icon: '🔬', baseCost: 30000, basePS: 1700, costScale: 1.07,
+    desc: 'Master all 5 cooking cheat codes together.',
+    tip: 'The 5 cheat codes: Salt Early, Add Acid, Use MSG, Fat Carries Flavor, Sear on High Heat. Combine all 5 and cheap food tastes gourmet.',
+    moneySave: 0, timeSave: 0, category: 'kitchen', qol: true },
+  { id: 'unitprice', name: 'Unit Price Awareness', icon: '🏷️🔍', baseCost: 75000, basePS: 4200, costScale: 1.07,
+    desc: 'Always check price per oz/lb, never package price.',
+    tip: 'Stores want you to look at package price, not UNIT price (per oz/lb). The big bag isn\'t always cheaper. Check the tiny number on the shelf tag.',
+    moneySave: 600, timeSave: 0, category: 'kitchen' },
+  { id: 'breadbake', name: 'Bread From Scratch', icon: '🥖', baseCost: 200000, basePS: 10000, costScale: 1.07,
+    desc: 'Flour + water + yeast + salt = $0.30/loaf.',
+    tip: 'A homemade loaf costs ~$0.30 in ingredients. Store bread is $3-5. That\'s a 10-16x markup. Basic bread takes 10 min of actual work (the rest is waiting).',
+    moneySave: 300, timeSave: 0, category: 'kitchen' },
+  { id: 'tortilla', name: 'Tortilla Factory', icon: '🫓', baseCost: 500000, basePS: 25000, costScale: 1.07,
+    desc: 'Flour + water + fat = wraps for everything.',
+    tip: 'Homemade tortillas: flour, water, fat, salt. 5 min to make 8 tortillas. Use for wraps, quesadillas, pizzas, chips. Cost: ~$0.03 each vs $0.25 store-bought.',
+    moneySave: 200, timeSave: 0, category: 'kitchen' },
+];
+
+const timeUpgrades = [
+  { id: 'video2x', name: '2x Video Speed', icon: '⏩', baseCost: 25, basePS: 2, costScale: 1.07,
+    desc: 'Same info, half the time. Brain adapts in days.',
+    tip: 'At 2x speed you absorb the same information in half the time. Start at 1.5x, your brain adapts in days. Saves 200+ hours/year on videos and podcasts.',
+    moneySave: 0, timeSave: 200, category: 'time' },
+  { id: 'morning', name: 'Morning Spaghetti Map', icon: '🌅', baseCost: 80, basePS: 5.5, costScale: 1.07,
+    desc: 'Map every step. Eliminate backtracking.',
+    tip: 'Draw your morning as a spaghetti diagram — every step and movement. You\'ll see wasted backtracking immediately. Fixing it saves 100+ hrs/yr.',
+    moneySave: 0, timeSave: 100, category: 'time' },
+  { id: 'shower', name: 'Shower Optimization', icon: '🚿', baseCost: 200, basePS: 13, costScale: 1.07,
+    desc: 'Multi-task the wait times. Save 50 hrs/yr.',
+    tip: 'Shampoo while soap sits, conditioner while shaving. Stack tasks with wait times. The Pareto shower saves 50+ hours a year.',
+    moneySave: 50, timeSave: 50, category: 'time' },
+  { id: 'packlunch', name: 'Pack Your Lunch', icon: '🍱', baseCost: 500, basePS: 32, costScale: 1.07,
+    desc: '$1-3 packed vs $10-15 eating out. Do the math.',
+    tip: 'Eating out for lunch: $10-15/day + drive time. Packed lunch: $1-3 total. That\'s $2,000-3,000/yr saved PLUS 80 hours not spent in drive-thrus.',
+    moneySave: 2500, timeSave: 80, category: 'time' },
+  { id: 'if16', name: 'Intermittent Fasting', icon: '🕐', baseCost: 1200, basePS: 75, costScale: 1.07,
+    desc: '2 meals/day = one less prep/cook/clean cycle.',
+    tip: 'Eating 2 meals instead of 3 eliminates one prep/cook/cleanup cycle daily. 10+ minutes/day = 60+ hours/year saved, plus you save on food costs.',
+    moneySave: 600, timeSave: 60, category: 'time' },
+  { id: 'multitask', name: 'Sequential Multitask', icon: '🔀', baseCost: 3000, basePS: 180, costScale: 1.07,
+    desc: 'Stack tasks with wait times. Zero wasted time.',
+    tip: 'True multitasking fails, but SEQUENTIAL multitasking works: start laundry → cook while it runs → clean while food cools. Stack the wait times.',
+    moneySave: 0, timeSave: 150, category: 'time' },
+  { id: 'pareto', name: 'Pareto Appearance', icon: '👔', baseCost: 7500, basePS: 420, costScale: 1.07,
+    desc: '20% of grooming = 80% of results.',
+    tip: 'Clean haircut, fitted clothes, good posture. That\'s the 20% that gives 80% of the impression. Skip the other 80% of grooming effort.',
+    moneySave: 200, timeSave: 100, category: 'time', qol: true },
+  { id: 'freezebread', name: 'Freeze Bread', icon: '🍞❄️', baseCost: 18000, basePS: 1000, costScale: 1.07,
+    desc: 'Toast from frozen. Same taste, zero waste.',
+    tip: 'Freeze bread before it goes bad. Toast directly from frozen — it tastes exactly the same. Zero bread waste ever again.',
+    moneySave: 100, timeSave: 0, category: 'time', qol: true },
+  { id: 'biphasic', name: 'Biphasic Sleep', icon: '🌙', baseCost: 45000, basePS: 2400, costScale: 1.07,
+    desc: '6hr core + 20min nap = 2 EXTRA hours/day!',
+    tip: 'Biphasic sleep: 6hr night + 20min nap = 2 extra hours EVERY day. That\'s 730 hrs/yr. Adjustment takes 3 tough weeks. Avoid caffeine >100mg while adapting.',
+    moneySave: 0, timeSave: 730, category: 'time' },
+  { id: 'naptechnique', name: 'Nap Technique', icon: '😴', baseCost: 110000, basePS: 5800, costScale: 1.07,
+    desc: '20 min exactly. Set alarm. Don\'t open eyes.',
+    tip: 'Set alarm for exactly 20 minutes. Don\'t open your eyes until it rings. This sweet spot refreshes without grogginess. Your body learns to fall asleep fast.',
+    moneySave: 0, timeSave: 30, category: 'time', qol: true },
+  { id: 'nocommute', name: 'Commute Optimization', icon: '🚗', baseCost: 280000, basePS: 14000, costScale: 1.07,
+    desc: 'The average commute wastes 200+ hrs/yr.',
+    tip: 'Average American commutes 27 min each way = 225 hrs/yr. Audiobooks at 2x speed, or negotiating 1 remote day/week = huge time recovery.',
+    moneySave: 500, timeSave: 100, category: 'time' },
+  { id: 'routine', name: 'Full Routine Science', icon: '🔧', baseCost: 700000, basePS: 35000, costScale: 1.07,
+    desc: 'Apply industrial engineering to your entire day.',
+    tip: 'Your daily life IS a factory. Apply spaghetti diagrams, eliminate waste, batch similar tasks, optimize every transition. IE isn\'t just for factories.',
+    moneySave: 0, timeSave: 200, category: 'time', qol: true },
+  { id: 'compound1pct', name: '1% Better Daily', icon: '📈', baseCost: 1800000, basePS: 90000, costScale: 1.07,
+    desc: '1% daily = 37x better in one year.',
+    tip: 'If you improve just 1% every single day, you\'ll be 37.78x better in one year. (1.01^365 = 37.78). Small daily gains compound enormously.',
+    moneySave: 0, timeSave: 0, category: 'time', qol: true },
+];
+
+const lifeUpgrades = [
+  { id: 'caffpills', name: 'Caffeine Pills', icon: '💊', baseCost: 150, basePS: 9, costScale: 1.07,
+    desc: '$0.03/pill vs $5 coffee. Same molecule.',
+    tip: '200mg caffeine pills: ~$0.03 each. Starbucks: $5-7 for ~150mg caffeine. Same stimulant, 150x cheaper. A bottle of 100 pills costs $3-6 total.',
+    moneySave: 1500, timeSave: 50, category: 'life' },
+  { id: 'water', name: 'Tap Water Only', icon: '🚰', baseCost: 400, basePS: 22, costScale: 1.07,
+    desc: 'Bottled water is a 4,000% markup over tap.',
+    tip: 'Tap water costs ~$0.004/gallon. Bottled water costs $1-2/bottle. That\'s a 4,000% markup for the same thing. Get a reusable bottle.',
+    moneySave: 500, timeSave: 0, category: 'life' },
+  { id: 'library', name: 'Library Card', icon: '📚', baseCost: 1000, basePS: 55, costScale: 1.07,
+    desc: 'Free books, audiobooks, movies, WiFi.',
+    tip: 'Libraries offer free books, audiobooks (Libby app), movies, music, WiFi, printing, and events. A single audiobook costs $15-30 — the library has thousands free.',
+    moneySave: 500, timeSave: 0, category: 'life', qol: true },
+  { id: 'noimpulse', name: 'Anti-Impulse Rule', icon: '🛑', baseCost: 2500, basePS: 130, costScale: 1.07,
+    desc: 'Wait 48 hours. If you still want it, buy it.',
+    tip: 'The 48-hour rule: want something? Wait 48 hours. If you still want it after 2 days, buy it. 80% of impulse purchases fail this test.',
+    moneySave: 2000, timeSave: 0, category: 'life' },
+  { id: 'pizza', name: 'Pizza Math', icon: '🍕', baseCost: 6000, basePS: 320, costScale: 1.07,
+    desc: 'Large has 78% more area than medium.',
+    tip: 'A large pizza (14") has 78% more area than a medium (10") but rarely costs 78% more. Always compare price per square inch. Two mediums < one large.',
+    moneySave: 100, timeSave: 0, category: 'life', qol: true },
+  { id: 'montessori', name: 'Montessori at Home', icon: '👶', baseCost: 15000, basePS: 800, costScale: 1.07,
+    desc: 'Kid independence = your free time back.',
+    tip: 'Child-height shelves, let them serve themselves, dress themselves. Kids become independent faster = parents get time back. Montessori works at home too.',
+    moneySave: 0, timeSave: 200, category: 'life', qol: true },
+  { id: 'negotiate', name: 'Negotiate Everything', icon: '🤝', baseCost: 40000, basePS: 2000, costScale: 1.07,
+    desc: 'One phone call can save hundreds/year.',
+    tip: 'Call your internet, phone, and insurance companies annually and ask for a better rate. One 15-minute call saves $200-500/year on average.',
+    moneySave: 1000, timeSave: 0, category: 'life' },
+  { id: 'invest', name: 'Invest the Savings', icon: '📈💰', baseCost: 100000, basePS: 5000, costScale: 1.07,
+    desc: '$100/month at 7% = $120K in 20 years.',
+    tip: 'Don\'t just save money — INVEST it. $100/month in a low-cost index fund at 7% average return becomes $120,000 in 20 years. Compound interest is magic.',
+    moneySave: 2000, timeSave: 0, category: 'life' },
+  { id: 'diy', name: 'YouTube University', icon: '🎓', baseCost: 250000, basePS: 12000, costScale: 1.07,
+    desc: 'Fix anything yourself. Free education forever.',
+    tip: 'YouTube has free tutorials for virtually any repair, recipe, or skill. A plumber charges $100+/hour for a $5 part and a 10-minute fix you can learn on video.',
+    moneySave: 1500, timeSave: 0, category: 'life', qol: true },
+  { id: 'eiemaster', name: 'EIE Lifestyle Master', icon: '🏆', baseCost: 700000, basePS: 35000, costScale: 1.07,
+    desc: 'Apply efficiency to EVERYTHING. Waste nothing.',
+    tip: 'Efficiency isn\'t deprivation — it\'s optimization. Spend on what matters, eliminate what doesn\'t. The goal: maximum life quality per dollar and per hour.',
+    moneySave: 0, timeSave: 0, category: 'life', qol: true },
+  { id: 'pareto_life', name: 'Pareto Life Design', icon: '⚖️', baseCost: 2000000, basePS: 100000, costScale: 1.07,
+    desc: '80% of happiness from 20% of spending.',
+    tip: 'Track where your money goes for one month. You\'ll find 80% of your happiness comes from 20% of your spending. Cut the other 80% ruthlessly.',
+    moneySave: 5000, timeSave: 0, category: 'life', qol: true },
+];
+
+const autoUpgrades = [
+  { id: 'autoclicker', name: 'Auto-Saver', icon: '🤖', baseCost: 200, basePS: 0, costScale: 1.09,
+    desc: 'Automatically clicks SAVE once per second.',
+    tip: 'Automation is the ultimate efficiency: why do manually what a system can handle? Apply this to bills (auto-pay), savings (auto-transfer), everything.',
+    moneySave: 0, timeSave: 0, category: 'auto', autoClick: 1 },
+  { id: 'clickmult', name: 'Click Multiplier', icon: '✖️', baseCost: 600, basePS: 0, costScale: 1.20,
+    desc: 'Doubles your click power each level.',
+    tip: 'Compounding: 1% better daily = 37x in a year. Small improvements stacked over time create enormous results.',
+    moneySave: 0, timeSave: 0, category: 'auto', clickMult: true },
+  { id: 'interest', name: 'Compound Interest', icon: '🏦', baseCost: 3000, basePS: 0, costScale: 1.18,
+    desc: 'Earn 1% of savings every 10 seconds per level.',
+    tip: 'Einstein (maybe) called compound interest the 8th wonder of the world. Your money should be making money while you sleep.',
+    moneySave: 0, timeSave: 0, category: 'auto', interest: true },
+  { id: 'efficiency', name: 'Efficiency Aura', icon: '✨', baseCost: 8000, basePS: 0, costScale: 1.20,
+    desc: 'All production +25% per level.',
+    tip: 'Systems thinking: improving the SYSTEM beats improving individual parts. One process change is worth 100 hours of extra work.',
+    moneySave: 0, timeSave: 0, category: 'auto', aura: 0.25 },
+  { id: 'offline', name: 'Passive Income+', icon: '😴', baseCost: 20000, basePS: 0, costScale: 1.22,
+    desc: '+15% offline earning rate per level.',
+    tip: 'The ultimate goal: build systems that earn while you sleep. Automate savings, investments, and meal prep so your future self benefits.',
+    moneySave: 0, timeSave: 0, category: 'auto', offlineBoost: 0.15 },
+  { id: 'synergy', name: 'Category Synergy', icon: '🔗', baseCost: 60000, basePS: 0, costScale: 1.22,
+    desc: 'Each category boosts all others +10%/level.',
+    tip: 'Synergy: saving money → needing less income → more free time → better health → more energy → earn more. Every improvement amplifies every other.',
+    moneySave: 0, timeSave: 0, category: 'auto', synergy: 0.10 },
+  { id: 'milestone', name: 'Milestone Booster', icon: '🎯', baseCost: 150000, basePS: 0, costScale: 1.25,
+    desc: 'Every 10th upgrade of any type gives +50% bonus.',
+    tip: 'Consistency beats intensity. It\'s not the one big action — it\'s the 10th, 20th, 50th repetition where real transformation happens.',
+    moneySave: 0, timeSave: 0, category: 'auto', milestoneBoost: true },
+  { id: 'autobuyer', name: 'Smart Auto-Buyer', icon: '🧠', baseCost: 500000, basePS: 0, costScale: 1.30,
+    desc: 'Auto-purchases cheapest affordable upgrade.',
+    tip: 'Decision fatigue is real. Automate as many daily decisions as possible: same breakfast, capsule wardrobe, auto-pay bills. Save mental energy for big decisions.',
+    moneySave: 0, timeSave: 0, category: 'auto', autoBuy: true },
+];
+
+// All upgrades by category
+const allUpgrades = {
+  food: foodUpgrades,
+  kitchen: cookingUpgrades,
+  time: timeUpgrades,
+  life: lifeUpgrades,
+  auto: autoUpgrades,
+};
+
+// ═══════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════
+const achievements = [
+  { id: 'first_click', name: 'First Step', desc: 'Click SAVE', bonus: 'Click +50%', check: s => s.clicks >= 1 },
+  { id: 'ten_clicks', name: 'Getting Started', desc: 'Click 10 times', bonus: '+$0.02/s', check: s => s.clicks >= 10 },
+  { id: 'first_buy', name: 'Smart Shopper', desc: 'Buy your first upgrade', bonus: 'Click +100%', check: s => getTotalCount() >= 1 },
+  { id: 'earn_1', name: 'First Dollar', desc: 'Earn $1', bonus: '+$0.05/s', check: s => s.totalEarned >= 1 },
+  { id: 'earn_10', name: 'Double Digits', desc: 'Earn $10', bonus: 'All +10%', check: s => s.totalEarned >= 10 },
+  { id: 'earn_100', name: 'Triple Digits', desc: 'Earn $100', bonus: 'All +10%', check: s => s.totalEarned >= 100 },
+  { id: 'earn_1k', name: 'Four Figures', desc: 'Earn $1,000', bonus: 'All +10%', check: s => s.totalEarned >= 1000 },
+  { id: 'earn_10k', name: 'Serious Saver', desc: 'Earn $10,000', bonus: 'All +15%', check: s => s.totalEarned >= 10000 },
+  { id: 'earn_100k', name: 'Efficiency Expert', desc: 'Earn $100,000', bonus: 'All +15%', check: s => s.totalEarned >= 100000 },
+  { id: 'earn_1m', name: 'Millionaire Mindset', desc: 'Earn $1,000,000', bonus: 'All +20%', check: s => s.totalEarned >= 1000000 },
+  { id: 'earn_100m', name: 'Efficiency Mogul', desc: 'Earn $100,000,000', bonus: 'All +25%', check: s => s.totalEarned >= 100000000 },
+  { id: 'earn_1b', name: 'Billionaire Brain', desc: 'Earn $1 Billion', bonus: 'All +30%', check: s => s.totalEarned >= 1000000000 },
+  { id: 'five_food', name: 'Diverse Diet', desc: 'Own 5 food upgrades', bonus: 'Food +20%', check: s => foodUpgrades.filter(u => (s.upgrades[u.id]||0)>0).length >= 5 },
+  { id: 'ten_food', name: 'Grocery Guru', desc: 'Own 10 food upgrades', bonus: 'Food +25%', check: s => foodUpgrades.filter(u => (s.upgrades[u.id]||0)>0).length >= 10 },
+  { id: 'all_cook', name: 'Master Chef', desc: 'Own all cooking upgrades', bonus: 'Cooking +30%', check: s => cookingUpgrades.every(u => (s.upgrades[u.id]||0)>0) },
+  { id: 'all_time', name: 'Time Lord', desc: 'Own all time upgrades', bonus: 'Time +30%', check: s => timeUpgrades.every(u => (s.upgrades[u.id]||0)>0) },
+  { id: 'tips_5', name: 'Quick Learner', desc: 'Learn 5 tips', bonus: 'Click +100%', check: s => s.tipsLearned.length >= 5 },
+  { id: 'tips_15', name: 'Knowledge Seeker', desc: 'Learn 15 tips', bonus: 'All +10%', check: s => s.tipsLearned.length >= 15 },
+  { id: 'tips_30', name: 'Efficiency Scholar', desc: 'Learn 30 tips', bonus: 'All +15%', check: s => s.tipsLearned.length >= 30 },
+  { id: 'tips_50', name: 'Walking Encyclopedia', desc: 'Learn 50 tips', bonus: 'All +20%', check: s => s.tipsLearned.length >= 50 },
+  { id: 'click_100', name: 'Clicker', desc: 'Click 100 times', bonus: 'Click +100%', check: s => s.clicks >= 100 },
+  { id: 'click_1000', name: 'Dedicated', desc: 'Click 1,000 times', bonus: 'Click +200%', check: s => s.clicks >= 1000 },
+  { id: 'prestige1', name: 'Rebirth', desc: 'Prestige once', bonus: 'Start with $50', check: s => s.prestigeCount >= 1 },
+  { id: 'prestige3', name: 'Optimizer', desc: 'Prestige 3 times', bonus: 'All +20%', check: s => s.prestigeCount >= 3 },
+  { id: 'ps_10', name: 'Cash Flow', desc: 'Reach $10/s', bonus: 'All +5%', check: s => s.perSecond >= 10 },
+  { id: 'ps_100', name: 'Passive Income', desc: 'Reach $100/s', bonus: 'All +10%', check: s => s.perSecond >= 100 },
+  { id: 'ps_1000', name: 'Money Machine', desc: 'Reach $1,000/s', bonus: 'All +15%', check: s => s.perSecond >= 1000 },
+  { id: 'ps_10000', name: 'Empire Builder', desc: 'Reach $10,000/s', bonus: 'All +20%', check: s => s.perSecond >= 10000 },
+  { id: 'unlock_all_cats', name: 'Full Spectrum', desc: 'Unlock all 5 categories', bonus: 'All +25%', check: s => categories.every(c => getTotalCount() >= c.unlockAt) },
+  { id: 'total_50', name: 'Half Century', desc: 'Buy 50 total upgrades', bonus: 'All +10%', check: s => getTotalCount() >= 50 },
+  { id: 'total_100', name: 'Centurion', desc: 'Buy 100 total upgrades', bonus: 'All +15%', check: s => getTotalCount() >= 100 },
+  { id: 'total_200', name: 'Efficiency Legend', desc: 'Buy 200 total upgrades', bonus: 'All +20%', check: s => getTotalCount() >= 200 },
+];
+
+// ═══════════════════════════════════════════
+// TIP POOL (for rotating ticker)
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// TIPS — each can have a deepDive URL to EIE
+// ═══════════════════════════════════════════
+const tipData = [];
+// Pull tips from upgrades
+Object.values(allUpgrades).flat().forEach(u => {
+  if (u.tip) tipData.push({ text: u.tip, url: null });
+});
+// Extra standalone tips with deep-dive URLs
+const extraTips = [
+  // FOOD / CALORIES PER DOLLAR
+  { text: "Aim for ~700 calories per dollar to keep annual food costs around $1,000.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Eating only one food saves money but costs thousands in medical bills. Eat diverse foods!", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Processed boxed foods are significantly more expensive than homemade alternatives.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Fast food costs nearly double home-cooked meals. Little Caesars is 420 cal/$ — cheap food at home beats even the cheapest fast food.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Turkey has 78g protein per dollar — great for lean muscle building on a budget.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Greek yogurt: only 10g protein/$ vs chicken at 50g protein/$. Don't fall for health marketing.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Olive oil in bulk (101 fl oz): 1,245 cal/$. Always buy the biggest container of staples.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Canned foods are surprisingly expensive per calorie. Dry beans, rice, and lentils always win.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Instant oats cost 5x more than regular oats for the same product. Buy the big canister.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Cereal alone is a bad deal. But cereal + whole milk becomes reasonable nutrition per dollar.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Sugar: 2,854 cal/$. Not healthy alone, but shows why processed food is engineered to be cheap.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "The EIE author graduated with master's AND PhD degrees with zero debt using these food principles.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Build cheap meals in 5 steps: protein base + flavor veggies + carb base + fat + recipe search.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Lentils deliver 116g protein per dollar. Chicken only delivers 50g. Lentils win by 2x.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Beans and lentils: 80-140g protein/$, 60% daily fiber in just 180 calories. True superfoods.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+  { text: "Pearled barley: 1,429 cal/$. Ancient grain, extremely filling due to high fiber content.", url: "https://efficiencyiseverything.com/calorie-per-dollar-list/" },
+
+  // EAT FOR $1.50/DAY
+  { text: "You can eat for $1.50/day with 5 foods: Potatoes, Milk, Flour, Eggs, and Kale.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Homemade pizza costs ~$2 total. Restaurant pizza is $15-25. Learn to make dough.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Fried rice takes 10 minutes: leftover rice + egg + soy sauce + frozen veggies. Under $0.50.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Homemade noodles: eggs + flour + salt + water. Boil 2 minutes. Cheaper than any store pasta.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Crepes: eggs, flour, milk, sugar. Fill with PB, jelly, banana, or chocolate. 4 crepes for pennies.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Hash browns: grate raw potatoes, fry on high heat 10 min. Crispy, cheap, and satisfying.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Roasted carrots: slice, coat with oil + salt, bake 425°F for 15-20 min. Restaurant-quality side.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Buy a thrift-store bread maker for $6. Makes fresh bread for ~$0.30/loaf automatically.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Weekly meal plan: Mon-roasted potatoes, Tue-noodles, Wed-tortillas & beans, Thu-pizza, Fri-fried rice, Sat-pot pie, Sun-pierogis.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+  { text: "Spend $1-2/week on spices and flavor enhancers. They transform cheap base ingredients.", url: "https://efficiencyiseverything.com/eat-for-1-50-per-day/" },
+
+  // COOKING CHEAT CODES
+  { text: "The 5 cooking cheat codes: Acid (lemon/vinegar), Salt, Sugar, Fat, and MSG. Layer them.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Layer flavor on each component separately. Season the chicken, season the rice, season the veggies.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Taste as you go. Add a little of each flavor element, taste, adjust. Don't dump and pray.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Naming dishes creatively actually makes them taste better. Psychology is a real ingredient.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Worcestershire sauce, fish sauce, and oyster sauce are MSG alternatives for umami flavor.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Aromatics (garlic, onion, mirepoix) stimulate appetite through smell before you even taste.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Hot sauce and cayenne trigger endorphin release. Free happiness from a $2 bottle.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Steam or gently fry veggies to keep colors vibrant. Bright food looks (and tastes) better.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+  { text: "Brown sugar and syrups add richer depth than white sugar. Use sparingly in savory dishes too.", url: "https://efficiencyiseverything.com/cooking-cheat-codes/" },
+
+  // BIPHASIC SLEEP
+  { text: "Biphasic sleep adjustment takes 3 weeks. The first week is the hardest. Don't quit.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "Nap technique: set alarm for 20 min, lie down, don't open eyes, don't move. Wait for alarm.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "You only need 5 minutes of actual sleep in a 20-minute nap to hit a REM cycle.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "After a 20-min nap it feels like 2-3 hours passed. Your brain gets a full reset.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "Pick one consistent nap time (±2 hours is fine). The 4-8pm window works for most people.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "Reduce caffeine to under 100mg/day for a few weeks before starting biphasic sleep.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "After adapting to biphasic sleep, sleeping 9+ hours can help recover from illness or hangovers.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "Biphasic nappers successfully nap at weddings, in cars, at family gatherings. It becomes natural.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+  { text: "Perfection isn't required. Occasional missed naps or long weekend sleeps still net huge time savings.", url: "https://efficiencyiseverything.com/biphasic-sleep/" },
+
+  // TIME SAVING
+  { text: "Skipping breakfast via IF saves ~10 min/day: 2.5 min prep + 1 min walking + 5 min eating + 2 min cleanup.", url: "https://efficiencyiseverything.com/save-time/" },
+  { text: "Skipping one meal daily = 3,040 hours saved over a lifetime. That's 380 extra vacation days.", url: "https://efficiencyiseverything.com/save-time/" },
+  { text: "Batch cooking creates ready-to-eat leftovers. Microwave meals take 8 min total vs 30-45 min cooking.", url: "https://efficiencyiseverything.com/save-time/" },
+  { text: "Keep eggs as a backup meal. 'Breakfast for dinner' when leftovers run out takes 5 minutes.", url: "https://efficiencyiseverything.com/save-time/" },
+  { text: "Use just-in-time grocery shopping — buy only what you need rather than overstocking.", url: "https://efficiencyiseverything.com/save-time/" },
+
+  // MONEY SAVING
+  { text: "Smoking costs ~$25/week ($1,300/yr). Quitting saves money AND adds years to your life.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Alcohol costs ~$30/week at bars ($1,560/yr). Limit to social occasions or switch to home drinks.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Daily eating out: Starbucks ($8) + lunch ($10) + dinner ($15) = $33/day = $12,000/yr wasted.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Credit card interest is 12-24%. Pay in full every month. Never charge what you can't cover in cash.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "New textbooks cost ~$130. Rentals cost ~$40. Used copies even less. Always check rental first.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Car ownership costs insurance + gas + parking + maintenance. Bike or bus if possible.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Buy used items instead of new. Same function, 50-80% cheaper. Especially furniture and electronics.", url: "https://efficiencyiseverything.com/save-money/" },
+  { text: "Share large purchases with roommates. A Costco membership split 3 ways pays for itself fast.", url: "https://efficiencyiseverything.com/save-money/" },
+
+  // GENERAL EFFICIENCY
+  { text: "The Pareto Principle: 80% of your results come from 20% of your effort. Find and focus on that 20%.", url: "https://efficiencyiseverything.com" },
+  { text: "If you improve 1% every day, you'll be 37x better in one year. (1.01^365 = 37.78).", url: "https://efficiencyiseverything.com" },
+  { text: "Industrial engineering isn't just for factories. YOUR life is a system that can be optimized.", url: "https://efficiencyiseverything.com" },
+  { text: "Efficiency isn't deprivation — it's spending on what matters and eliminating what doesn't.", url: "https://efficiencyiseverything.com" },
+  { text: "Track your spending for one month. You'll find 80% of happiness comes from 20% of purchases.", url: "https://efficiencyiseverything.com" },
+  { text: "Every daily habit multiplied by 365 either costs or saves you thousands. Audit your habits.", url: "https://efficiencyiseverything.com" },
+  { text: "The goal isn't to be cheap — it's to maximize life quality per dollar AND per hour spent.", url: "https://efficiencyiseverything.com" },
+  { text: "Decision fatigue is real. Automate recurring decisions: same breakfast, auto-pay bills, capsule wardrobe.", url: "https://efficiencyiseverything.com" },
+  { text: "Sunk cost fallacy: just because you paid for it doesn't mean you should keep using it. Move on.", url: "https://efficiencyiseverything.com" },
+  { text: "The best investment is in knowledge that compounds forever. Learning to cook saves money for life.", url: "https://efficiencyiseverything.com" },
+];
+extraTips.forEach(t => tipData.push(t));
+
+// Shuffle tips for variety
+for (let i = tipData.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [tipData[i], tipData[j]] = [tipData[j], tipData[i]];
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function fmt(n) {
+  if (n < 0) return '-' + fmt(-n);
+  if (n >= 1e15) return '$' + (n/1e15).toFixed(2) + 'Q';
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e4) return '$' + (n/1e3).toFixed(1) + 'K';
+  if (n >= 100) return '$' + n.toFixed(0);
+  return '$' + n.toFixed(2);
+}
+function fmtShort(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return Math.floor(n).toLocaleString();
+}
+function getTotalCount() {
+  return Object.values(state.upgrades).reduce((a, b) => a + b, 0);
+}
+function getUpgradeCost(up) {
+  const count = state.upgrades[up.id] || 0;
+  return Math.ceil(up.baseCost * Math.pow(up.costScale, count) * 100) / 100;
+}
+
+// ═══════════════════════════════════════════
+// PRODUCTION MATH
+// ═══════════════════════════════════════════
+function getAchBonuses() {
+  let allPct = 0, foodPct = 0, cookPct = 0, timePct = 0, clickPct = 0, flatPS = 0;
+  for (const ach of achievements) {
+    if (!state.achievements[ach.id]) continue;
+    const b = ach.bonus;
+    if (b.startsWith('All'))    { const m = b.match(/(\d+)/); if (m) allPct += parseInt(m[1]); }
+    if (b.startsWith('Food'))   { const m = b.match(/(\d+)/); if (m) foodPct += parseInt(m[1]); }
+    if (b.startsWith('Cook'))   { const m = b.match(/(\d+)/); if (m) cookPct += parseInt(m[1]); }
+    if (b.startsWith('Time'))   { const m = b.match(/(\d+)/); if (m) timePct += parseInt(m[1]); }
+    if (b.startsWith('Click'))  { const m = b.match(/(\d+)/); if (m) clickPct += parseInt(m[1]); }
+    if (b.includes('/s'))       { const m = b.match(/\+\$([0-9.]+)/); if (m) flatPS += parseFloat(m[1]); }
+    if (b.startsWith('Start')) {} // prestige start bonus handled elsewhere
+  }
+  return { allPct, foodPct, cookPct, timePct, clickPct, flatPS };
+}
+
+function calcPerSecond() {
+  const ach = getAchBonuses();
+  const auraCount = state.upgrades['efficiency'] || 0;
+  const synergyCount = state.upgrades['synergy'] || 0;
+  const milestoneBoost = state.upgrades['milestone'] || 0;
+
+  // Count categories with upgrades
+  let catsOwned = 0;
+  for (const cat of Object.keys(allUpgrades)) {
+    if (allUpgrades[cat].some(u => (state.upgrades[u.id] || 0) > 0)) catsOwned++;
+  }
+
+  // Milestone bonus: every 10th upgrade of any type gives +50% per milestone level
+  let milestoneMultiplier = 1;
+  if (milestoneBoost > 0) {
+    const total = getTotalCount();
+    const milestones = Math.floor(total / 10);
+    milestoneMultiplier = 1 + (milestones * 0.50 * milestoneBoost);
+  }
+
+  let ps = 0;
+  const catMultipliers = {
+    food: 1 + ach.foodPct / 100,
+    kitchen: 1 + ach.cookPct / 100,
+    time: 1 + ach.timePct / 100,
+    life: 1,
+    auto: 1,
+  };
+
+  for (const cat of Object.keys(allUpgrades)) {
+    let catPS = 0;
+    for (const up of allUpgrades[cat]) {
+      const count = state.upgrades[up.id] || 0;
+      if (count > 0 && up.basePS > 0) catPS += up.basePS * count;
+    }
+    catPS *= (catMultipliers[cat] || 1);
+    ps += catPS;
+  }
+
+  // Global multipliers
+  const auraMultiplier = 1 + auraCount * 0.25;
+  const synergyMultiplier = 1 + synergyCount * 0.10 * Math.max(0, catsOwned - 1);
+  const achMultiplier = 1 + ach.allPct / 100;
+
+  const deepDiveMultiplier = 1 + getDeepDiveBonus() / 100;
+  ps *= auraMultiplier * synergyMultiplier * achMultiplier * milestoneMultiplier * deepDiveMultiplier * state.prestigeMultiplier;
+
+  // Flat PS from achievements
+  ps += ach.flatPS * state.prestigeMultiplier;
+
+  return ps;
+}
+
+function calcClickValue() {
+  const ach = getAchBonuses();
+  let base = 0.01;
+  base += getTotalCount() * 0.002;
+  const clickMultCount = state.upgrades['clickmult'] || 0;
+  if (clickMultCount > 0) base *= Math.pow(2, clickMultCount);
+  base *= (1 + ach.clickPct / 100);
+  base *= state.prestigeMultiplier;
+  // 5% of per-second as click bonus
+  base += state.perSecond * 0.05;
+  return base;
+}
+
+function calcAutoClicksPerSec() { return state.upgrades['autoclicker'] || 0; }
+
+function calcOfflineRate() {
+  return Math.min(1.0, 0.50 + (state.upgrades['offline'] || 0) * 0.15);
+}
+
+function calcPrestigeMultiplier() {
+  if (state.lifetimeEarned < 100000) return 0;
+  return Math.floor(Math.pow(state.lifetimeEarned / 100000, 0.42) * 100) / 100;
+}
+
+function calcRealWorldImpact() {
+  let money = 0, time = 0, tips = 0;
+  for (const cat of Object.keys(allUpgrades)) {
+    for (const up of allUpgrades[cat]) {
+      if ((state.upgrades[up.id] || 0) > 0) {
+        money += up.moneySave || 0;
+        time += up.timeSave || 0;
+        tips++;
+      }
+    }
+  }
+  return { money, time, tips };
+}
+
+// ═══════════════════════════════════════════
+// AUTO-BUYER
+// ═══════════════════════════════════════════
+let autoBuyTimer = 0;
+function doAutoBuy() {
+  const autoBuyCount = state.upgrades['autobuyer'] || 0;
+  if (autoBuyCount <= 0) return;
+  // Find cheapest affordable upgrade across all unlocked categories
+  let cheapest = null, cheapestCost = Infinity;
+  const totalCount = getTotalCount();
+  for (const cat of categories) {
+    if (totalCount < cat.unlockAt) continue;
+    for (const up of allUpgrades[cat.id]) {
+      if (up.autoBuy || up.autoClick || up.clickMult || up.interest || up.aura || up.offlineBoost || up.synergy || up.milestoneBoost) continue;
+      const cost = getUpgradeCost(up);
+      if (state.money >= cost && cost < cheapestCost) {
+        cheapest = up;
+        cheapestCost = cost;
+      }
+    }
+  }
+  if (cheapest) buyUpgrade(cheapest, true);
+}
+
+// ═══════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════
+let lastUpgradeSig = '';
+
+function updateUI() {
+  state.perSecond = calcPerSecond();
+  state.clickValue = calcClickValue();
+  const impact = calcRealWorldImpact();
+
+  document.getElementById('statMoney').textContent = fmt(state.money);
+  document.getElementById('statPS').textContent = fmt(state.perSecond) + '/s';
+  document.getElementById('statClick').textContent = fmt(state.clickValue);
+  document.getElementById('clickPower').textContent = '+' + fmt(state.clickValue) + ' / click';
+  document.getElementById('clickStats').textContent = 'Clicks: ' + fmtShort(state.clicks);
+
+  document.getElementById('impactMoney').textContent = '$' + fmtShort(impact.money);
+  document.getElementById('impactTime').textContent = fmtShort(impact.time);
+  document.getElementById('impactTips').textContent = impact.tips.toString();
+
+  // Prestige — only show after $100k lifetime
+  const showPrestige = state.lifetimeEarned >= 100000 || state.prestigeCount > 0;
+  document.getElementById('prestigeSection').classList.toggle('visible', showPrestige);
+  document.getElementById('prestigePill').style.display = showPrestige ? '' : 'none';
+
+  if (showPrestige) {
+    document.getElementById('statPrestige').textContent = 'x' + state.prestigeMultiplier.toFixed(2);
+    const newMult = calcPrestigeMultiplier();
+    const btn = document.getElementById('prestigeBtn');
+    const info = document.getElementById('prestigeInfo');
+    if (newMult > 0 && (1 + newMult) > state.prestigeMultiplier) {
+      btn.disabled = false;
+      info.textContent = 'New multiplier: x' + (1 + newMult).toFixed(2);
+    } else {
+      btn.disabled = true;
+      info.textContent = 'Earn more to increase multiplier';
+    }
+  }
+  updateNextUnlockHint();
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = '';
+  const total = getTotalCount();
+
+  for (const cat of categories) {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.setAttribute('data-cat', cat.id);
+    const locked = total < cat.unlockAt && cat.unlockAt > 0;
+
+    if (cat.id === state.activeTab && !locked) btn.classList.add('active');
+    if (locked) {
+      btn.classList.add('locked');
+      btn.innerHTML = cat.name + ' <span class="unlock-hint">(' + cat.unlockText + ')</span>';
+    } else {
+      if (!state.unlockedCats.includes(cat.id)) {
+        state.unlockedCats.push(cat.id);
+        showToast('🎉 ' + cat.name + ' UNLOCKED!');
+        state.activeTab = cat.id;
+      }
+      btn.textContent = cat.name;
+      btn.addEventListener('click', () => {
+        state.activeTab = cat.id;
+        renderTabs();
+        renderUpgrades(true);
+      });
+    }
+    bar.appendChild(btn);
+  }
+}
+
+function renderUpgrades(force) {
+  if (state.activeTab === 'journal') {
+    renderJournal();
+    return;
+  }
+
+  const list = allUpgrades[state.activeTab] || [];
+  const container = document.getElementById('upgradesList');
+
+  // Signature to prevent unnecessary re-renders (fixes jitter)
+  let sig = state.activeTab + '|' + buyAmount + '|';
+  for (const up of list) {
+    const count = state.upgrades[up.id] || 0;
+    const cost = getUpgradeCost(up);
+    sig += up.id + count + (state.money >= cost ? 'Y' : 'N') + Math.floor(cost) + '|';
+  }
+  if (sig === lastUpgradeSig && !force) return;
+  lastUpgradeSig = sig;
+
+  container.innerHTML = '';
+  for (const up of list) {
+    const count = state.upgrades[up.id] || 0;
+    const cost = getUpgradeCost(up);
+
+    let displayCost, bulkAmount;
+    if (buyAmount === 1) {
+      displayCost = cost;
+      bulkAmount = 1;
+    } else {
+      const bulk = getBulkCost(up, buyAmount);
+      displayCost = bulk.total;
+      bulkAmount = bulk.amount;
+    }
+    const affordable = state.money >= displayCost && bulkAmount > 0;
+
+    const card = document.createElement('div');
+    card.className = 'upgrade-card' + (affordable ? ' affordable' : ' locked');
+
+    let prodText = '';
+    if (count > 0) {
+      if (up.basePS > 0) prodText = fmt(up.basePS * count) + '/s base';
+      else if (up.autoClick) prodText = count + 'x auto-click/s';
+      else if (up.clickMult) prodText = 'Click x' + Math.pow(2, count);
+      else if (up.interest) prodText = count + '% interest / 10s';
+      else if (up.aura) prodText = 'All +' + (count * 25) + '%';
+      else if (up.offlineBoost) prodText = 'Offline: ' + Math.round(calcOfflineRate() * 100) + '%';
+      else if (up.synergy) prodText = '+' + (count * 10) + '% per cat';
+      else if (up.milestoneBoost) prodText = 'Active (' + count + ')';
+      else if (up.autoBuy) prodText = 'Auto-buying (' + count + ')';
+    }
+
+    // Milestone badge at 10, 25, 50
+    let badge = '';
+    if (count === 10 || count === 25 || count === 50) {
+      badge = '<span class="milestone-badge">x' + count + ' MILESTONE</span>';
+    }
+
+    const bulkLabel = (buyAmount !== 1 && bulkAmount > 1) ? ' (x' + bulkAmount + ')' : '';
+
+    card.innerHTML =
+      '<div class="upgrade-icon">' + up.icon + '</div>' +
+      '<div class="upgrade-info">' +
+        '<h3>' + up.name + badge + '</h3>' +
+        '<div class="desc">' + up.desc + '</div>' +
+        (prodText ? '<div class="production">' + prodText + '</div>' : '') +
+      '</div>' +
+      '<div class="upgrade-buy">' +
+        '<span class="upgrade-cost">' + fmt(displayCost) + bulkLabel + '</span>' +
+        '<span class="upgrade-count">' + (count > 0 ? 'x' + count : '') + '</span>' +
+      '</div>';
+
+    // Progress bar for non-affordable upgrades
+    if (!affordable && displayCost > 0) {
+      const pct = Math.min(99, Math.floor((state.money / displayCost) * 100));
+      if (pct > 0) {
+        const bar = document.createElement('div');
+        bar.className = 'upgrade-progress';
+        bar.innerHTML = '<div class="upgrade-progress-fill" style="width:' + pct + '%"></div>';
+        card.appendChild(bar);
+      }
+    }
+
+    if (affordable) {
+      const amt = bulkAmount;
+      card.addEventListener('click', () => {
+        for (let i = 0; i < amt; i++) buyUpgrade(up, i > 0);
+      });
+    }
+    container.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════
+function doClick(e) {
+  const earned = state.clickValue;
+  state.money += earned;
+  state.totalEarned += earned;
+  state.lifetimeEarned += earned;
+  state.clicks++;
+
+  // Popup
+  const btn = document.getElementById('clickBtn');
+  const rect = btn.getBoundingClientRect();
+  const popup = document.createElement('div');
+  popup.className = 'number-popup';
+  popup.textContent = '+' + fmt(earned);
+  const ox = (e.clientX || (rect.left + rect.width / 2)) - rect.left;
+  const oy = (e.clientY || (rect.top + rect.height / 2)) - rect.top;
+  popup.style.left = ox + 'px';
+  popup.style.top = oy + 'px';
+  btn.appendChild(popup);
+  setTimeout(() => popup.remove(), 700);
+
+  // Particles
+  for (let i = 0; i < 5; i++) {
+    const p = document.createElement('div');
+    p.className = 'click-particle';
+    const angle = (Math.PI * 2 / 5) * i + Math.random() * 0.4;
+    const dist = 25 + Math.random() * 25;
+    p.style.left = ox + 'px'; p.style.top = oy + 'px';
+    p.style.background = ['#33CD66', '#0693e3', '#ffd700'][i % 3];
+    p.style.transition = 'all 0.35s ease-out';
+    btn.appendChild(p);
+    requestAnimationFrame(() => {
+      p.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`;
+      p.style.opacity = '0';
+    });
+    setTimeout(() => p.remove(), 400);
+  }
+
+  updateUI();
+  checkAchievements();
+}
+
+function buyUpgrade(up, silent) {
+  const cost = getUpgradeCost(up);
+  if (state.money < cost) return;
+  state.money -= cost;
+  state.upgrades[up.id] = (state.upgrades[up.id] || 0) + 1;
+
+  // Learn tip + show deep dive link for the upgrade's category
+  if (up.tip && !state.tipsLearned.includes(up.id)) {
+    state.tipsLearned.push(up.id);
+    document.getElementById('factText').textContent = up.tip;
+    // Show relevant deep dive link
+    const ddLink = document.getElementById('deepDiveLink');
+    const catUrls = {
+      food: 'https://efficiencyiseverything.com/calorie-per-dollar-list/',
+      kitchen: 'https://efficiencyiseverything.com/cooking-cheat-codes/',
+      time: 'https://efficiencyiseverything.com/save-time/',
+      life: 'https://efficiencyiseverything.com/save-money/',
+      auto: 'https://efficiencyiseverything.com',
+    };
+    const url = catUrls[up.category] || 'https://efficiencyiseverything.com';
+    ddLink.href = url;
+    ddLink.style.display = 'inline-block';
+  }
+
+  if (!silent) showToast(up.icon + ' ' + up.name + (state.upgrades[up.id] > 1 ? ' (x' + state.upgrades[up.id] + ')' : ''));
+  updateUI();
+  renderTabs();
+  renderUpgrades(true);
+  checkAchievements();
+  saveGame();
+}
+
+function doPrestige() {
+  const newMult = calcPrestigeMultiplier();
+  if (newMult <= 0) return;
+  state.prestigeMultiplier = 1 + newMult;
+  state.prestigeCount++;
+  // Start bonus from achievement
+  state.money = state.achievements['prestige1'] ? 50 : 0;
+  state.totalEarned = 0;
+  state.upgrades = {};
+  state.clicks = 0;
+  state.unlockedCats = ['food'];
+  lastUpgradeSig = '';
+  state.activeTab = 'food';
+
+  showToast('⚡ OPTIMIZED! Multiplier: x' + state.prestigeMultiplier.toFixed(2));
+  updateUI();
+  renderTabs();
+  renderUpgrades(true);
+  checkAchievements();
+  saveGame();
+}
+
+// ═══════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════
+let achQueue = [], showingAch = false;
+function checkAchievements() {
+  for (const ach of achievements) {
+    if (state.achievements[ach.id]) continue;
+    if (ach.check(state)) {
+      state.achievements[ach.id] = true;
+      achQueue.push(ach);
+    }
+  }
+  if (!showingAch && achQueue.length > 0) showNextAch();
+}
+
+function showNextAch() {
+  if (achQueue.length === 0) { showingAch = false; return; }
+  showingAch = true;
+  const ach = achQueue.shift();
+  document.getElementById('achName').textContent = ach.name;
+  document.getElementById('achDesc').textContent = ach.desc;
+  document.getElementById('achBonus').textContent = '🎁 ' + ach.bonus;
+  document.getElementById('achievementPopup').classList.add('show');
+  setTimeout(() => {
+    document.getElementById('achievementPopup').classList.remove('show');
+    setTimeout(showNextAch, 300);
+  }, 2500);
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+let toastTimeout;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════════
+// FACTS TICKER + DEEP DIVE SYSTEM
+// ═══════════════════════════════════════════
+let factIdx = 0;
+function rotateFact() {
+  factIdx = (factIdx + 1) % tipData.length;
+  const tip = tipData[factIdx];
+  const el = document.getElementById('factText');
+  el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+  el.textContent = tip.text;
+
+  // Show/hide deep dive link
+  const ddLink = document.getElementById('deepDiveLink');
+  if (tip.url) {
+    ddLink.href = tip.url;
+    ddLink.style.display = 'inline-block';
+  } else {
+    ddLink.style.display = 'none';
+  }
+}
+setInterval(rotateFact, 7000);
+
+// Deep Dive click tracking — each unique URL visited gives +5% production
+function onDeepDiveClick(e) {
+  const url = e.currentTarget.href;
+  if (!url || url === '#') return;
+  // Track unique deep dives
+  if (!state.deepDives) state.deepDives = [];
+  if (!state.deepDives.includes(url)) {
+    state.deepDives.push(url);
+    showToast('📖 Deep Dive bonus! All production +5%');
+    saveGame();
+  }
+  updateDeepDiveUI();
+}
+
+function getDeepDiveBonus() {
+  const count = (state.deepDives || []).length;
+  return count * 5; // +5% per unique page visited
+}
+
+function updateDeepDiveUI() {
+  const count = (state.deepDives || []).length;
+  const pct = count * 5;
+  document.getElementById('ddCount').textContent = count + ' — All production +' + pct + '%';
+}
+
+document.getElementById('deepDiveLink').addEventListener('click', onDeepDiveClick);
+
+// ═══════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════
+let interestTimer = 0;
+function gameTick() {
+  const now = Date.now();
+  const dt = Math.min((now - state.lastTick) / 1000, 1); // cap at 1s to prevent jumps
+  state.lastTick = now;
+
+  // Production
+  if (state.perSecond > 0) {
+    const earned = state.perSecond * dt;
+    state.money += earned;
+    state.totalEarned += earned;
+    state.lifetimeEarned += earned;
+  }
+
+  // Auto-clicker
+  const ac = calcAutoClicksPerSec();
+  if (ac > 0) {
+    const acEarned = state.clickValue * ac * dt;
+    state.money += acEarned;
+    state.totalEarned += acEarned;
+    state.lifetimeEarned += acEarned;
+    state.clicks += Math.round(ac * dt);
+  }
+
+  // Interest
+  interestTimer += dt;
+  const intCount = state.upgrades['interest'] || 0;
+  if (intCount > 0 && interestTimer >= 10) {
+    interestTimer -= 10;
+    const intEarned = state.money * intCount * 0.01;
+    state.money += intEarned;
+    state.totalEarned += intEarned;
+    state.lifetimeEarned += intEarned;
+  }
+
+  // Auto-buyer (every 2 seconds)
+  autoBuyTimer += dt;
+  if (autoBuyTimer >= 2) {
+    autoBuyTimer -= 2;
+    doAutoBuy();
+  }
+
+  updateUI();
+}
+
+setInterval(gameTick, 50);
+setInterval(() => renderUpgrades(false), 600);
+setInterval(checkAchievements, 2000);
+setInterval(() => renderTabs(), 3000);
+
+// ═══════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════
+function saveGame() {
+  localStorage.setItem('effEmpireV3', JSON.stringify({
+    ...state,
+    lastSave: Date.now()
+  }));
+}
+
+function loadGame() {
+  const raw = localStorage.getItem('effEmpireV3');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (!saved.tipsLearned) saved.tipsLearned = [];
+    if (!saved.deepDives) saved.deepDives = [];
+    if (!saved.unlockedCats) saved.unlockedCats = ['food'];
+    Object.assign(state, saved);
+
+    // Offline earnings
+    const now = Date.now();
+    const offSec = (now - (state.lastSave || state.lastTick)) / 1000;
+    state.perSecond = calcPerSecond();
+    if (offSec > 5 && state.perSecond > 0) {
+      const rate = calcOfflineRate();
+      const earned = state.perSecond * offSec * rate;
+      state.money += earned;
+      state.totalEarned += earned;
+      state.lifetimeEarned += earned;
+      const hrs = Math.floor(offSec / 3600);
+      const mins = Math.floor((offSec % 3600) / 60);
+      const t = hrs > 0 ? hrs + 'h ' + mins + 'm' : mins + 'm';
+      setTimeout(() => showToast('Welcome back! Earned ' + fmt(earned) + ' in ' + t), 400);
+    }
+    state.lastTick = now;
+  } catch(e) { console.error('Save load error', e); }
+}
+
+setInterval(saveGame, 10000);
+
+// ═══════════════════════════════════════════
+// PARTICLES (subtle green/blue on light bg)
+// ═══════════════════════════════════════════
+function createParticles() {
+  const c = document.getElementById('particles');
+  const colors = ['#33CD66', '#0693e3', '#9b51e0', '#fcb900'];
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 3 + Math.random() * 4;
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    p.style.background = color;
+    p.style.animationDuration = (14 + Math.random() * 22) + 's';
+    p.style.animationDelay = (Math.random() * 20) + 's';
+    p.style.boxShadow = '0 0 ' + (size * 2) + 'px ' + color;
+    c.appendChild(p);
+  }
+}
+
+// ═══════════════════════════════════════════
+// BUY AMOUNT TOGGLE
+// ═══════════════════════════════════════════
+let buyAmount = 1;
+function setBuyAmount(n) {
+  buyAmount = n;
+  document.querySelectorAll('.buy-toggle button').forEach((b, i) => {
+    b.classList.toggle('active', (n === 1 && i === 0) || (n === 10 && i === 1) || (n === -1 && i === 2));
+  });
+  renderUpgrades(true);
+}
+
+function getBulkCost(up, amount) {
+  let total = 0;
+  const baseCount = state.upgrades[up.id] || 0;
+  const actualAmount = amount === -1 ? getMaxBuyable(up) : amount;
+  for (let i = 0; i < actualAmount; i++) {
+    total += Math.ceil(up.baseCost * Math.pow(up.costScale, baseCount + i) * 100) / 100;
+  }
+  return { total: total, amount: actualAmount };
+}
+
+function getMaxBuyable(up) {
+  let count = 0;
+  let total = 0;
+  const baseCount = state.upgrades[up.id] || 0;
+  while (true) {
+    const nextCost = Math.ceil(up.baseCost * Math.pow(up.costScale, baseCount + count) * 100) / 100;
+    if (total + nextCost > state.money) break;
+    total += nextCost;
+    count++;
+    if (count > 1000) break;
+  }
+  return count;
+}
+
+// ═══════════════════════════════════════════
+// JOURNAL TAB
+// ═══════════════════════════════════════════
+function renderJournal() {
+  const container = document.getElementById('upgradesList');
+  lastUpgradeSig = 'journal|' + state.tipsLearned.length;
+
+  const totalTips = Object.values(allUpgrades).flat().length;
+  const learned = state.tipsLearned.length;
+
+  let html = '<div class="journal-header"><div class="j-count">' + learned + ' / ' + totalTips + '</div><div class="j-label">Efficiency Tips Collected</div></div>';
+
+  const catNames = { food: '🍽️ Food', kitchen: '🔥 Cooking', time: '⏱️ Time', life: '💡 Lifestyle', auto: '⚙️ Automation' };
+
+  for (const catId of ['food', 'kitchen', 'time', 'life', 'auto']) {
+    const ups = allUpgrades[catId];
+    html += '<div class="journal-cat-title">' + catNames[catId] + '</div>';
+    for (const up of ups) {
+      const known = state.tipsLearned.includes(up.id);
+      if (known) {
+        html += '<div class="journal-tip"><span class="jt-name">' + up.icon + ' ' + up.name + ':</span> ' + up.tip + '</div>';
+      } else {
+        html += '<div class="journal-tip unknown">??? — Buy this upgrade to learn the tip</div>';
+      }
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// SPACEBAR HANDLER
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' && e.target === document.body) {
+    e.preventDefault();
+    document.getElementById('clickBtn').click();
+  }
+});
+
+// ═══════════════════════════════════════════
+// GOLDEN EFFICIENCY EVENTS
+// ═══════════════════════════════════════════
+function spawnGoldenEvent() {
+  const existing = document.querySelector('.golden-event');
+  if (existing) existing.remove();
+
+  const bonus = Math.max(state.perSecond * 10, state.clickValue * 20);
+  if (bonus <= 0.01) { scheduleNextGolden(); return; }
+
+  const el = document.createElement('div');
+  el.className = 'golden-event';
+  el.innerHTML = '<div class="ge-icon">⚡</div><div class="ge-text">EFFICIENCY INSIGHT</div><div class="ge-bonus">Click for ' + fmt(bonus) + '!</div>';
+
+  el.style.top = (15 + Math.random() * 50) + '%';
+  el.style.left = (10 + Math.random() * 60) + '%';
+
+  el.addEventListener('click', function() {
+    state.money += bonus;
+    state.totalEarned += bonus;
+    state.lifetimeEarned += bonus;
+    showToast('⚡ Efficiency Insight! +' + fmt(bonus));
+    const tipsWithUrl = tipData.filter(function(t) { return t.url; });
+    if (tipsWithUrl.length > 0) {
+      const tip = tipsWithUrl[Math.floor(Math.random() * tipsWithUrl.length)];
+      document.getElementById('factText').textContent = tip.text;
+      const ddLink = document.getElementById('deepDiveLink');
+      ddLink.href = tip.url;
+      ddLink.style.display = 'inline-block';
+    }
+    el.remove();
+    updateUI();
+    scheduleNextGolden();
+  });
+
+  document.body.appendChild(el);
+
+  setTimeout(function() {
+    if (el.parentNode) el.remove();
+    scheduleNextGolden();
+  }, 8000);
+}
+
+function scheduleNextGolden() {
+  const delay = 45000 + Math.random() * 45000;
+  setTimeout(spawnGoldenEvent, delay);
+}
+
+setTimeout(spawnGoldenEvent, 30000);
+
+// ═══════════════════════════════════════════
+// NEXT UNLOCK HINT
+// ═══════════════════════════════════════════
+function updateNextUnlockHint() {
+  const total = getTotalCount();
+  const next = categories.find(function(c) { return c.id !== 'journal' && total < c.unlockAt; });
+  const el = document.getElementById('nextUnlockHint');
+  if (next) {
+    const remaining = next.unlockAt - total;
+    el.innerHTML = 'Next unlock: <strong>' + next.name + '</strong> — buy ' + remaining + ' more upgrade' + (remaining !== 1 ? 's' : '');
+  } else {
+    el.textContent = '✓ All categories unlocked!';
+  }
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+loadGame();
+createParticles();
+updateUI();
+renderTabs();
+renderUpgrades(true);
+checkAchievements();
+updateDeepDiveUI();
+
+document.getElementById('clickBtn').addEventListener('click', doClick);
+document.getElementById('prestigeBtn').addEventListener('click', doPrestige);
+</script>
+</body>
+</html>

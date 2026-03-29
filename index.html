@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efficiency Is Everything - 10 Games That Pay For Themselves</title>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+    <style>
+        :root {
+            --neon-green: #39ff14;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff006e;
+            --neon-yellow: #ffe600;
+            --neon-orange: #ff6a00;
+            --dark-bg: #0a0a1a;
+            --card-bg: #12122a;
+            --card-hover: #1a1a3a;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Grid Background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .grid-bg canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatParticle linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-10vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .main-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.3));
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.3)); }
+            50% { filter: drop-shadow(0 0 40px rgba(57, 255, 20, 0.6)); }
+        }
+
+        .subtitle {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            color: var(--neon-yellow);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 230, 0, 0.4);
+        }
+
+        .tagline {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 400;
+            font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+            color: #8888aa;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .divider {
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), var(--neon-blue), transparent);
+            margin: 30px auto;
+            border-radius: 2px;
+        }
+
+        /* Game Grid */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Game Card */
+        .game-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(57, 255, 20, 0.15);
+            border-radius: 16px;
+            padding: 28px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 40%, var(--neon-green) 50%, var(--neon-blue) 60%, transparent 70%);
+            background-size: 300% 300%;
+            background-position: 100% 100%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            transition: background-position 0.5s ease;
+            pointer-events: none;
+        }
+
+        .game-card:hover::before {
+            background-position: 0% 0%;
+        }
+
+        .game-card:hover {
+            background: var(--card-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 40px rgba(57, 255, 20, 0.15), 0 0 80px rgba(0, 240, 255, 0.08);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .card-icon {
+            font-size: 2.8rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.3));
+        }
+
+        .card-title-group {
+            flex: 1;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #ffffff;
+            margin-bottom: 4px;
+            transition: color 0.3s;
+        }
+
+        .game-card:hover .card-title {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+        }
+
+        .genre-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: #9999bb;
+            line-height: 1.6;
+            flex: 1;
+            margin-bottom: 18px;
+        }
+
+        .play-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--dark-bg);
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            align-self: flex-start;
+        }
+
+        .play-btn:hover {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), 0 0 40px rgba(0, 240, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .play-btn .arrow {
+            font-size: 1rem;
+            transition: transform 0.3s;
+        }
+
+        .game-card:hover .play-btn .arrow {
+            transform: translateX(4px);
+        }
+
+        /* Game Number */
+        .card-number {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 2.5rem;
+            color: rgba(57, 255, 20, 0.06);
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(57, 255, 20, 0.1);
+        }
+
+        .footer p {
+            color: #555577;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .footer a {
+            color: var(--neon-green);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .footer a:hover {
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+            color: var(--neon-blue);
+        }
+
+        .footer .footer-tagline {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #333355;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Grid Background -->
+    <div class="grid-bg">
+        <canvas id="gridCanvas"></canvas>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <header class="header">
+            <h1 class="main-title">Efficiency Is Everything</h1>
+            <h2 class="subtitle">10 Games That Pay For Themselves</h2>
+            <div class="divider"></div>
+            <p class="tagline">Real data from efficiencyiseverything.com &mdash; learn to save $2,000+/year and 600+ hours/year</p>
+        </header>
+
+        <div class="game-grid">
+
+            <!-- Game 1 -->
+            <a href="efficiency-empire.html" class="game-card">
+                <span class="card-number">01</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F3ED;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Efficiency Empire</div>
+                        <span class="genre-tag">Idle / Clicker</span>
+                    </div>
+                </div>
+                <p class="card-desc">Build your savings empire from $0. Automate food optimization, time hacks, and watch compound savings grow!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 2 -->
+            <a href="budget-blaster.html" class="game-card">
+                <span class="card-number">02</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F680;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Budget Blaster</div>
+                        <span class="genre-tag">Space Shooter</span>
+                    </div>
+                </div>
+                <p class="card-desc">Pilot your cart through the grocery gauntlet! Shoot down overpriced items, collect efficient deals!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 3 -->
+            <a href="optimizer-quest.html" class="game-card">
+                <span class="card-number">03</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x2694;&#xFE0F;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">The Optimizer Quest</div>
+                        <span class="genre-tag">RPG</span>
+                    </div>
+                </div>
+                <p class="card-desc">Level up your character by mastering efficiency knowledge. Fight waste bosses with data!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 4 -->
+            <a href="nutrient-tetris.html" class="game-card">
+                <span class="card-number">04</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F9E9;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Nutrient Tetris</div>
+                        <span class="genre-tag">Puzzle</span>
+                    </div>
+                </div>
+                <p class="card-desc">Stack food blocks to build perfect meals. Match nutrients, clear rows, maximize efficiency!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 5 -->
+            <a href="savings-snake.html" class="game-card">
+                <span class="card-number">05</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F40D;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Savings Snake</div>
+                        <span class="genre-tag">Classic Arcade</span>
+                    </div>
+                </div>
+                <p class="card-desc">Guide your snake to eat efficient foods and grow. Avoid the overpriced traps!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 6 -->
+            <a href="tower-of-thrift.html" class="game-card">
+                <span class="card-number">06</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F3F0;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Tower of Thrift</div>
+                        <span class="genre-tag">Tower Defense</span>
+                    </div>
+                </div>
+                <p class="card-desc">Build defenses against waves of wasteful spending. Upgrade with efficiency knowledge!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 7 -->
+            <a href="speed-shopper.html" class="game-card">
+                <span class="card-number">07</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F3C3;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Speed Shopper</div>
+                        <span class="genre-tag">Endless Runner</span>
+                    </div>
+                </div>
+                <p class="card-desc">Sprint through aisles grabbing deals! Dodge impulse buys and beat the budget clock!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 8 -->
+            <a href="meal-match.html" class="game-card">
+                <span class="card-number">08</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F0CF;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Meal Match Madness</div>
+                        <span class="genre-tag">Memory Card</span>
+                    </div>
+                </div>
+                <p class="card-desc">Flip cards to match foods with their cost-per-calorie stats. Train your efficiency memory!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 9 -->
+            <a href="kitchen-alchemist.html" class="game-card">
+                <span class="card-number">09</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x1F9EA;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Kitchen Alchemist</div>
+                        <span class="genre-tag">Cooking Sim</span>
+                    </div>
+                </div>
+                <p class="card-desc">Combine ingredients using real cooking science. Master MSG, acid, salt, fat, and heat!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+            <!-- Game 10 -->
+            <a href="time-platformer.html" class="game-card">
+                <span class="card-number">10</span>
+                <div class="card-top">
+                    <span class="card-icon">&#x23F1;&#xFE0F;</span>
+                    <div class="card-title-group">
+                        <div class="card-title">Time Thief</div>
+                        <span class="genre-tag">Platformer</span>
+                    </div>
+                </div>
+                <p class="card-desc">Jump through levels reclaiming wasted hours. Learn time hacks as you platform to victory!</p>
+                <span class="play-btn">PLAY <span class="arrow">&#9654;</span></span>
+            </a>
+
+        </div>
+
+        <footer class="footer">
+            <p>Powered by real data from <a href="https://efficiencyiseverything.com" target="_blank" rel="noopener">efficiencyiseverything.com</a></p>
+            <p class="footer-tagline">Optimize Everything. Waste Nothing.</p>
+        </footer>
+    </div>
+
+    <script>
+        // === Animated Grid Background ===
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+        let gridOffset = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const spacing = 60;
+            const speed = 0.3;
+            gridOffset = (gridOffset + speed) % spacing;
+
+            ctx.strokeStyle = 'rgba(57, 255, 20, 0.04)';
+            ctx.lineWidth = 1;
+
+            // Vertical lines
+            for (let x = -spacing + gridOffset; x < canvas.width + spacing; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Horizontal lines
+            for (let y = -spacing + gridOffset; y < canvas.height + spacing; y += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Brighter intersection dots
+            for (let x = -spacing + gridOffset; x < canvas.width + spacing; x += spacing) {
+                for (let y = -spacing + gridOffset; y < canvas.height + spacing; y += spacing) {
+                    ctx.fillStyle = 'rgba(57, 255, 20, 0.08)';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            requestAnimationFrame(drawGrid);
+        }
+        drawGrid();
+
+        // === Floating Particles ===
+        const particlesContainer = document.getElementById('particles');
+        const colors = ['#39ff14', '#00f0ff', '#ff006e', '#ffe600', '#ff6a00'];
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            const size = Math.random() * 4 + 1;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const left = Math.random() * 100;
+            const duration = Math.random() * 12 + 8;
+            const delay = Math.random() * 10;
+
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = left + '%';
+            particle.style.background = color;
+            particle.style.boxShadow = `0 0 ${size * 3}px ${color}`;
+            particle.style.animationDuration = duration + 's';
+            particle.style.animationDelay = delay + 's';
+
+            particlesContainer.appendChild(particle);
+
+            // Remove and recreate after animation
+            setTimeout(() => {
+                particle.remove();
+                createParticle();
+            }, (duration + delay) * 1000);
+        }
+
+        for (let i = 0; i < 30; i++) {
+            createParticle();
+        }
+    </script>
+</body>
+</html>

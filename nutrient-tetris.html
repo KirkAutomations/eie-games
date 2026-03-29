@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nutrient Tetris - Efficiency Is Everything</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap">
+    <style>
+        :root {
+            --neon-green: #39ff14;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff006e;
+            --neon-yellow: #ffe600;
+            --neon-orange: #ff6a00;
+            --dark-bg: #0a0a1a;
+            --card-bg: #12122a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .top-bar {
+            width: 100%;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border-bottom: 1px solid rgba(0,240,255,0.2);
+        }
+
+        .top-bar a {
+            color: var(--neon-blue);
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+        .top-bar a:hover { color: var(--neon-green); }
+
+        .top-bar h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            max-width: 900px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .side-panel {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(0,240,255,0.15);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .panel-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            color: var(--neon-blue);
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .panel-box .value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            color: var(--neon-green);
+        }
+
+        .panel-box .sub-value {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        #nextCanvas {
+            width: 100%;
+            aspect-ratio: 4/4;
+            display: block;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease, background 0.5s ease;
+        }
+
+        .canvas-container {
+            position: relative;
+            border: 2px solid rgba(0,240,255,0.25);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,240,255,0.08), inset 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        #gameCanvas {
+            display: block;
+            background: var(--dark-bg);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10,10,26,0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            gap: 16px;
+        }
+
+        .overlay.hidden { display: none; }
+
+        .overlay h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .overlay p {
+            text-align: center;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            max-width: 260px;
+        }
+
+        .overlay .score-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            color: var(--neon-green);
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            padding: 12px 28px;
+            border: 2px solid var(--neon-green);
+            background: transparent;
+            color: var(--neon-green);
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: var(--neon-green);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px rgba(57,255,20,0.4);
+        }
+
+        .fact-toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            border: 1px solid var(--neon-blue);
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 0.9rem;
+            color: var(--neon-blue);
+            z-index: 100;
+            max-width: 400px;
+            text-align: center;
+            transition: bottom 0.5s ease;
+            box-shadow: 0 0 20px rgba(0,240,255,0.2);
+        }
+        .fact-toast.show { bottom: 20px; }
+
+        .meal-toast {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 4px;
+            z-index: 20;
+            pointer-events: none;
+            white-space: nowrap;
+            transition: opacity 0.4s, top 0.6s ease;
+        }
+
+        .controls-hint {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            text-align: center;
+            padding: 8px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        #dailyCalories, #dailyProtein {
+            font-size: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .game-wrapper { flex-direction: column; align-items: center; gap: 10px; padding: 8px; }
+            .side-panel { flex-direction: row; flex-wrap: wrap; width: 100%; justify-content: center; }
+            .side-panel .panel-box { flex: 1; min-width: 80px; }
+            .panel-box h3 { font-size: 0.55rem; }
+            .panel-box .value { font-size: 1rem; }
+            .controls-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="index.html">&larr; BACK TO HUB</a>
+        <h1>NUTRIENT TETRIS</h1>
+        <div style="width:80px"></div>
+    </div>
+
+    <div class="game-wrapper">
+        <div class="side-panel" id="leftPanel">
+            <div class="panel-box">
+                <h3>Score</h3>
+                <div class="value" id="scoreVal">0</div>
+            </div>
+            <div class="panel-box">
+                <h3>Level</h3>
+                <div class="value" id="levelVal">1</div>
+            </div>
+            <div class="panel-box">
+                <h3>Lines</h3>
+                <div class="value" id="linesVal">0</div>
+            </div>
+            <div class="panel-box">
+                <h3>High Score</h3>
+                <div class="value" id="hiScoreVal">0</div>
+            </div>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div class="overlay" id="startOverlay">
+                <h2 style="color:var(--neon-green)">NUTRIENT<br>TETRIS</h2>
+                <p>Stack food blocks to build efficient meals. Complete rows to score!</p>
+                <p style="font-size:0.75rem; color:var(--neon-yellow)">Green = Cheap calories<br>Blue = High protein<br>Yellow = Balanced<br>Pink = Junk food penalty!</p>
+                <button class="btn" id="startBtn">START GAME</button>
+                <div class="controls-hint">Arrow keys to move/rotate | Space = hard drop</div>
+            </div>
+            <div class="overlay hidden" id="gameOverOverlay">
+                <h2 style="color:var(--neon-pink)">GAME OVER</h2>
+                <div class="score-display" id="finalScore">0</div>
+                <p id="finalStats"></p>
+                <button class="btn" id="restartBtn">PLAY AGAIN</button>
+            </div>
+            <div class="overlay hidden" id="pauseOverlay">
+                <h2 style="color:var(--neon-yellow)">PAUSED</h2>
+                <button class="btn" id="resumeBtn">RESUME</button>
+            </div>
+        </div>
+
+        <div class="side-panel" id="rightPanel">
+            <div class="panel-box">
+                <h3>Next Piece</h3>
+                <canvas id="nextCanvas"></canvas>
+            </div>
+            <div class="panel-box">
+                <h3>Meal Quality</h3>
+                <div class="value" id="qualityVal" style="font-size:1rem;">---</div>
+                <div class="meter-bar"><div class="meter-fill" id="qualityMeter" style="width:0%; background:var(--neon-green);"></div></div>
+            </div>
+            <div class="panel-box">
+                <h3>Daily Nutrition</h3>
+                <div id="dailyCalories" class="value" style="color:var(--neon-yellow); font-size:1rem;">0 cal/$</div>
+                <div class="sub-value">calories per dollar</div>
+                <div id="dailyProtein" class="value" style="color:var(--neon-blue); font-size:1rem; margin-top:4px;">0 g/$</div>
+                <div class="sub-value">protein per dollar</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fact-toast" id="factToast"></div>
+
+    <script>
+    (() => {
+    'use strict';
+
+    // --- CONSTANTS ---
+    const COLS = 10, ROWS = 20, BLOCK = 30;
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = COLS * BLOCK;
+    canvas.height = ROWS * BLOCK;
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nctx = nextCanvas.getContext('2d');
+    nextCanvas.width = 120;
+    nextCanvas.height = 120;
+
+    // --- FOOD DATA ---
+    const FOODS = {
+        green: [
+            { name: 'Flour', emoji: '\u{1F33E}', cal: 4464, prot: 80 },
+            { name: 'Rice', emoji: '\u{1F35A}', cal: 2320, prot: 42 },
+            { name: 'Oats', emoji: '\u{1F35E}', cal: 2148, prot: 72 },
+            { name: 'Ramen', emoji: '\u{1F35C}', cal: 1949, prot: 45 },
+            { name: 'Pasta', emoji: '\u{1F35D}', cal: 1600, prot: 56 },
+            { name: 'PB', emoji: '\u{1F95C}', cal: 1487, prot: 52 },
+        ],
+        blue: [
+            { name: 'Lentils', emoji: '\u{1F372}', cal: 929, prot: 73 },
+            { name: 'Eggs', emoji: '\u{1F95A}', cal: 802, prot: 70 },
+            { name: 'Beans', emoji: '\u{1FAD8}', cal: 880, prot: 80 },
+            { name: 'Milk', emoji: '\u{1F95B}', cal: 350, prot: 56 },
+            { name: 'Tuna', emoji: '\u{1F41F}', cal: 300, prot: 55 },
+        ],
+        yellow: [
+            { name: 'Potato', emoji: '\u{1F954}', cal: 780, prot: 20 },
+            { name: 'Banana', emoji: '\u{1F34C}', cal: 500, prot: 6 },
+            { name: 'Chicken', emoji: '\u{1F357}', cal: 239, prot: 38 },
+        ],
+        pink: [
+            { name: 'Takeout', emoji: '\u{1F4B8}', cal: 80, prot: 5 },
+            { name: 'Starbux', emoji: '\u{2615}', cal: 50, prot: 2 },
+            { name: 'DlvyFee', emoji: '\u{1F6D1}', cal: 0, prot: 0 },
+        ]
+    };
+
+    const COLORS = {
+        green: { fill: '#39ff14', glow: 'rgba(57,255,20,0.4)', dark: '#1a7a0a' },
+        blue: { fill: '#00f0ff', glow: 'rgba(0,240,255,0.4)', dark: '#006a72' },
+        yellow: { fill: '#ffe600', glow: 'rgba(255,230,0,0.4)', dark: '#7a6e00' },
+        pink: { fill: '#ff006e', glow: 'rgba(255,0,110,0.4)', dark: '#7a0035' }
+    };
+
+    // Standard Tetris shapes (each rotation state)
+    const SHAPES = {
+        I: [[[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[0,2],[0,3]]],
+        O: [[[0,0],[1,0],[0,1],[1,1]]],
+        T: [[[0,0],[1,0],[2,0],[1,1]], [[0,0],[0,1],[0,2],[1,1]], [[1,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[1,2],[0,1]]],
+        S: [[[1,0],[2,0],[0,1],[1,1]], [[0,0],[0,1],[1,1],[1,2]]],
+        Z: [[[0,0],[1,0],[1,1],[2,1]], [[1,0],[0,1],[1,1],[0,2]]],
+        L: [[[0,0],[0,1],[0,2],[1,2]], [[0,0],[1,0],[2,0],[0,1]], [[0,0],[1,0],[1,1],[1,2]], [[2,0],[0,1],[1,1],[2,1]]],
+        J: [[[1,0],[1,1],[0,2],[1,2]], [[0,0],[0,1],[1,1],[2,1]], [[0,0],[1,0],[0,1],[0,2]], [[0,0],[1,0],[2,0],[2,1]]]
+    };
+
+    // Pink pieces get harder shapes (S, Z, T mostly)
+    const SHAPE_KEYS_NORMAL = ['I','O','T','S','Z','L','J'];
+    const SHAPE_KEYS_PINK = ['S','Z','T','Z','S'];
+
+    const EFFICIENCY_FACTS = [
+        "Flour gives you 4,464 calories per dollar - the cheapest energy source!",
+        "Beans provide 80g of protein per dollar - the best budget protein!",
+        "A $5 Starbucks drink could buy 10 lbs of rice instead.",
+        "Lentils cost about $0.15 per serving with 18g of protein.",
+        "Delivery fees can double your food cost for zero nutrition.",
+        "Oats give 2,148 cal/$ and 72g protein/$ - one of the best overall.",
+        "Eggs cost about $0.20 each and pack 6g of protein.",
+        "Peanut butter: 1,487 cal/$ with healthy fats and 52g protein/$.",
+        "Ramen noodles: 1,949 cal/$ - cheap but lacks micronutrients.",
+        "Cooking at home saves the average American $3,000+ per year."
+    ];
+
+    // --- GAME STATE ---
+    let grid = [];
+    let current = null;
+    let nextPiece = null;
+    let score = 0, level = 1, lines = 0;
+    let highScore = parseInt(localStorage.getItem('nutrientTetrisHi')) || 0;
+    let gameRunning = false, paused = false;
+    let dropInterval = 800;
+    let lastDrop = 0;
+    let totalCalCleared = 0, totalProtCleared = 0, rowsWithStats = 0;
+    let qualitySum = 0;
+    let particles = [];
+    let flashRows = [];
+    let flashTimer = 0;
+    let factIndex = 0;
+    let animFrame = 0;
+    let lockDelay = 0;
+    let lockDelayMax = 500;
+
+    // DOM refs
+    const scoreEl = document.getElementById('scoreVal');
+    const levelEl = document.getElementById('levelVal');
+    const linesEl = document.getElementById('linesVal');
+    const hiScoreEl = document.getElementById('hiScoreVal');
+    const qualityEl = document.getElementById('qualityVal');
+    const qualityMeter = document.getElementById('qualityMeter');
+    const dailyCal = document.getElementById('dailyCalories');
+    const dailyProt = document.getElementById('dailyProtein');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const factToast = document.getElementById('factToast');
+    const finalScoreEl = document.getElementById('finalScore');
+    const finalStatsEl = document.getElementById('finalStats');
+
+    hiScoreEl.textContent = highScore;
+
+    // --- HELPERS ---
+    function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function pickCategory() {
+        const r = Math.random();
+        if (r < 0.35) return 'green';
+        if (r < 0.60) return 'blue';
+        if (r < 0.80) return 'yellow';
+        return 'pink';
+    }
+
+    function createPiece() {
+        const cat = pickCategory();
+        const food = randItem(FOODS[cat]);
+        const isPink = cat === 'pink';
+        const shapeKey = isPink ? randItem(SHAPE_KEYS_PINK) : randItem(SHAPE_KEYS_NORMAL);
+        const rotations = SHAPES[shapeKey];
+        const blocks = rotations[0].map(b => [...b]);
+
+        // Find width to center
+        let maxX = 0;
+        for (const b of blocks) if (b[0] > maxX) maxX = b[0];
+        const startX = Math.floor((COLS - maxX - 1) / 2);
+
+        return {
+            blocks: blocks,
+            rotations: rotations,
+            rotIdx: 0,
+            x: startX,
+            y: 0,
+            cat: cat,
+            food: food,
+            color: COLORS[cat]
+        };
+    }
+
+    function initGrid() {
+        grid = [];
+        for (let r = 0; r < ROWS; r++) {
+            grid[r] = [];
+            for (let c = 0; c < COLS; c++) {
+                grid[r][c] = null;
+            }
+        }
+    }
+
+    function collides(piece, dx, dy, blocks) {
+        const bl = blocks || piece.blocks;
+        for (const b of bl) {
+            const nx = piece.x + b[0] + dx;
+            const ny = piece.y + b[1] + dy;
+            if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+            if (ny >= 0 && grid[ny][nx]) return true;
+        }
+        return false;
+    }
+
+    function lockPiece() {
+        for (const b of current.blocks) {
+            const gx = current.x + b[0];
+            const gy = current.y + b[1];
+            if (gy < 0) { gameOver(); return; }
+            grid[gy][gx] = { cat: current.cat, food: current.food, color: current.color };
+        }
+        checkRows();
+        spawnNext();
+    }
+
+    function spawnNext() {
+        current = nextPiece || createPiece();
+        nextPiece = createPiece();
+        lockDelay = 0;
+        if (collides(current, 0, 0)) {
+            gameOver();
+        }
+        drawNextPiece();
+    }
+
+    function rotate() {
+        const rots = current.rotations;
+        if (rots.length === 1) return;
+        const newIdx = (current.rotIdx + 1) % rots.length;
+        const newBlocks = rots[newIdx].map(b => [...b]);
+
+        // Wall kick offsets
+        const kicks = [0, -1, 1, -2, 2];
+        for (const kick of kicks) {
+            const test = { ...current, blocks: newBlocks, x: current.x + kick };
+            if (!collides(test, 0, 0, newBlocks)) {
+                current.blocks = newBlocks;
+                current.rotIdx = newIdx;
+                current.x += kick;
+                return;
+            }
+        }
+    }
+
+    function checkRows() {
+        const fullRows = [];
+        for (let r = 0; r < ROWS; r++) {
+            if (grid[r].every(cell => cell !== null)) {
+                fullRows.push(r);
+            }
+        }
+        if (fullRows.length === 0) return;
+
+        // Calculate stats for cleared rows
+        let rowCalTotal = 0, rowProtTotal = 0, rowCount = 0;
+        let allGreenBlue = true;
+        let hasPink = false;
+
+        for (const r of fullRows) {
+            for (const cell of grid[r]) {
+                rowCalTotal += cell.food.cal;
+                rowProtTotal += cell.food.prot;
+                rowCount++;
+                if (cell.cat !== 'green' && cell.cat !== 'blue') allGreenBlue = false;
+                if (cell.cat === 'pink') hasPink = true;
+            }
+        }
+
+        const avgCal = Math.round(rowCalTotal / rowCount);
+        const avgProt = Math.round(rowProtTotal / rowCount);
+
+        totalCalCleared += rowCalTotal;
+        totalProtCleared += rowProtTotal;
+        rowsWithStats += rowCount;
+
+        // Score
+        const basePoints = [0, 100, 300, 500, 800];
+        let pts = basePoints[fullRows.length] * level;
+        if (allGreenBlue) pts = Math.round(pts * 1.5);
+        if (hasPink) pts = Math.round(pts * 0.7);
+        score += pts;
+
+        lines += fullRows.length;
+        level = Math.floor(lines / 10) + 1;
+        dropInterval = Math.max(100, 800 - (level - 1) * 60);
+
+        // Quality
+        qualitySum += avgCal;
+        const avgQuality = Math.round(qualitySum / (lines || 1));
+        let qualLabel = 'Poor';
+        let qualPct = 10;
+        let qualColor = 'var(--neon-pink)';
+        if (avgQuality > 1500) { qualLabel = 'Excellent'; qualPct = 95; qualColor = 'var(--neon-green)'; }
+        else if (avgQuality > 1000) { qualLabel = 'Great'; qualPct = 75; qualColor = 'var(--neon-green)'; }
+        else if (avgQuality > 500) { qualLabel = 'Good'; qualPct = 50; qualColor = 'var(--neon-yellow)'; }
+        else if (avgQuality > 200) { qualLabel = 'Fair'; qualPct = 30; qualColor = 'var(--neon-orange)'; }
+        qualityEl.textContent = qualLabel;
+        qualityEl.style.color = qualColor;
+        qualityMeter.style.width = qualPct + '%';
+        qualityMeter.style.background = qualColor;
+
+        // Flash and particles
+        flashRows = fullRows.slice();
+        flashTimer = 400;
+
+        for (const r of fullRows) {
+            for (let c = 0; c < COLS; c++) {
+                const cell = grid[r][c];
+                for (let i = 0; i < 4; i++) {
+                    particles.push({
+                        x: c * BLOCK + BLOCK / 2,
+                        y: r * BLOCK + BLOCK / 2,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8 - 2,
+                        life: 600 + Math.random() * 400,
+                        maxLife: 1000,
+                        color: cell.color.fill,
+                        size: 3 + Math.random() * 3
+                    });
+                }
+            }
+        }
+
+        // Show meal toast
+        showMealToast(fullRows[0], avgCal, avgProt, allGreenBlue, fullRows.length);
+
+        // Remove rows after flash
+        setTimeout(() => {
+            for (const r of fullRows.sort((a, b) => b - a)) {
+                grid.splice(r, 1);
+                grid.unshift(new Array(COLS).fill(null));
+            }
+            flashRows = [];
+        }, 350);
+
+        // Fact every 10 lines
+        if (Math.floor((lines - fullRows.length) / 10) < Math.floor(lines / 10)) {
+            showFact();
+        }
+
+        updateUI();
+    }
+
+    function showMealToast(row, cal, prot, bonus, count) {
+        const toast = document.createElement('div');
+        toast.className = 'meal-toast';
+        toast.style.top = (row * BLOCK) + 'px';
+        const bonusTxt = bonus ? ' EFFICIENT MEAL BONUS!' : '';
+        const label = count > 1 ? `${count}x MEAL COMPLETE!` : 'MEAL COMPLETE!';
+        toast.innerHTML = `<span style="color:${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}">${label}</span><br><span style="font-family:'Space Mono'; font-size:0.65rem; color:#fff">${cal} cal/$ | ${prot}g prot/$${bonusTxt}</span>`;
+        toast.style.background = bonus ? 'rgba(57,255,20,0.15)' : 'rgba(255,230,0,0.1)';
+        toast.style.border = `1px solid ${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}`;
+        document.getElementById('canvasContainer').appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.top = (row * BLOCK - 40) + 'px'; }, 100);
+        setTimeout(() => toast.remove(), 1200);
+    }
+
+    function showFact() {
+        factToast.textContent = EFFICIENCY_FACTS[factIndex % EFFICIENCY_FACTS.length];
+        factToast.classList.add('show');
+        factIndex++;
+        setTimeout(() => factToast.classList.remove('show'), 4000);
+    }
+
+    function updateUI() {
+        scoreEl.textContent = score.toLocaleString();
+        levelEl.textContent = level;
+        linesEl.textContent = lines;
+        const avgC = rowsWithStats ? Math.round(totalCalCleared / rowsWithStats) : 0;
+        const avgP = rowsWithStats ? Math.round(totalProtCleared / rowsWithStats) : 0;
+        dailyCal.textContent = avgC + ' cal/$';
+        dailyProt.textContent = avgP + ' g/$';
+
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('nutrientTetrisHi', highScore);
+            hiScoreEl.textContent = highScore;
+        }
+    }
+
+    function gameOver() {
+        gameRunning = false;
+        finalScoreEl.textContent = score.toLocaleString();
+        finalStatsEl.textContent = `Level ${level} | ${lines} lines cleared`;
+        gameOverOverlay.classList.remove('hidden');
+    }
+
+    // --- DRAWING ---
+    function drawBlock(context, x, y, size, cell, ghost) {
+        const alpha = ghost ? 0.25 : 1;
+        const c = cell.color;
+
+        // Fill
+        context.globalAlpha = alpha;
+        context.fillStyle = c.dark;
+        context.fillRect(x + 1, y + 1, size - 2, size - 2);
+
+        // Inner bright
+        const grad = context.createLinearGradient(x, y, x + size, y + size);
+        grad.addColorStop(0, c.fill);
+        grad.addColorStop(1, c.dark);
+        context.fillStyle = grad;
+        context.fillRect(x + 2, y + 2, size - 4, size - 4);
+
+        // Glow border
+        context.strokeStyle = c.fill;
+        context.lineWidth = 1;
+        context.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
+
+        // Food text
+        if (!ghost && size >= 24) {
+            context.fillStyle = '#fff';
+            context.font = `bold ${Math.floor(size * 0.3)}px 'Rajdhani', sans-serif`;
+            context.textAlign = 'center';
+            context.textBaseline = 'top';
+            context.fillText(cell.food.emoji, x + size / 2, y + 2);
+            context.font = `bold ${Math.floor(size * 0.28)}px 'Rajdhani', sans-serif`;
+            context.fillText(cell.food.name, x + size / 2, y + size * 0.55);
+        }
+        context.globalAlpha = 1;
+    }
+
+    function getGhostY() {
+        let gy = 0;
+        while (!collides(current, 0, gy + 1)) gy++;
+        return gy;
+    }
+
+    function drawGrid() {
+        // Grid lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.lineWidth = 0.5;
+        for (let r = 0; r <= ROWS; r++) {
+            ctx.beginPath(); ctx.moveTo(0, r * BLOCK); ctx.lineTo(COLS * BLOCK, r * BLOCK); ctx.stroke();
+        }
+        for (let c = 0; c <= COLS; c++) {
+            ctx.beginPath(); ctx.moveTo(c * BLOCK, 0); ctx.lineTo(c * BLOCK, ROWS * BLOCK); ctx.stroke();
+        }
+
+        // Placed blocks
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[r][c]) {
+                    // Flash effect
+                    if (flashRows.includes(r)) {
+                        ctx.fillStyle = '#fff';
+                        ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.02) * 0.3;
+                        ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
+                        ctx.globalAlpha = 1;
+                    } else {
+                        drawBlock(ctx, c * BLOCK, r * BLOCK, BLOCK, grid[r][c], false);
+                    }
+                }
+            }
+        }
+    }
+
+    function drawCurrentPiece() {
+        if (!current) return;
+
+        // Ghost
+        const ghostY = getGhostY();
+        if (ghostY > 0) {
+            for (const b of current.blocks) {
+                const gx = (current.x + b[0]) * BLOCK;
+                const gy = (current.y + b[1] + ghostY) * BLOCK;
+                drawBlock(ctx, gx, gy, BLOCK, current, true);
+            }
+        }
+
+        // Actual piece
+        for (const b of current.blocks) {
+            const px = (current.x + b[0]) * BLOCK;
+            const py = (current.y + b[1]) * BLOCK;
+            if (current.y + b[1] >= 0) {
+                drawBlock(ctx, px, py, BLOCK, current, false);
+            }
+        }
+    }
+
+    function drawParticles(dt) {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx * dt / 16;
+            p.y += p.vy * dt / 16;
+            p.vy += 0.15;
+            p.life -= dt;
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
+            const alpha = p.life / p.maxLife;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    function drawNextPiece() {
+        if (!nextPiece) return;
+        nctx.clearRect(0, 0, 120, 120);
+
+        // Center the preview
+        let minX = 99, minY = 99, maxX = 0, maxY = 0;
+        for (const b of nextPiece.blocks) {
+            if (b[0] < minX) minX = b[0];
+            if (b[1] < minY) minY = b[1];
+            if (b[0] > maxX) maxX = b[0];
+            if (b[1] > maxY) maxY = b[1];
+        }
+        const pw = (maxX - minX + 1), ph = (maxY - minY + 1);
+        const bs = Math.min(24, Math.floor(100 / Math.max(pw, ph)));
+        const ox = (120 - pw * bs) / 2 - minX * bs;
+        const oy = (120 - ph * bs) / 2 - minY * bs;
+
+        for (const b of nextPiece.blocks) {
+            drawBlock(nctx, ox + b[0] * bs, oy + b[1] * bs, bs, nextPiece, false);
+        }
+    }
+
+    // --- GAME LOOP ---
+    let lastTime = 0;
+
+    function gameLoop(time) {
+        animFrame = requestAnimationFrame(gameLoop);
+        if (!gameRunning || paused) return;
+
+        const dt = time - lastTime;
+        lastTime = time;
+
+        // Auto drop
+        lastDrop += dt;
+
+        // Check if piece is resting on something
+        const onGround = collides(current, 0, 1);
+
+        if (onGround) {
+            lockDelay += dt;
+            if (lockDelay >= lockDelayMax) {
+                lockPiece();
+                lastDrop = 0;
+                lockDelay = 0;
+            }
+        } else if (lastDrop >= dropInterval) {
+            current.y++;
+            lastDrop = 0;
+            lockDelay = 0;
+        }
+
+        // Draw
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+        drawCurrentPiece();
+        drawParticles(dt || 16);
+    }
+
+    // --- CONTROLS ---
+    document.addEventListener('keydown', e => {
+        if (!gameRunning) return;
+
+        if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+            paused = !paused;
+            pauseOverlay.classList.toggle('hidden', !paused);
+            return;
+        }
+
+        if (paused) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                if (!collides(current, -1, 0)) { current.x--; lockDelay = 0; }
+                e.preventDefault();
+                break;
+            case 'ArrowRight':
+                if (!collides(current, 1, 0)) { current.x++; lockDelay = 0; }
+                e.preventDefault();
+                break;
+            case 'ArrowDown':
+                if (!collides(current, 0, 1)) {
+                    current.y++;
+                    score += 1;
+                    lastDrop = 0;
+                }
+                e.preventDefault();
+                break;
+            case 'ArrowUp':
+                rotate();
+                lockDelay = 0;
+                e.preventDefault();
+                break;
+            case ' ':
+                let drops = 0;
+                while (!collides(current, 0, 1)) {
+                    current.y++;
+                    drops++;
+                }
+                score += drops * 2;
+                lockPiece();
+                lastDrop = 0;
+                lockDelay = 0;
+                updateUI();
+                e.preventDefault();
+                break;
+        }
+    });
+
+    // --- TOUCH CONTROLS ---
+    let touchStartX = 0, touchStartY = 0, touchStartTime = 0, touchMoved = false;
+
+    canvas.addEventListener('touchstart', e => {
+        if (!gameRunning || paused) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchStartTime = Date.now();
+        touchMoved = false;
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+        if (!gameRunning || paused) return;
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+
+        if (Math.abs(dx) > 30 && !touchMoved) {
+            if (dx > 0 && !collides(current, 1, 0)) { current.x++; lockDelay = 0; }
+            else if (dx < 0 && !collides(current, -1, 0)) { current.x--; lockDelay = 0; }
+            touchStartX = t.clientX;
+            touchMoved = true;
+        }
+
+        if (dy > 40 && !touchMoved) {
+            // Swipe down = hard drop
+            let drops = 0;
+            while (!collides(current, 0, 1)) { current.y++; drops++; }
+            score += drops * 2;
+            lockPiece();
+            lastDrop = 0;
+            lockDelay = 0;
+            updateUI();
+            touchMoved = true;
+        }
+
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        if (!gameRunning || paused) return;
+        const elapsed = Date.now() - touchStartTime;
+        if (!touchMoved && elapsed < 300) {
+            // Tap = rotate
+            rotate();
+            lockDelay = 0;
+        }
+        e.preventDefault();
+    }, { passive: false });
+
+    // --- START / RESTART ---
+    function startGame() {
+        initGrid();
+        score = 0; level = 1; lines = 0;
+        totalCalCleared = 0; totalProtCleared = 0; rowsWithStats = 0; qualitySum = 0;
+        dropInterval = 800;
+        particles = [];
+        flashRows = [];
+        lastDrop = 0;
+        lockDelay = 0;
+        current = null;
+        nextPiece = null;
+
+        qualityEl.textContent = '---';
+        qualityMeter.style.width = '0%';
+        dailyCal.textContent = '0 cal/$';
+        dailyProt.textContent = '0 g/$';
+
+        startOverlay.classList.add('hidden');
+        gameOverOverlay.classList.add('hidden');
+        pauseOverlay.classList.add('hidden');
+
+        gameRunning = true;
+        paused = false;
+        lastTime = performance.now();
+
+        spawnNext();
+        updateUI();
+
+        if (animFrame) cancelAnimationFrame(animFrame);
+        animFrame = requestAnimationFrame(gameLoop);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('resumeBtn').addEventListener('click', () => {
+        paused = false;
+        pauseOverlay.classList.add('hidden');
+    });
+
+    // Initial draw
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    })();
+    </script>
+</body>
+</html>
