@@ -501,6 +501,85 @@ body {
 .next-unlock-hint strong {
   color: var(--eie-blue); font-style: normal;
 }
+
+/* ── Collection Bonus NEW Badge ── */
+.new-badge {
+  display: inline-block; font-size: 0.5rem; font-weight: 700;
+  background: var(--eie-green); color: #fff; padding: 1px 5px;
+  border-radius: 3px; margin-left: 6px; vertical-align: middle;
+  animation: newPulse 1.5s ease-in-out infinite;
+}
+@keyframes newPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Prestige Clarity ── */
+.prestige-explain {
+  font-size: 0.65rem; color: var(--light-gray); line-height: 1.4;
+  margin-bottom: 8px; padding: 6px 8px;
+  background: rgba(255,49,49,0.04); border-radius: 4px;
+}
+.prestige-explain strong { color: var(--eie-red); }
+.prestige-multiplier-compare {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+  color: var(--eie-red); font-weight: 700; margin: 6px 0;
+}
+.prestige-multiplier-compare .arrow { color: var(--light-gray); margin: 0 6px; }
+.prestige-multiplier-compare .new-mult { color: var(--eie-green); }
+
+/* ── Empire Tab ── */
+.tab-btn.active[data-cat="empire"] { background: linear-gradient(135deg, #b8860b, #daa520); border-color: #8B6914; box-shadow: 0 2px 6px rgba(184,134,11,0.3); }
+.empire-container { padding: 10px 0; }
+.empire-tanks { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.empire-tank {
+  flex: 1; min-width: 140px; background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 10px; padding: 12px; text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.tank-label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; letter-spacing: 1px; }
+.tank-value { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+.tank-bar {
+  width: 100%; height: 80px; background: #f0f0f0; border-radius: 8px;
+  position: relative; overflow: hidden; border: 1px solid #e0e0e0;
+}
+.tank-fill {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  border-radius: 0 0 7px 7px;
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tank-fill.money { background: linear-gradient(180deg, rgba(51,205,102,0.6), rgba(51,205,102,0.9)); }
+.tank-fill.time { background: linear-gradient(180deg, rgba(6,147,227,0.6), rgba(6,147,227,0.9)); }
+.tank-fill.knowledge { background: linear-gradient(180deg, rgba(255,215,0,0.6), rgba(255,215,0,0.9)); }
+.tank-fill::after {
+  content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 8px;
+  background: rgba(255,255,255,0.3);
+  animation: tankWave 3s ease-in-out infinite;
+}
+@keyframes tankWave {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(25%); }
+}
+.empire-collection { margin-top: 12px; }
+.empire-collection h3 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1rem;
+  color: var(--eie-blue); letter-spacing: 2px; margin-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8; padding-bottom: 4px;
+}
+.collection-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.collection-item {
+  width: 40px; height: 40px; background: #fff; border: 1px solid #e0e0e0;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.2s;
+}
+.collection-item.owned { border-color: var(--eie-green); background: rgba(51,205,102,0.05); }
+.collection-item.unowned { opacity: 0.2; filter: grayscale(1); }
+
+/* ── Cursor Follow Particles ── */
+.cursor-particle {
+  position: fixed; pointer-events: none; z-index: 9999;
+  border-radius: 50%; background: var(--eie-green); opacity: 0.6;
+}
 </style>
 </head>
 <body>
@@ -554,6 +633,10 @@ body {
       <span class="s-label">Prestige</span>
       <span class="s-val red" id="statPrestige">x1.00</span>
     </div>
+    <div class="stat-pill">
+      <span class="s-label">Collection</span>
+      <span class="s-val green" id="statCollection">0/0</span>
+    </div>
   </div>
 
   <!-- Main Game -->
@@ -587,9 +670,15 @@ body {
       <div class="prestige-section" id="prestigeSection">
         <div class="prestige-panel">
           <h3>⚡ OPTIMIZE ⚡</h3>
-          <div class="info">Reset for a permanent multiplier to everything!</div>
+          <div class="prestige-explain">
+            <strong>How it works:</strong> Reset all upgrades for a <strong>PERMANENT multiplier</strong> to ALL earnings.
+            Your multiplier gets bigger the more you've earned in total. You keep your prestige multiplier, achievements, and knowledge forever!
+          </div>
+          <div class="prestige-multiplier-compare" id="prestigeCompare">
+            Current: x1.00 <span class="arrow">→</span> <span class="new-mult">x1.00</span>
+          </div>
           <div class="info" id="prestigeInfo" style="color:var(--eie-red);font-family:'JetBrains Mono',monospace;font-size:0.7rem;"></div>
-          <button class="prestige-btn" id="prestigeBtn" disabled>OPTIMIZE →</button>
+          <button class="prestige-btn" id="prestigeBtn" disabled title="Reset all upgrades for a permanent multiplier to ALL future earnings">OPTIMIZE →</button>
         </div>
       </div>
     </div>
@@ -649,6 +738,7 @@ const categories = [
   { id: 'life',    name: '💡 Lifestyle',   color: 'var(--accent-life)',  unlockAt: 22,  unlockText: 'Buy 22 upgrades' },
   { id: 'auto',    name: '⚙️ Automation', color: 'var(--accent-auto)',  unlockAt: 40,  unlockText: 'Buy 40 upgrades' },
   { id: 'journal', name: '📖 Journal', color: 'var(--eie-blue)', unlockAt: 1, unlockText: 'Buy 1 upgrade' },
+  { id: 'empire', name: '🏛️ Empire', color: '#b8860b', unlockAt: 5, unlockText: 'Buy 5 upgrades' },
 ];
 
 // ═══════════════════════════════════════════
@@ -1182,7 +1272,8 @@ function calcPerSecond() {
   const achMultiplier = 1 + ach.allPct / 100;
 
   const deepDiveMultiplier = 1 + getDeepDiveBonus() / 100;
-  ps *= auraMultiplier * synergyMultiplier * achMultiplier * milestoneMultiplier * deepDiveMultiplier * state.prestigeMultiplier;
+  const collectionMultiplier = 1 + getCollectionBonus() / 100;
+  ps *= auraMultiplier * synergyMultiplier * achMultiplier * milestoneMultiplier * deepDiveMultiplier * collectionMultiplier * state.prestigeMultiplier;
 
   // Flat PS from achievements
   ps += ach.flatPS * state.prestigeMultiplier;
@@ -1197,6 +1288,7 @@ function calcClickValue() {
   const clickMultCount = state.upgrades['clickmult'] || 0;
   if (clickMultCount > 0) base *= Math.pow(2, clickMultCount);
   base *= (1 + ach.clickPct / 100);
+  base *= (1 + getCollectionBonus() / 100);
   base *= state.prestigeMultiplier;
   // 5% of per-second as click bonus
   base += state.perSecond * 0.05;
@@ -1272,6 +1364,8 @@ function updateUI() {
   document.getElementById('impactTime').textContent = fmtShort(impact.time);
   document.getElementById('impactTips').textContent = impact.tips.toString();
 
+  updateCollectionUI();
+
   // Prestige — only show after $100k lifetime
   const showPrestige = state.lifetimeEarned >= 100000 || state.prestigeCount > 0;
   document.getElementById('prestigeSection').classList.toggle('visible', showPrestige);
@@ -1282,12 +1376,17 @@ function updateUI() {
     const newMult = calcPrestigeMultiplier();
     const btn = document.getElementById('prestigeBtn');
     const info = document.getElementById('prestigeInfo');
+    const compare = document.getElementById('prestigeCompare');
     if (newMult > 0 && (1 + newMult) > state.prestigeMultiplier) {
       btn.disabled = false;
-      info.textContent = 'New multiplier: x' + (1 + newMult).toFixed(2);
+      info.textContent = 'Earn more to increase the new multiplier even further!';
+      compare.innerHTML = 'Current: x' + state.prestigeMultiplier.toFixed(2) +
+        ' <span class="arrow">→</span> <span class="new-mult">New: x' + (1 + newMult).toFixed(2) + '</span>';
     } else {
       btn.disabled = true;
       info.textContent = 'Earn more to increase multiplier';
+      compare.innerHTML = 'Current: x' + state.prestigeMultiplier.toFixed(2) +
+        ' <span class="arrow">→</span> <span class="new-mult">keep earning...</span>';
     }
   }
   updateNextUnlockHint();
@@ -1328,6 +1427,10 @@ function renderTabs() {
 function renderUpgrades(force) {
   if (state.activeTab === 'journal') {
     renderJournal();
+    return;
+  }
+  if (state.activeTab === 'empire') {
+    renderEmpire();
     return;
   }
 
@@ -1380,6 +1483,10 @@ function renderUpgrades(force) {
     let badge = '';
     if (count === 10 || count === 25 || count === 50) {
       badge = '<span class="milestone-badge">x' + count + ' MILESTONE</span>';
+    }
+    // NEW badge for never-purchased upgrades
+    if (count === 0 && !state.tipsLearned.includes(up.id)) {
+      badge += '<span class="new-badge">NEW</span>';
     }
 
     const bulkLabel = (buyAmount !== 1 && bulkAmount > 1) ? ' (x' + bulkAmount + ')' : '';
@@ -1604,6 +1711,87 @@ function updateDeepDiveUI() {
 }
 
 document.getElementById('deepDiveLink').addEventListener('click', onDeepDiveClick);
+
+// ═══════════════════════════════════════════
+// COLLECTION BONUS (+2% per unique upgrade owned)
+// ═══════════════════════════════════════════
+function getUniqueUpgradesOwned() {
+  let count = 0;
+  const all = Object.values(allUpgrades).flat();
+  for (const up of all) {
+    if ((state.upgrades[up.id] || 0) > 0) count++;
+  }
+  return count;
+}
+
+function getTotalUniqueUpgrades() {
+  return Object.values(allUpgrades).flat().length;
+}
+
+function getCollectionBonus() {
+  return getUniqueUpgradesOwned() * 2; // +2% per unique upgrade
+}
+
+function updateCollectionUI() {
+  const owned = getUniqueUpgradesOwned();
+  const total = getTotalUniqueUpgrades();
+  const el = document.getElementById('statCollection');
+  if (el) {
+    el.textContent = owned + '/' + total + ' (+' + getCollectionBonus() + '%)';
+  }
+}
+
+// ═══════════════════════════════════════════
+// EMPIRE TAB
+// ═══════════════════════════════════════════
+function renderEmpire() {
+  const container = document.getElementById('upgradesList');
+  const impact = calcRealWorldImpact();
+  const allUps = Object.values(allUpgrades).flat();
+  const totalTips = allUps.length;
+
+  // Calculate fill percentages (capped at 100%)
+  const moneyPct = Math.min(100, (impact.money / 25000) * 100);
+  const timePct = Math.min(100, (impact.time / 2000) * 100);
+  const knowledgePct = Math.min(100, (impact.tips / totalTips) * 100);
+
+  let html = '<div class="empire-container">';
+
+  // Tanks
+  html += '<div class="empire-tanks">';
+  html += '<div class="empire-tank">' +
+    '<div class="tank-label">💰 Money Saved</div>' +
+    '<div class="tank-value" style="color:var(--eie-green);">$' + fmtShort(impact.money) + '/yr</div>' +
+    '<div class="tank-bar"><div class="tank-fill money" style="height:' + moneyPct + '%;"></div></div>' +
+    '</div>';
+  html += '<div class="empire-tank">' +
+    '<div class="tank-label">⏱️ Time Saved</div>' +
+    '<div class="tank-value" style="color:var(--accent-time);">' + fmtShort(impact.time) + ' hrs/yr</div>' +
+    '<div class="tank-bar"><div class="tank-fill time" style="height:' + timePct + '%;"></div></div>' +
+    '</div>';
+  html += '<div class="empire-tank">' +
+    '<div class="tank-label">📚 Knowledge</div>' +
+    '<div class="tank-value" style="color:#b8860b;">' + impact.tips + ' / ' + totalTips + ' tips</div>' +
+    '<div class="tank-bar"><div class="tank-fill knowledge" style="height:' + knowledgePct + '%;"></div></div>' +
+    '</div>';
+  html += '</div>';
+
+  // Collection grid
+  html += '<div class="empire-collection"><h3>📦 COLLECTION</h3><div class="collection-grid">';
+  const catNames = { food: '🍽️', kitchen: '🔥', time: '⏱️', life: '💡', auto: '⚙️' };
+  for (const catId of ['food', 'kitchen', 'time', 'life', 'auto']) {
+    const ups = allUpgrades[catId];
+    for (const up of ups) {
+      const owned = (state.upgrades[up.id] || 0) > 0;
+      html += '<div class="collection-item ' + (owned ? 'owned' : 'unowned') + '" title="' +
+        (owned ? up.name : '???') + '">' + up.icon + '</div>';
+    }
+  }
+  html += '</div></div></div>';
+
+  container.innerHTML = html;
+  lastUpgradeSig = 'empire|' + impact.money + '|' + impact.time + '|' + impact.tips;
+}
 
 // ═══════════════════════════════════════════
 // GAME LOOP
@@ -1874,6 +2062,62 @@ updateDeepDiveUI();
 
 document.getElementById('clickBtn').addEventListener('click', doClick);
 document.getElementById('prestigeBtn').addEventListener('click', doPrestige);
+
+// ═══════════════════════════════════════════
+// CURSOR-FOLLOW PARTICLES
+// ═══════════════════════════════════════════
+(function() {
+  const MAX_PARTICLES = 15;
+  const particles = [];
+  let mouseX = 0, mouseY = 0;
+
+  document.addEventListener('mousemove', function(e) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  function spawnCursorParticle() {
+    if (particles.length >= MAX_PARTICLES) return;
+    const el = document.createElement('div');
+    el.className = 'cursor-particle';
+    const size = 2 + Math.random() * 4;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    const spread = 30 + Math.random() * 40;
+    const px = mouseX + (Math.random() - 0.5) * spread * 2;
+    const py = mouseY + (Math.random() - 0.5) * spread * 2;
+    el.style.left = px + 'px';
+    el.style.top = py + 'px';
+    el.style.opacity = '0.5';
+    const hue = 140 + Math.random() * 30; // green range
+    el.style.background = 'hsl(' + hue + ', 70%, 55%)';
+    el.style.boxShadow = '0 0 ' + (size * 2) + 'px hsl(' + hue + ', 70%, 55%)';
+    document.body.appendChild(el);
+    const particle = { el: el, x: px, y: py, life: 1.0, decay: 0.008 + Math.random() * 0.012 };
+    particles.push(particle);
+  }
+
+  function animateCursorParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      // Drift toward cursor
+      p.x += (mouseX - p.x) * 0.02;
+      p.y += (mouseY - p.y) * 0.02;
+      p.life -= p.decay;
+      p.el.style.left = p.x + 'px';
+      p.el.style.top = p.y + 'px';
+      p.el.style.opacity = Math.max(0, p.life * 0.5).toFixed(2);
+      if (p.life <= 0) {
+        p.el.remove();
+        particles.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(animateCursorParticles);
+  }
+
+  setInterval(spawnCursorParticle, 200);
+  animateCursorParticles();
+})();
 </script>
 </body>
 </html>

@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Budget Blaster - Space Shooter</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
 <style>
 :root {
     --neon-green: #39ff14;
@@ -120,16 +119,19 @@ function sfxDamage() { playSound(100, 0.2, 'sawtooth', 0.1); }
 
 // --- GAME DATA ---
 const EFFICIENT_FOODS = [
-    { name: 'Flour', stat: '4,464 cal/$', cal: 4464, emoji: '🌾' },
-    { name: 'Rice', stat: '2,320 cal/$', cal: 2320, emoji: '🍚' },
-    { name: 'Oats', stat: '2,148 cal/$', cal: 2148, emoji: '🥣' },
-    { name: 'Ramen', stat: '1,949 cal/$', cal: 1949, emoji: '🍜' },
-    { name: 'Pasta', stat: '1,600 cal/$', cal: 1600, emoji: '🍝' },
-    { name: 'PB', stat: '1,487 cal/$', cal: 1487, emoji: '🥜' },
-    { name: 'Lentils', stat: '929 cal/$', cal: 929, emoji: '🫘' },
-    { name: 'Eggs', stat: '802 cal/$', cal: 802, emoji: '🥚' },
-    { name: 'Beans', stat: '880 cal/$', cal: 880, emoji: '🫘' },
-    { name: 'Potatoes', stat: '780 cal/$', cal: 780, emoji: '🥔' },
+    { name: 'Flour', stat: '4,464 cal/$', cal: 4464, emoji: '🌾', tip: 'Flour: 4,464 cal/$ — #1 cheapest calorie source!' },
+    { name: 'White Bread', stat: '3,333 cal/$', cal: 3333, emoji: '🍞', tip: 'White Bread: 3,333 cal/$ — $219/yr if eaten all year!' },
+    { name: 'Rice', stat: '2,320 cal/$', cal: 2320, emoji: '🍚', tip: 'Rice: 2,320 cal/$ — a global staple for a reason!' },
+    { name: 'Oats', stat: '2,148 cal/$', cal: 2148, emoji: '🥣', tip: 'Plain Oats: 2,148 cal/$ — instant oats cost 3x more!' },
+    { name: 'Ramen', stat: '1,949 cal/$', cal: 1949, emoji: '🍜', tip: 'Ramen: 1,949 cal/$ — nearly 2k cal before toppings!' },
+    { name: 'Pasta', stat: '1,600 cal/$', cal: 1600, emoji: '🍝', tip: 'Angel Hair: 1,600 cal/$ & 56g protein/$!' },
+    { name: 'PB', stat: '1,487 cal/$', cal: 1487, emoji: '🥜', tip: 'Peanut Butter: 1,487 cal/$ — protein + fats + cheap!' },
+    { name: 'Barley', stat: '1,429 cal/$', cal: 1429, emoji: '🌾', tip: 'Pearled Barley: 1,429 cal/$ — underrated grain!' },
+    { name: 'Pinto Beans', stat: '1,026 cal/$', cal: 1026, emoji: '🫘', tip: 'Pinto Beans: 1,026 cal/$ & 80g protein/$!' },
+    { name: 'Lentils', stat: '929 cal/$', cal: 929, emoji: '🫘', tip: 'Lentils: 929 cal/$ but 116g protein/$ — king of budget protein!' },
+    { name: 'Eggs', stat: '802 cal/$', cal: 802, emoji: '🥚', tip: 'Eggs (Costco): 802 cal/$ & 70g protein/$!' },
+    { name: 'Whole Milk', stat: '902 cal/$', cal: 902, emoji: '🥛', tip: 'Whole Milk: 902 cal/$ — cheapest dairy by far!' },
+    { name: 'Potatoes', stat: '780 cal/$', cal: 780, emoji: '🥔', tip: 'Mac & Cheese: 780 cal/$ — 30g protein/$ too!' },
 ];
 
 const ENEMIES = [
@@ -139,6 +141,9 @@ const ENEMIES = [
     { name: 'Restaurant Meal', price: '$18.00', stat: 'Overpriced!', emoji: '🍽️', hp: 4, points: 200, speed: 0.7 },
     { name: 'Energy Drink', price: '$3.50', stat: '80mg caff/$', emoji: '🥤', hp: 2, points: 120, speed: 1.3 },
     { name: "Baileys", price: '$25.00', stat: '0.28 drinks/$', emoji: '🥃', hp: 3, points: 175, speed: 0.9 },
+    { name: 'Beef Jerky', price: '$14.99', stat: '96 cal/$', emoji: '🥩', hp: 2, points: 130, speed: 1.1 },
+    { name: 'Fancy Juice', price: '$6.00', stat: '150 cal/$', emoji: '🧃', hp: 2, points: 110, speed: 1.15 },
+    { name: 'Premium Sub', price: '$12.99/mo', stat: 'Auto-renews!', emoji: '📱', hp: 8, points: 350, speed: 0.85 },
 ];
 
 const BOSSES = [
@@ -154,24 +159,41 @@ const POWERUPS = [
 ];
 
 const FACTS = [
-    "Flour gives 4,464 calories per dollar!",
-    "Rice is one of the cheapest calorie sources.",
-    "Oats: cheap, nutritious, versatile!",
-    "Ramen: nearly 2,000 cal/$ before toppings.",
-    "Pasta is a staple for budget eaters.",
-    "Peanut butter: protein + calories + cheap!",
-    "Lentils are the king of budget protein.",
-    "Eggs: 802 cal/$ and full of nutrients.",
-    "Beans are loaded with fiber & protein.",
-    "Potatoes are incredibly nutrient-dense.",
-    "A Starbucks latte costs more than a bag of rice.",
-    "Restaurant meals cost 3-5x home cooking.",
-    "Energy drinks: terrible caffeine per dollar.",
-    "Craft beer: great taste, bad bang for buck.",
-    "Greek yogurt costs 10x more per calorie than oats.",
-    "Cooking at home saves $2,000+/year easily.",
+    // Food cost facts (EIE data)
+    "Flour: 4,464 cal/$ — #1 cheapest food on Earth!",
+    "Rice: 2,320 cal/$ — a global staple for a reason.",
+    "Plain oats cost 5x LESS than instant oats!",
+    "Ramen: 1,949 cal/$ before toppings.",
+    "Peanut butter: 1,487 cal/$ with protein + fats!",
+    "Lentils: 116g protein/$ — king of budget protein!",
+    "Pinto beans: 80g protein/$ and 60% daily fiber!",
+    "Eggs (Costco): 802 cal/$ and 70g protein/$.",
+    "Greek yogurt: only 161 cal/$. Oats are 13x better!",
+    "Little Caesar's: 423 cal/$ — best fast food value.",
+    "Canned food is almost ALWAYS more expensive!",
+    "Home cooking beats ALL fast food on cal/$.",
+    "Target ~700 cal/$ to eat for ~$1,000/year.",
+    "Restaurant meals cost 3-5x vs home cooking.",
+    // Money savings
+    "Caffeine pills: ~$0.05/dose vs $5 Starbucks latte!",
     "Buying in bulk can cut grocery bills 30%.",
+    "A Starbucks latte costs more than 10 lbs of rice.",
     "Meal prepping prevents expensive impulse eating.",
+    "Cooking at home saves $2,000+/year easily.",
+    "Generic brands are the same product, different label.",
+    // Time savings
+    "Watch videos at 2x speed — double your learning!",
+    "Biphasic sleep: 6hr night + 20min nap = more awake hours.",
+    "Meal prep Sunday: cook once, eat all week.",
+    "Batch similar tasks — context switching kills time.",
+    "Audiobooks while commuting: free education.",
+    // Cooking cheat codes
+    "MSG is safe and makes everything taste better!",
+    "Salt your food EARLY — it penetrates deeper.",
+    "Acid (lime, vinegar) brightens any dish instantly.",
+    "Fat carries flavor — don't skip the oil.",
+    "Toast your spices in oil before adding liquid.",
+    "Deglaze your pan — that brown stuff IS the flavor.",
 ];
 
 // --- GAME STATE ---
@@ -561,7 +583,7 @@ function showFact(x, y) {
 // --- SPAWN ---
 function spawnEnemy() {
     let template = ENEMIES[Math.floor(Math.random() * ENEMIES.length)];
-    let waveMult = 1 + (wave - 1) * 0.12;
+    let waveMult = 1 + (wave - 1) * 0.18;
     enemies.push({
         x: 30 + Math.random() * (W() - 60),
         y: -30,
@@ -754,8 +776,8 @@ function updateGame() {
     if (keys['ArrowUp'] || keys['KeyW']) dy -= speed;
     if (keys['ArrowDown'] || keys['KeyS']) dy += speed;
 
-    // Mouse attraction (if mouse is being used)
-    if (mouseDown || (mouseX !== 0 && mouseY !== 0 && !keys['ArrowLeft'] && !keys['ArrowRight'])) {
+    // Mouse attraction (only when actively clicking/holding)
+    if (mouseDown) {
         let rect = canvas.getBoundingClientRect();
         let mx = (mouseX - rect.left) * (canvas.width / rect.width);
         let my = (mouseY - rect.top) * (canvas.height / rect.height);
@@ -1391,6 +1413,79 @@ canvas.addEventListener('touchmove', e => {
 
 // Prevent context menu
 canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// --- CURSOR PARTICLES (subtle ambient effect) ---
+const cursorParticles = [];
+const MAX_CURSOR_PARTICLES = 20;
+let canvasMouseX = W() / 2, canvasMouseY = H() / 2;
+
+function updateCanvasMouse() {
+    const rect = canvas.getBoundingClientRect();
+    canvasMouseX = (mouseX - rect.left) * (canvas.width / rect.width);
+    canvasMouseY = (mouseY - rect.top) * (canvas.height / rect.height);
+}
+
+function spawnCursorParticle() {
+    if (cursorParticles.length >= MAX_CURSOR_PARTICLES) return;
+    cursorParticles.push({
+        x: canvasMouseX + (Math.random() - 0.5) * 60,
+        y: canvasMouseY + (Math.random() - 0.5) * 60,
+        size: Math.random() * 2.5 + 0.8,
+        life: 60 + Math.random() * 40,
+        maxLife: 100,
+        alpha: 0.15 + Math.random() * 0.2,
+    });
+}
+
+function updateCursorParticles() {
+    updateCanvasMouse();
+    // Spawn 1-2 per frame if below cap
+    if (Math.random() < 0.4) spawnCursorParticle();
+
+    for (let i = cursorParticles.length - 1; i >= 0; i--) {
+        const p = cursorParticles[i];
+        // Gently drift toward cursor
+        const dx = canvasMouseX - p.x;
+        const dy = canvasMouseY - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        p.x += (dx / dist) * 0.4;
+        p.y += (dy / dist) * 0.4;
+        p.life--;
+        if (p.life <= 0) cursorParticles.splice(i, 1);
+    }
+}
+
+function drawCursorParticles() {
+    for (const p of cursorParticles) {
+        const fade = Math.min(1, p.life / (p.maxLife * 0.3));
+        ctx.globalAlpha = p.alpha * fade;
+        ctx.fillStyle = NEON_GREEN;
+        ctx.shadowColor = NEON_GREEN;
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+}
+
+// Patch drawGame to include cursor particles
+const _origDrawGame = drawGame;
+drawGame = function() {
+    updateCursorParticles();
+    _origDrawGame();
+    // Draw cursor particles on top (inside the shake transform would need save/restore, so draw after)
+    drawCursorParticles();
+};
+
+// Also draw them on menu
+const _origDrawMenu = drawMenu;
+drawMenu = function() {
+    updateCursorParticles();
+    _origDrawMenu();
+    drawCursorParticles();
+};
 
 // --- START ---
 gameLoop();

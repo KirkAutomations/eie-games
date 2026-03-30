@@ -334,11 +334,17 @@ const TIME_HACKS = [
     { name:"Pareto Appearance", hours:100, desc:"80% of looks from 20% of effort", unit:"/yr" },
     { name:"Packed Lunch System", hours:80, desc:"Never wait in line or decide what to eat", unit:"/yr" },
     { name:"Shower Optimization", hours:50, desc:"Mark your handle position. Save 300+ hours over lifetime", unit:"/yr" },
-    { name:"Efficient Exercise", hours:40, desc:"Run 3x/week 20min, not 6x 45min", unit:"/yr" }
+    { name:"Efficient Exercise", hours:40, desc:"Run 3x/week 20min, not 6x 45min", unit:"/yr" },
+    { name:"Bulk Buying Strategy", hours:100, desc:"Buy rice, oats, beans in 25lb bags. Save 40-60% on staples.", unit:"/yr", money:800 },
+    { name:"Cooking Cheat Codes", hours:50, desc:"Salt early, add acid at end, use MSG, fat carries flavor, high heat sear.", unit:"/yr", money:400 },
+    { name:"$0.50 Meal Mastery", hours:80, desc:"Rice + lentils + spices = complete protein meal for $0.50", unit:"/yr", money:2000 },
+    { name:"Caffeine Pill Switch", hours:50, desc:"200mg pills cost $0.03 each. Starbucks charges $5 for 150mg. 150x markup.", unit:"/yr", money:1500 },
+    { name:"Subscription Audit", hours:20, desc:"Average person wastes $200/month on unused subscriptions.", unit:"/yr", money:2400 },
+    { name:"1% Daily Improvement", hours:200, desc:"1.01^365 = 37.78x better in one year. Small gains compound.", unit:"/yr", money:5000 }
 ];
 
-const LEVEL_NAMES = ["The Bedroom","The Kitchen","The Commute","The Screen","The Gauntlet"];
-const LEVEL_HACKS = [0, 2, 3, 1, 7]; // which hack each level teaches
+const LEVEL_NAMES = ["The Bedroom","The Kitchen","The Commute","The Grocery Store","The Kitchen Lab","The Meal Prep Factory","The Coffee Shop","The Subscription Maze","The Final Optimization"];
+const LEVEL_HACKS = [0, 2, 3, 4, 5, 6, 7, 8, 9]; // which hack each level teaches
 
 // ============ INPUT ============
 const keys = {};
@@ -509,7 +515,7 @@ function generateLevel(levelIdx){
     }
 
     // Golden hourglasses
-    for(let i=0;i<5;i++){
+    for(let i=0;i<9;i++){
         const cx = (15+Math.floor(seededRandom(ri++)*160))*TILE;
         const cy = (2+Math.floor(seededRandom(ri++)*10))*TILE;
         const tx=Math.floor(cx/TILE), ty=Math.floor(cy/TILE);
@@ -526,7 +532,7 @@ function generateLevel(levelIdx){
     }
 
     // Enemies based on level theme
-    const enemyTypes = ['alarm','drone','car','notification','vampire'];
+    const enemyTypes = ['alarm','drone','car','impulse','delivery','brand','subscription','fomo','lifestyle'];
     const eType = enemyTypes[levelIdx] || 'alarm';
     for(let i=0;i<8+levelIdx*2;i++){
         const ex = (15+Math.floor(seededRandom(ri++)*160))*TILE;
@@ -642,7 +648,14 @@ const Game = {
 
         const grid = document.getElementById('level-grid');
         grid.innerHTML = '';
-        for(let i=0;i<5;i++){
+        const actLabels = {0:'ACT 1: TIME', 3:'ACT 2: FOOD', 6:'ACT 3: MONEY'};
+        for(let i=0;i<9;i++){
+            if(actLabels[i]){
+                const actHeader = document.createElement('div');
+                actHeader.style.cssText = 'width:100%;text-align:center;font-size:1.3em;font-weight:bold;color:#FFD700;margin:18px 0 8px;letter-spacing:2px;text-transform:uppercase;grid-column:1/-1;';
+                actHeader.textContent = actLabels[i];
+                grid.appendChild(actHeader);
+            }
             const unlocked = i===0 || this.savedData.levels[i-1];
             const data = this.savedData.levels[i];
             const card = document.createElement('div');
@@ -657,9 +670,9 @@ const Game = {
     startGame(){
         // Find first unlocked unbeaten level or start at 0
         let lvl = 0;
-        for(let i=0;i<5;i++){
+        for(let i=0;i<9;i++){
             if(!this.savedData.levels[i]){ lvl=i; break; }
-            if(i===4) lvl=0;
+            if(i===8) lvl=0;
         }
         this.startLevel(lvl);
     },
@@ -692,7 +705,7 @@ const Game = {
     },
 
     nextLevel(){
-        if(this.currentLevel<4) this.startLevel(this.currentLevel+1);
+        if(this.currentLevel<8) this.startLevel(this.currentLevel+1);
         else this.showLevelSelect();
     },
 

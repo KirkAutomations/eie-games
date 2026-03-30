@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Optimizer Quest - Efficiency RPG</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2694;</text></svg>">
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap">
 <style>
 :root {
   --neon-green: #39ff14;
@@ -17,8 +17,6 @@
   --card-bg: #12122a;
   --card-hover: #1a1a3a;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -438,6 +436,11 @@ body::after {
   background: var(--card-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(57, 255, 20, 0.15);
+  animation: abilityGlow 1.2s ease-in-out infinite;
+}
+@keyframes abilityGlow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(57, 255, 20, 0.15); }
+  50% { box-shadow: 0 4px 25px rgba(57, 255, 20, 0.4), 0 0 40px rgba(57, 255, 20, 0.15); }
 }
 .ability-btn:disabled { opacity: 0.3; cursor: default; }
 .ability-btn .ab-emoji { font-size: 1.3rem; }
@@ -459,15 +462,27 @@ body::after {
   margin-top: 4px;
 }
 .ability-btn.type-attack { border-color: #441122; }
-.ability-btn.type-attack:hover:not(:disabled) { border-color: var(--neon-pink); box-shadow: 0 4px 15px rgba(255,0,110,0.15); }
+.ability-btn.type-attack:hover:not(:disabled) { border-color: var(--neon-pink); box-shadow: 0 4px 15px rgba(255,0,110,0.15); animation: abilityGlowPink 1.2s ease-in-out infinite; }
+@keyframes abilityGlowPink {
+  0%, 100% { box-shadow: 0 4px 15px rgba(255,0,110,0.15); }
+  50% { box-shadow: 0 4px 25px rgba(255,0,110,0.4), 0 0 40px rgba(255,0,110,0.15); }
+}
 .ability-btn.type-attack .ab-name { color: var(--neon-pink); }
 .ability-btn.type-defense { border-color: #112244; }
-.ability-btn.type-defense:hover:not(:disabled) { border-color: var(--neon-blue); box-shadow: 0 4px 15px rgba(0,240,255,0.15); }
+.ability-btn.type-defense:hover:not(:disabled) { border-color: var(--neon-blue); box-shadow: 0 4px 15px rgba(0,240,255,0.15); animation: abilityGlowBlue 1.2s ease-in-out infinite; }
+@keyframes abilityGlowBlue {
+  0%, 100% { box-shadow: 0 4px 15px rgba(0,240,255,0.15); }
+  50% { box-shadow: 0 4px 25px rgba(0,240,255,0.4), 0 0 40px rgba(0,240,255,0.15); }
+}
 .ability-btn.type-defense .ab-name { color: var(--neon-blue); }
 .ability-btn.type-heal { border-color: #114422; }
 .ability-btn.type-heal:hover:not(:disabled) { border-color: var(--neon-green); }
 .ability-btn.type-buff { border-color: #443311; }
-.ability-btn.type-buff:hover:not(:disabled) { border-color: var(--neon-yellow); box-shadow: 0 4px 15px rgba(255,230,0,0.15); }
+.ability-btn.type-buff:hover:not(:disabled) { border-color: var(--neon-yellow); box-shadow: 0 4px 15px rgba(255,230,0,0.15); animation: abilityGlowYellow 1.2s ease-in-out infinite; }
+@keyframes abilityGlowYellow {
+  0%, 100% { box-shadow: 0 4px 15px rgba(255,230,0,0.15); }
+  50% { box-shadow: 0 4px 25px rgba(255,230,0,0.4), 0 0 40px rgba(255,230,0,0.15); }
+}
 .ability-btn.type-buff .ab-name { color: var(--neon-yellow); }
 
 /* Floating damage numbers */
@@ -861,7 +876,7 @@ const LOOT_TABLE = [
   { name: 'Bulk Buying Badge', emoji: '\u{1F3F7}\uFE0F', effect: '+10% Savings', stat: 'savings_mult', value: 0.1 },
   { name: 'Rice Cooker', emoji: '\u{1F35A}', effect: '+3 Knowledge', stat: 'knowledge', value: 3 },
   { name: 'Slow Cooker', emoji: '\u{1F372}', effect: '+2 Efficiency', stat: 'efficiency', value: 2 },
-  { name: 'Instant Pot', emoji: '\u{1FA D5}', effect: '+2 Speed', stat: 'speed', value: 2 },
+  { name: 'Instant Pot', emoji: '\u{1FAD5}', effect: '+2 Speed', stat: 'speed', value: 2 },
   { name: 'Caffeine Stash', emoji: '\u{1F48A}', effect: '+3 Speed', stat: 'speed', value: 3 },
   { name: 'Meal Prep Container', emoji: '\u{1F4E6}', effect: '+10 Max HP', stat: 'maxHp', value: 10 },
   { name: 'Spreadsheet of Power', emoji: '\u{1F4CA}', effect: '+3 Knowledge', stat: 'knowledge', value: 3 },

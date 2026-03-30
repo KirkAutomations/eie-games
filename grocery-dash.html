@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grocery Dash — Build the Most Efficient Cart</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.container{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px}
+.back-link{display:inline-block;margin-bottom:15px;color:#00e5ff;text-decoration:none;font-size:.9rem;opacity:.8;transition:opacity .3s}
+.back-link:hover{opacity:1;text-shadow:0 0 10px #00e5ff}
+h1{font-family:'Orbitron',sans-serif;text-align:center;font-size:2rem;background:linear-gradient(135deg,#00e5ff,#76ff03);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}
+.subtitle{text-align:center;color:#aaa;margin-bottom:20px;font-size:.95rem}
+.hud{display:flex;justify-content:center;gap:30px;margin-bottom:20px;flex-wrap:wrap}
+.hud-item{background:rgba(255,255,255,.05);border:1px solid rgba(0,229,255,.3);border-radius:12px;padding:12px 24px;text-align:center;min-width:140px}
+.hud-label{font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:1px}
+.hud-value{font-family:'Orbitron',sans-serif;font-size:1.5rem;color:#00e5ff;margin-top:4px}
+.hud-value.money{color:#76ff03}
+.hud-value.timer{color:#ff4081}
+.hud-value.score{color:#ffab00}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+.item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.item:hover{border-color:#00e5ff;transform:translateY(-2px);box-shadow:0 0 20px rgba(0,229,255,.15)}
+.item.added{border-color:#76ff03;box-shadow:0 0 15px rgba(118,255,3,.2)}
+.item.disabled{opacity:.35;pointer-events:none}
+.item-emoji{font-size:2rem;margin-bottom:6px}
+.item-name{font-weight:700;font-size:.85rem;margin-bottom:4px}
+.item-price{color:#76ff03;font-family:'Orbitron',sans-serif;font-size:.9rem}
+.item-cal{font-size:.7rem;color:#888;margin-top:3px}
+.item-efficiency{font-size:.7rem;color:#ffab00;margin-top:2px}
+.item-qty{position:absolute;top:8px;right:10px;background:#00e5ff;color:#0a0a0f;font-weight:900;font-size:.75rem;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;display:none}
+.item-qty.show{display:flex}
+.cart{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px;margin-bottom:20px}
+.cart h3{font-family:'Orbitron',sans-serif;font-size:.9rem;color:#00e5ff;margin-bottom:10px}
+.cart-items{display:flex;flex-wrap:wrap;gap:8px;min-height:30px}
+.cart-tag{background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.3);border-radius:8px;padding:4px 10px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.cart-tag:hover{background:rgba(255,64,129,.2);border-color:#ff4081}
+.btn{font-family:'Orbitron',sans-serif;padding:14px 40px;border:none;border-radius:12px;font-size:1.1rem;cursor:pointer;transition:all .3s;font-weight:700}
+.btn-start{background:linear-gradient(135deg,#00e5ff,#76ff03);color:#0a0a0f;display:block;margin:30px auto}
+.btn-start:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(0,229,255,.4)}
+.btn-restart{background:linear-gradient(135deg,#ff4081,#ffab00);color:#0a0a0f;display:block;margin:20px auto}
+.end-screen{display:none;text-align:center;padding:30px}
+.end-screen h2{font-family:'Orbitron',sans-serif;font-size:2rem;margin-bottom:10px}
+.end-score{font-family:'Orbitron',sans-serif;font-size:3rem;margin:20px 0}
+.end-score .val{color:#ffab00}
+.end-compare{color:#aaa;font-size:1rem;margin:10px 0}
+.grade{font-family:'Orbitron',sans-serif;font-size:1.5rem;margin:15px 0;padding:10px 30px;border-radius:12px;display:inline-block}
+.grade-s{background:rgba(118,255,3,.2);color:#76ff03;border:1px solid #76ff03}
+.grade-a{background:rgba(0,229,255,.2);color:#00e5ff;border:1px solid #00e5ff}
+.grade-b{background:rgba(255,171,0,.2);color:#ffab00;border:1px solid #ffab00}
+.grade-c{background:rgba(255,64,129,.2);color:#ff4081;border:1px solid #ff4081}
+.hidden{display:none}
+.start-overlay{text-align:center;padding:40px 20px}
+.start-overlay p{color:#aaa;max-width:500px;margin:10px auto;line-height:1.6}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="container">
+<a href="index.html" class="back-link">← Back to Hub</a>
+<h1>🛒 GROCERY DASH</h1>
+<p class="subtitle">Build the Most Efficient Cart</p>
+
+<div id="startScreen" class="start-overlay">
+<p>You have <strong>$10</strong> and <strong>60 seconds</strong>. Buy food to maximize your <strong>calories per dollar</strong>. Click items to add, click cart tags to remove. The most efficient shoppers know: not all calories are equal in price.</p>
+<button class="btn btn-start" onclick="startGame()">START DASH</button>
+</div>
+
+<div id="gameArea" class="hidden">
+<div class="hud">
+<div class="hud-item"><div class="hud-label">Budget Left</div><div class="hud-value money" id="budget">$10.00</div></div>
+<div class="hud-item"><div class="hud-label">Timer</div><div class="hud-value timer" id="timer">60</div></div>
+<div class="hud-item"><div class="hud-label">Calories</div><div class="hud-value" id="totalCal">0</div></div>
+<div class="hud-item"><div class="hud-label">Cal/$</div><div class="hud-value score" id="calPerDollar">0</div></div>
+</div>
+<div class="cart"><h3>🛒 YOUR CART (click to remove)</h3><div class="cart-items" id="cartItems"></div></div>
+<div class="grid" id="itemGrid"></div>
+</div>
+
+<div id="endScreen" class="end-screen">
+<h2>⏱️ TIME'S UP!</h2>
+<div class="end-score">Your Score: <span class="val" id="finalScore">0</span> cal/$</div>
+<div class="end-compare" id="compareText"></div>
+<div id="gradeBox"></div>
+<p style="color:#888;margin-top:15px" id="cartSummary"></p>
+<button class="btn btn-restart" onclick="resetGame()">PLAY AGAIN</button>
+</div>
+</div>
+
+<script>
+const ITEMS=[
+{name:"Rice 25lb",emoji:"🍚",price:12,cal:57800,cpd:4817},
+{name:"Flour 10lb",emoji:"🌾",price:4,cal:16350,cpd:4088},
+{name:"Oats 42oz",emoji:"🥣",price:3.5,cal:5040,cpd:1440},
+{name:"Ramen 12pk",emoji:"🍜",price:3,cal:4560,cpd:1520},
+{name:"Pasta 1lb",emoji:"🍝",price:1.2,cal:1680,cpd:1400},
+{name:"PB 16oz",emoji:"🥜",price:3,cal:2660,cpd:887},
+{name:"Lentils 1lb",emoji:"🫘",price:1.5,cal:1040,cpd:693},
+{name:"Eggs 12ct",emoji:"🥚",price:3,cal:840,cpd:280},
+{name:"Beans 1lb",emoji:"🫘",price:1,cal:480,cpd:480},
+{name:"Chicken 1lb",emoji:"🍗",price:4,cal:480,cpd:120},
+{name:"Potatoes 5lb",emoji:"🥔",price:3,cal:1700,cpd:567},
+{name:"Bananas 1lb",emoji:"🍌",price:.6,cal:400,cpd:667},
+{name:"Milk 1gal",emoji:"🥛",price:3.5,cal:2080,cpd:594},
+{name:"Bread loaf",emoji:"🍞",price:2.5,cal:1820,cpd:728},
+{name:"Starbucks Latte",emoji:"☕",price:5,cal:190,cpd:38},
+{name:"Energy Drink",emoji:"🥤",price:3,cal:110,cpd:37}
+];
+
+let budget=10,totalCal=0,totalSpent=0,cart=[],timerVal=60,timerID=null,gameActive=false;
+
+function calcOptimal(){
+// greedy by cal/$ descending, fill $10
+let sorted=[...ITEMS].sort((a,b)=>b.cpd-a.cpd);
+let rem=10,oc=0;
+for(let it of sorted){if(it.price<=rem){rem-=it.price;oc+=it.cal;}}
+return rem>0?oc:oc; // return best possible
+}
+const OPTIMAL_CPD=(function(){let s=[...ITEMS].sort((a,b)=>b.cpd-a.cpd),r=10,c=0,sp=0;for(let i of s){if(i.price<=r){r-=i.price;c+=i.cal;sp+=i.price;}}return sp>0?Math.round(c/sp):1;})();
+
+function buildGrid(){
+const g=document.getElementById('itemGrid');g.innerHTML='';
+ITEMS.forEach((it,i)=>{
+const d=document.createElement('div');d.className='item';d.dataset.idx=i;
+d.innerHTML=`<div class="item-emoji">${it.emoji}</div><div class="item-name">${it.name}</div><div class="item-price">$${it.price.toFixed(2)}</div><div class="item-cal">${it.cal.toLocaleString()} cal</div><div class="item-efficiency">${it.cpd.toLocaleString()} cal/$</div><div class="item-qty" id="qty${i}">0</div>`;
+d.onclick=()=>addItem(i);
+g.appendChild(d);
+});
+}
+
+function addItem(i){
+if(!gameActive)return;
+const it=ITEMS[i];
+if(it.price>budget)return;
+budget-=it.price;totalCal+=it.cal;totalSpent+=it.price;
+cart.push(i);
+updateUI();
+}
+
+function removeItem(ci){
+if(!gameActive)return;
+const i=cart[ci];
+const it=ITEMS[i];
+budget+=it.price;totalCal-=it.cal;totalSpent-=it.price;
+cart.splice(ci,1);
+updateUI();
+}
+
+function updateUI(){
+document.getElementById('budget').textContent='$'+budget.toFixed(2);
+document.getElementById('totalCal').textContent=totalCal.toLocaleString();
+document.getElementById('calPerDollar').textContent=totalSpent>0?Math.round(totalCal/totalSpent).toLocaleString():'0';
+// cart tags
+const cc=document.getElementById('cartItems');cc.innerHTML='';
+cart.forEach((idx,ci)=>{
+const t=document.createElement('span');t.className='cart-tag';
+t.textContent=ITEMS[idx].emoji+' '+ITEMS[idx].name;
+t.onclick=()=>removeItem(ci);
+cc.appendChild(t);
+});
+// qty badges & disabled state
+let counts={};cart.forEach(i=>{counts[i]=(counts[i]||0)+1;});
+ITEMS.forEach((it,i)=>{
+const el=document.querySelector(`.item[data-idx="${i}"]`);
+const qel=document.getElementById('qty'+i);
+if(counts[i]){qel.textContent=counts[i];qel.classList.add('show');el.classList.add('added');}
+else{qel.classList.remove('show');el.classList.remove('added');}
+if(it.price>budget)el.classList.add('disabled');else el.classList.remove('disabled');
+});
+}
+
+function startGame(){
+document.getElementById('startScreen').classList.add('hidden');
+document.getElementById('gameArea').classList.remove('hidden');
+document.getElementById('endScreen').style.display='none';
+budget=10;totalCal=0;totalSpent=0;cart=[];timerVal=60;gameActive=true;
+buildGrid();updateUI();
+document.getElementById('timer').textContent='60';
+timerID=setInterval(()=>{
+timerVal--;document.getElementById('timer').textContent=timerVal;
+if(timerVal<=10)document.getElementById('timer').style.color='#ff1744';
+if(timerVal<=0){clearInterval(timerID);endGame();}
+},1000);
+}
+
+function endGame(){
+gameActive=false;
+document.getElementById('gameArea').classList.add('hidden');
+const es=document.getElementById('endScreen');es.style.display='block';
+const score=totalSpent>0?Math.round(totalCal/totalSpent):0;
+document.getElementById('finalScore').textContent=score.toLocaleString();
+const pct=Math.round((score/OPTIMAL_CPD)*100);
+document.getElementById('compareText').textContent=`Optimal: ~${OPTIMAL_CPD.toLocaleString()} cal/$. You achieved ${pct}% efficiency. Spent $${totalSpent.toFixed(2)} for ${totalCal.toLocaleString()} calories.`;
+let grade,gc;
+if(pct>=90){grade='S — EFFICIENCY GOD';gc='grade-s';}
+else if(pct>=70){grade='A — Smart Shopper';gc='grade-a';}
+else if(pct>=50){grade='B — Decent';gc='grade-b';}
+else{grade='C — Starbucks Shopper';gc='grade-c';}
+document.getElementById('gradeBox').innerHTML=`<div class="grade ${gc}">${grade}</div>`;
+let summary=cart.map(i=>ITEMS[i].emoji+ITEMS[i].name).join(', ');
+document.getElementById('cartSummary').textContent='Cart: '+(summary||'Empty!');
+}
+
+function resetGame(){startGame();}
+
+// Particles
+(function(){
+const c=document.getElementById('particles'),ctx=c.getContext('2d');
+let w,h,pts=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+for(let i=0;i<50;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*2+.5,dx:(Math.random()-.5)*.4,dy:(Math.random()-.5)*.4,a:Math.random()*.4+.1});
+function draw(){ctx.clearRect(0,0,w,h);for(let p of pts){p.x+=p.dx;p.y+=p.dy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${p.a})`;ctx.fill();}requestAnimationFrame(draw);}
+draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caffeine Calculator — Know Your Markup</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:20px}
+.back-link{display:inline-block;margin-bottom:15px;color:#00e5ff;text-decoration:none;font-size:.9rem;opacity:.8;transition:opacity .3s}
+.back-link:hover{opacity:1;text-shadow:0 0 10px #00e5ff}
+h1{font-family:'Orbitron',sans-serif;text-align:center;font-size:2rem;background:linear-gradient(135deg,#00e5ff,#76ff03);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}
+.subtitle{text-align:center;color:#aaa;margin-bottom:25px;font-size:.95rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:30px}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 14px;text-align:center;transition:all .3s}
+.card:hover{border-color:#00e5ff;box-shadow:0 0 20px rgba(0,229,255,.1)}
+.card-emoji{font-size:2.5rem;margin-bottom:8px}
+.card-name{font-weight:700;font-size:.95rem;margin-bottom:4px}
+.card-info{font-size:.75rem;color:#888;margin-bottom:10px}
+.card-price{color:#76ff03;font-family:'Orbitron',sans-serif;font-size:.85rem}
+.card-mg{color:#ffab00;font-size:.75rem;margin-top:2px}
+.card-controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+.card-controls button{width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,229,255,.4);background:rgba(0,229,255,.1);color:#00e5ff;font-size:1.2rem;cursor:pointer;transition:all .2s;font-weight:700}
+.card-controls button:hover{background:#00e5ff;color:#0a0a0f}
+.card-count{font-family:'Orbitron',sans-serif;font-size:1.2rem;min-width:28px;text-align:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:25px}
+.stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px;text-align:center}
+.stat-label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:1px}
+.stat-value{font-family:'Orbitron',sans-serif;font-size:1.6rem;margin-top:6px;transition:all .3s}
+.stat-value.mg{color:#ffab00}
+.stat-value.daily{color:#76ff03}
+.stat-value.monthly{color:#00e5ff}
+.stat-value.yearly{color:#ff4081}
+.compare-box{background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(118,255,3,.08));border:1px solid rgba(0,229,255,.3);border-radius:16px;padding:24px;text-align:center;margin-bottom:25px}
+.compare-box h3{font-family:'Orbitron',sans-serif;font-size:1rem;color:#00e5ff;margin-bottom:12px}
+.compare-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-bottom:10px}
+.compare-item{text-align:center}
+.compare-item .label{font-size:.75rem;color:#888}
+.compare-item .val{font-family:'Orbitron',sans-serif;font-size:1.3rem;margin-top:4px}
+.savings{font-family:'Orbitron',sans-serif;font-size:1.4rem;color:#76ff03;margin-top:12px}
+.savings-sub{color:#aaa;font-size:.85rem;margin-top:4px}
+.challenge{background:rgba(255,171,0,.08);border:1px solid rgba(255,171,0,.3);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px}
+.challenge h3{font-family:'Orbitron',sans-serif;color:#ffab00;font-size:.95rem;margin-bottom:8px}
+.challenge p{color:#aaa;font-size:.85rem}
+.challenge .result{font-family:'Orbitron',sans-serif;font-size:1.1rem;margin-top:10px}
+.bar-wrap{height:8px;background:rgba(255,255,255,.1);border-radius:4px;margin-top:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s;background:linear-gradient(90deg,#ffab00,#ff4081)}
+.reset-btn{display:block;margin:0 auto;padding:10px 30px;background:rgba(255,64,129,.15);border:1px solid #ff4081;color:#ff4081;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s}
+.reset-btn:hover{background:#ff4081;color:#0a0a0f}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="container">
+<a href="index.html" class="back-link">← Back to Hub</a>
+<h1>☕ CAFFEINE CALCULATOR</h1>
+<p class="subtitle">Know Your Markup — See What Your Habit Really Costs</p>
+
+<div class="challenge" id="challenge">
+<h3>⚡ CHALLENGE: Reach 400mg Daily for the Cheapest Price</h3>
+<p>Can you hit the FDA safe limit without breaking the bank?</p>
+<div class="bar-wrap"><div class="bar-fill" id="challengeBar" style="width:0%"></div></div>
+<div class="result" id="challengeResult"></div>
+</div>
+
+<div class="cards" id="cards"></div>
+
+<div class="stats">
+<div class="stat"><div class="stat-label">Daily Caffeine</div><div class="stat-value mg" id="dailyMg">0 mg</div></div>
+<div class="stat"><div class="stat-label">Daily Cost</div><div class="stat-value daily" id="dailyCost">$0.00</div></div>
+<div class="stat"><div class="stat-label">Monthly Cost</div><div class="stat-value monthly" id="monthlyCost">$0.00</div></div>
+<div class="stat"><div class="stat-label">Yearly Cost</div><div class="stat-value yearly" id="yearlyCost">$0.00</div></div>
+</div>
+
+<div class="compare-box" id="compareBox" style="display:none">
+<h3>💊 THE PILL COMPARISON</h3>
+<div class="compare-row">
+<div class="compare-item"><div class="label">Your Yearly Cost</div><div class="val" style="color:#ff4081" id="cmpYours">$0</div></div>
+<div class="compare-item"><div class="label">With Caffeine Pills</div><div class="val" style="color:#76ff03" id="cmpPills">$0</div></div>
+</div>
+<div class="savings" id="cmpSavings">$0/year saved</div>
+<div class="savings-sub" id="cmpSub"></div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">RESET ALL</button>
+</div>
+
+<script>
+const SOURCES=[
+{name:"Starbucks Latte",emoji:"☕",price:5,mg:150,info:"$5.00 / 150mg"},
+{name:"Energy Drink",emoji:"🥤",price:3,mg:160,info:"$3.00 / 160mg"},
+{name:"Instant Coffee",emoji:"🫖",price:.10,mg:65,info:"$0.10 / 65mg"},
+{name:"Home Brewed",emoji:"☕",price:.25,mg:95,info:"$0.25 / 95mg"},
+{name:"Caffeine Pill",emoji:"💊",price:.03,mg:200,info:"$0.03 / 200mg"}
+];
+let counts=[0,0,0,0,0];
+
+function render(){
+const cDiv=document.getElementById('cards');cDiv.innerHTML='';
+SOURCES.forEach((s,i)=>{
+cDiv.innerHTML+=`<div class="card">
+<div class="card-emoji">${s.emoji}</div>
+<div class="card-name">${s.name}</div>
+<div class="card-info">${s.info}</div>
+<div class="card-controls">
+<button onclick="dec(${i})">−</button>
+<span class="card-count">${counts[i]}</span>
+<button onclick="inc(${i})">+</button>
+</div></div>`;
+});
+updateStats();
+}
+
+function inc(i){counts[i]++;render();}
+function dec(i){if(counts[i]>0)counts[i]--;render();}
+function resetAll(){counts=[0,0,0,0,0];render();}
+
+function updateStats(){
+let mg=0,cost=0;
+counts.forEach((c,i)=>{mg+=c*SOURCES[i].mg;cost+=c*SOURCES[i].price;});
+document.getElementById('dailyMg').textContent=mg+' mg';
+document.getElementById('dailyCost').textContent='$'+cost.toFixed(2);
+document.getElementById('monthlyCost').textContent='$'+(cost*30).toFixed(2);
+document.getElementById('yearlyCost').textContent='$'+(cost*365).toFixed(0);
+
+// challenge bar
+const pct=Math.min(100,Math.round((mg/400)*100));
+document.getElementById('challengeBar').style.width=pct+'%';
+if(mg>=400){
+document.getElementById('challengeResult').innerHTML=`<span style="color:#76ff03">✓ 400mg reached at $${cost.toFixed(2)}/day!</span>`;
+}else{
+document.getElementById('challengeResult').innerHTML=`<span style="color:#aaa">${mg}/400mg (${pct}%)</span>`;
+}
+
+// comparison
+const cb=document.getElementById('compareBox');
+if(cost>0){
+cb.style.display='block';
+const yearly=cost*365;
+// pills needed for same mg
+const pillsNeeded=Math.ceil(mg/200);
+const pillCost=pillsNeeded*0.03*365;
+const saved=yearly-pillCost;
+document.getElementById('cmpYours').textContent='$'+yearly.toFixed(0);
+document.getElementById('cmpPills').textContent='$'+pillCost.toFixed(0);
+document.getElementById('cmpSavings').textContent='$'+Math.max(0,saved).toFixed(0)+'/year saved';
+if(saved>0){
+document.getElementById('cmpSub').textContent="That's $"+(saved/12).toFixed(0)+'/month back in your pocket.';
+}else{
+document.getElementById('cmpSub').textContent="You're already at peak efficiency. 💪";
+}
+}else{cb.style.display='none';}
+}
+
+render();
+
+// Particles
+(function(){
+const c=document.getElementById('particles'),ctx=c.getContext('2d');
+let w,h,pts=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+for(let i=0;i<40;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*2+.5,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,a:Math.random()*.3+.1});
+function draw(){ctx.clearRect(0,0,w,h);for(let p of pts){p.x+=p.dx;p.y+=p.dy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${p.a})`;ctx.fill();}requestAnimationFrame(draw);}
+draw();
+})();
+</script>
+</body>
+</html>

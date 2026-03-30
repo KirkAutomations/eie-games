@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Builder — Hit Your Macros for Less</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.container{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:20px}
+.back-link{display:inline-block;margin-bottom:15px;color:#00e5ff;text-decoration:none;font-size:.9rem;opacity:.8;transition:opacity .3s}
+.back-link:hover{opacity:1;text-shadow:0 0 10px #00e5ff}
+h1{font-family:'Orbitron',sans-serif;text-align:center;font-size:2rem;background:linear-gradient(135deg,#00e5ff,#76ff03);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}
+.subtitle{text-align:center;color:#aaa;margin-bottom:20px;font-size:.95rem}
+.target-box{background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(118,255,3,.1));border:1px solid rgba(0,229,255,.3);border-radius:16px;padding:20px;text-align:center;margin-bottom:20px}
+.target-box h2{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:#00e5ff;margin-bottom:8px}
+.target-box .round-info{color:#aaa;font-size:.85rem}
+.progress{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.prog-item{flex:1;min-width:180px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px}
+.prog-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:6px}
+.prog-label .name{color:#888;text-transform:uppercase;letter-spacing:1px;font-size:.7rem}
+.prog-label .val{font-family:'Orbitron',sans-serif}
+.prog-bar{height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:5px;transition:width .3s}
+.prog-fill.cal{background:linear-gradient(90deg,#00e5ff,#76ff03)}
+.prog-fill.pro{background:linear-gradient(90deg,#ffab00,#ff6d00)}
+.prog-fill.cost{background:linear-gradient(90deg,#76ff03,#ff4081)}
+.prog-over{color:#ff1744!important}
+.plate{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px;margin-bottom:16px;min-height:50px}
+.plate h3{font-family:'Orbitron',sans-serif;font-size:.85rem;color:#00e5ff;margin-bottom:8px}
+.plate-items{display:flex;flex-wrap:wrap;gap:6px}
+.plate-tag{background:rgba(118,255,3,.12);border:1px solid rgba(118,255,3,.3);border-radius:8px;padding:4px 10px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.plate-tag:hover{background:rgba(255,64,129,.2);border-color:#ff4081}
+.ingredients{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.ing{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.ing:hover{border-color:#00e5ff;transform:translateY(-2px);box-shadow:0 0 15px rgba(0,229,255,.12)}
+.ing-emoji{font-size:1.6rem;margin-bottom:4px}
+.ing-name{font-weight:700;font-size:.8rem;margin-bottom:3px}
+.ing-stats{font-size:.65rem;color:#888;line-height:1.5}
+.btn{font-family:'Orbitron',sans-serif;padding:12px 35px;border:none;border-radius:12px;font-size:1rem;cursor:pointer;transition:all .3s;font-weight:700}
+.btn-submit{background:linear-gradient(135deg,#76ff03,#00e5ff);color:#0a0a0f;display:block;margin:0 auto 20px}
+.btn-submit:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(118,255,3,.3)}
+.btn-submit:disabled{opacity:.4;transform:none;cursor:default}
+.result-screen{display:none;text-align:center;padding:30px}
+.result-screen h2{font-family:'Orbitron',sans-serif;font-size:1.8rem;margin-bottom:15px}
+.stars{font-size:2.5rem;margin:15px 0}
+.result-detail{color:#aaa;font-size:.9rem;margin:8px 0;line-height:1.6}
+.final-screen{display:none;text-align:center;padding:30px}
+.final-screen h2{font-family:'Orbitron',sans-serif;font-size:2rem;margin-bottom:10px;background:linear-gradient(135deg,#ffab00,#ff4081);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.final-stars{font-size:3rem;margin:15px 0}
+.btn-restart{background:linear-gradient(135deg,#ff4081,#ffab00);color:#0a0a0f}
+.hidden{display:none}
+.start-overlay{text-align:center;padding:40px 20px}
+.start-overlay p{color:#aaa;max-width:500px;margin:10px auto;line-height:1.6}
+.btn-start{background:linear-gradient(135deg,#00e5ff,#76ff03);color:#0a0a0f;display:block;margin:20px auto}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="container">
+<a href="index.html" class="back-link">← Back to Hub</a>
+<h1>🍽️ MEAL BUILDER</h1>
+<p class="subtitle">Hit Your Macros for Less</p>
+
+<div id="startScreen" class="start-overlay">
+<p>Build meals that hit calorie and protein targets — under a budget. 3 rounds, each harder than the last. Click ingredients to add, click plate items to remove. Star ratings for efficiency.</p>
+<button class="btn btn-start" onclick="startGame()">START BUILDING</button>
+</div>
+
+<div id="gameArea" class="hidden">
+<div class="target-box">
+<h2 id="targetText">Build a 2000 cal, 80g protein meal under $5.00</h2>
+<div class="round-info" id="roundInfo">Round 1 of 3</div>
+</div>
+<div class="progress">
+<div class="prog-item"><div class="prog-label"><span class="name">Calories</span><span class="val" id="calVal" style="color:#00e5ff">0 / 2000</span></div><div class="prog-bar"><div class="prog-fill cal" id="calBar" style="width:0%"></div></div></div>
+<div class="prog-item"><div class="prog-label"><span class="name">Protein</span><span class="val" id="proVal" style="color:#ffab00">0 / 80g</span></div><div class="prog-bar"><div class="prog-fill pro" id="proBar" style="width:0%"></div></div></div>
+<div class="prog-item"><div class="prog-label"><span class="name">Cost</span><span class="val" id="costVal" style="color:#76ff03">$0.00 / $5.00</span></div><div class="prog-bar"><div class="prog-fill cost" id="costBar" style="width:0%"></div></div></div>
+</div>
+<div class="plate"><h3>🍽️ YOUR PLATE (click to remove)</h3><div class="plate-items" id="plateItems"></div></div>
+<div class="ingredients" id="ingGrid"></div>
+<button class="btn btn-submit" id="submitBtn" onclick="submitRound()">SUBMIT MEAL</button>
+</div>
+
+<div id="resultScreen" class="result-screen">
+<h2 id="resultTitle">Round Complete!</h2>
+<div class="stars" id="resultStars"></div>
+<div class="result-detail" id="resultDetail"></div>
+<button class="btn btn-start" onclick="nextRound()">NEXT ROUND</button>
+</div>
+
+<div id="finalScreen" class="final-screen">
+<h2>ALL ROUNDS COMPLETE!</h2>
+<div class="final-stars" id="finalStars"></div>
+<p class="result-detail" id="finalDetail"></p>
+<button class="btn btn-restart" onclick="resetGame()">PLAY AGAIN</button>
+</div>
+</div>
+
+<script>
+const ING=[
+{name:"Rice",emoji:"🍚",price:.20,cal:360,pro:7},
+{name:"Lentils",emoji:"🫘",price:.20,cal:230,pro:18},
+{name:"Eggs",emoji:"🥚",price:.25,cal:70,pro:6},
+{name:"Chicken",emoji:"🍗",price:1.00,cal:165,pro:31},
+{name:"Beans",emoji:"🫘",price:.15,cal:240,pro:15},
+{name:"Pasta",emoji:"🍝",price:.18,cal:200,pro:7},
+{name:"PB",emoji:"🥜",price:.12,cal:190,pro:8},
+{name:"Oats",emoji:"🥣",price:.10,cal:150,pro:5},
+{name:"Potato",emoji:"🥔",price:.20,cal:160,pro:4},
+{name:"Bread",emoji:"🍞",price:.15,cal:70,pro:3},
+{name:"Tuna can",emoji:"🐟",price:1.00,cal:200,pro:40},
+{name:"Banana",emoji:"🍌",price:.10,cal:100,pro:1},
+{name:"Milk cup",emoji:"🥛",price:.25,cal:150,pro:8},
+{name:"Butter",emoji:"🧈",price:.08,cal:100,pro:0},
+{name:"Oil tbsp",emoji:"🫒",price:.05,cal:120,pro:0}
+];
+
+const ROUNDS=[
+{cal:2000,pro:80,budget:5.00},
+{cal:2500,pro:100,budget:4.00},
+{cal:1800,pro:120,budget:3.50}
+];
+
+let round=0,plate=[],scores=[],gameActive=false;
+
+function buildIngGrid(){
+const g=document.getElementById('ingGrid');g.innerHTML='';
+ING.forEach((ig,i)=>{
+g.innerHTML+=`<div class="ing" onclick="addIng(${i})">
+<div class="ing-emoji">${ig.emoji}</div>
+<div class="ing-name">${ig.name}</div>
+<div class="ing-stats">${ig.cal}cal · ${ig.pro}g pro<br>$${ig.price.toFixed(2)}</div></div>`;
+});
+}
+
+function getTotals(){
+let c=0,p=0,co=0;
+plate.forEach(i=>{c+=ING[i].cal;p+=ING[i].pro;co+=ING[i].price;});
+return{cal:c,pro:p,cost:co};
+}
+
+function addIng(i){
+if(!gameActive)return;
+plate.push(i);updateUI();
+}
+
+function removeIng(pi){
+if(!gameActive)return;
+plate.splice(pi,1);updateUI();
+}
+
+function updateUI(){
+const t=getTotals(),r=ROUNDS[round];
+// progress bars
+const calPct=Math.min(150,(t.cal/r.cal)*100);
+const proPct=Math.min(150,(t.pro/r.pro)*100);
+const costPct=Math.min(150,(t.cost/r.budget)*100);
+document.getElementById('calBar').style.width=Math.min(100,calPct)+'%';
+document.getElementById('proBar').style.width=Math.min(100,proPct)+'%';
+document.getElementById('costBar').style.width=Math.min(100,costPct)+'%';
+const calEl=document.getElementById('calVal');
+calEl.textContent=`${t.cal} / ${r.cal}`;
+calEl.className='val'+(t.cal>=r.cal?' prog-over':'');calEl.style.color=t.cal>=r.cal?'#76ff03':'#00e5ff';
+const proEl=document.getElementById('proVal');
+proEl.textContent=`${t.pro}g / ${r.pro}g`;
+proEl.style.color=t.pro>=r.pro?'#76ff03':'#ffab00';
+const costEl=document.getElementById('costVal');
+costEl.textContent=`$${t.cost.toFixed(2)} / $${r.budget.toFixed(2)}`;
+costEl.style.color=t.cost>r.budget?'#ff1744':'#76ff03';
+if(t.cost>r.budget)document.getElementById('costBar').querySelector('.prog-fill').style.background='linear-gradient(90deg,#ff4081,#ff1744)';
+else document.getElementById('costBar').querySelector('.prog-fill').style.background='linear-gradient(90deg,#76ff03,#00e5ff)';
+// plate
+const pp=document.getElementById('plateItems');pp.innerHTML='';
+plate.forEach((idx,pi)=>{
+pp.innerHTML+=`<span class="plate-tag" onclick="removeIng(${pi})">${ING[idx].emoji} ${ING[idx].name}</span>`;
+});
+}
+
+function startGame(){
+round=0;scores=[];plate=[];
+document.getElementById('startScreen').classList.add('hidden');
+document.getElementById('finalScreen').style.display='none';
+document.getElementById('resultScreen').style.display='none';
+startRound();
+}
+
+function startRound(){
+plate=[];gameActive=true;
+const r=ROUNDS[round];
+document.getElementById('gameArea').classList.remove('hidden');
+document.getElementById('resultScreen').style.display='none';
+document.getElementById('targetText').textContent=`Build a ${r.cal} cal, ${r.pro}g protein meal under $${r.budget.toFixed(2)}`;
+document.getElementById('roundInfo').textContent=`Round ${round+1} of 3`;
+buildIngGrid();updateUI();
+}
+
+function submitRound(){
+if(!gameActive)return;
+gameActive=false;
+const t=getTotals(),r=ROUNDS[round];
+let stars=0;
+if(t.cal>=r.cal)stars++;
+if(t.pro>=r.pro)stars++;
+if(t.cost<=r.budget)stars++;
+scores.push(stars);
+document.getElementById('gameArea').classList.add('hidden');
+const rs=document.getElementById('resultScreen');rs.style.display='block';
+document.getElementById('resultTitle').textContent=`Round ${round+1} Complete!`;
+document.getElementById('resultStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+let det=`Calories: ${t.cal}/${r.cal} ${t.cal>=r.cal?'✅':'❌'} · Protein: ${t.pro}g/${r.pro}g ${t.pro>=r.pro?'✅':'❌'} · Cost: $${t.cost.toFixed(2)}/$${r.budget.toFixed(2)} ${t.cost<=r.budget?'✅':'❌'}`;
+document.getElementById('resultDetail').textContent=det;
+round++;
+if(round>=3){
+document.querySelector('#resultScreen button').textContent='SEE FINAL SCORE';
+}
+}
+
+function nextRound(){
+if(round>=3){showFinal();return;}
+startRound();
+}
+
+function showFinal(){
+document.getElementById('resultScreen').style.display='none';
+const fs=document.getElementById('finalScreen');fs.style.display='block';
+const total=scores.reduce((a,b)=>a+b,0);
+document.getElementById('finalStars').textContent='⭐'.repeat(total)+'☆'.repeat(9-total);
+let msg='';
+if(total>=8)msg='Efficiency God — you could feed an army on pocket change.';
+else if(total>=6)msg='Solid nutrition instincts. A few tweaks from perfection.';
+else if(total>=4)msg='Not bad, but your wallet and macros could do better.';
+else msg='Time to study up at EfficiencyIsEverything.com!';
+document.getElementById('finalDetail').textContent=`${total}/9 stars — ${msg}`;
+}
+
+function resetGame(){startGame();}
+
+// Particles
+(function(){
+const c=document.getElementById('particles'),ctx=c.getContext('2d');
+let w,h,pts=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+for(let i=0;i<45;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*2+.5,dx:(Math.random()-.5)*.35,dy:(Math.random()-.5)*.35,a:Math.random()*.35+.1});
+function draw(){ctx.clearRect(0,0,w,h);for(let p of pts){p.x+=p.dx;p.y+=p.dy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${p.a})`;ctx.fill();}requestAnimationFrame(draw);}
+draw();
+})();
+</script>
+</body>
+</html>

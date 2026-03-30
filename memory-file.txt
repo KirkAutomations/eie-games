@@ -1,0 +1,114 @@
+# EIE Games — Development Memory File
+# Created: 2026-03-29
+# Purpose: Preserve context and lessons learned in case of session loss
+
+## Project Overview
+- 10 browser games (now 15 with 5 new ones) built for Efficiency Is Everything (EIE)
+- All single-file HTML games with neon dark theme
+- Hosted on GitHub Pages: https://kirkautomations.github.io/eie-games/
+- Repo: https://github.com/KirkAutomations/eie-games
+- Local path: C:\Users\micha\Documents\efficiencyiseverything game\
+- Version control: git + timestamped snapshots in versions/ + Deploy-Pages.ps1
+
+## Game List (Original 10)
+1. efficiency-empire.html — Idle/Clicker (flagship game, most complex)
+2. budget-blaster.html — Space Shooter  
+3. optimizer-quest.html — RPG
+4. nutrient-tetris.html — Puzzle/Tetris
+5. savings-snake.html — Snake variant
+6. tower-of-thrift.html — Tower Defense
+7. speed-shopper.html — Endless Runner
+8. meal-match.html — Efficiency Sorter (was memory card, completely redesigned)
+9. kitchen-alchemist.html — Cooking Sim
+10. time-platformer.html — Platformer (Time Thief)
+
+## New Games (Added 2026-03-29)
+11. price-is-right.html — "The Price Is Efficient" (guessing game)
+12. grocery-dash.html — "Grocery Dash" (shopping cart builder)
+13. caffeine-clicker.html — "Caffeine Calculator" (cost comparison)
+14. meal-builder.html — "Meal Builder Challenge" (drag-and-drop)
+15. time-calculator.html — "Time Reclaimer" (interactive calculator)
+
+## Key Design Decisions & Lessons Learned
+
+### What Works (Keep These)
+- Neon dark theme (--neon-green: #39ff14, --neon-blue: #00f0ff, --dark-bg: #0a0a1a)
+- Orbitron font for headers, Rajdhani for body, Space Mono for data
+- Single-file HTML approach (zero dependencies, instant load)
+- Cursor-following particle effects (subtle, max 15-20 particles)
+- Educational facts shown during gameplay, not just at end
+- Real EIE data (cal/$, protein/$, time savings)
+
+### What Doesn't Work (Avoid)
+- @import url() in CSS — ALWAYS use <link> tags instead. @import after :root breaks fonts.
+- Memory card matching games — users find them boring
+- Plain snake without unique mechanics — add growth zones, bosses, combos
+- Small text on game elements — minimum 12px for any readable text
+- Assuming emoji will render on all systems — use safe/common emoji only
+- Full file rewrites in sub-agents — SURGICAL EDITS with edit tool for files >30KB
+
+### Critical Bugs Found & Fixed
+1. optimizer-quest.html: Malformed unicode `\u{1FA D5}` (space in hex) broke entire JS
+2. optimizer-quest.html: @import after :root in CSS broke font loading — converted to <link>
+3. budget-blaster.html: @import outside <style> tag rendered as visible white text
+4. budget-blaster.html: Mouse attraction applied when idle, causing constant upward drift
+5. nutrient-tetris.html: "DlvyFee" with \u{1F6D1} emoji rendering as "DOTS" on some systems
+
+### User Feedback Themes
+- EDUCATION is critical — every game must teach real EIE data
+- Fun > Education — but education should be woven in, not bolted on
+- Progression matters — games need to get harder and reward continued play
+- Text must be readable — especially on mobile
+- Show correct answers — when quizzes/challenges are wrong, ALWAYS show why
+- Incentivize exploration — Efficiency Empire's "Collection Bonus" forces buying all upgrades
+- Visual feedback — particles, screen shake, combos, floating text all make games feel alive
+
+### Kitchen Alchemist — Science Audit Results
+VERIFIED CORRECT:
+- MSG is safe (FDA GRAS classification)
+- Salt early for deeper seasoning (osmosis)
+- Acid brightens at end of cooking (preserves volatiles)
+- Fat carries flavor (fat-soluble compounds)
+- High heat → Maillard reaction (280-330°F)
+
+FIXED (was wrong):
+- "Potatoes absorb salt" — MYTH (they absorb liquid, not selectively salt)
+- Cold lemonade claim about ethanol vapor — lemonade has no ethanol; fixed to taste perception
+- "MSG enhances flavor 10x" — removed unsubstantiated multiplier
+- "Salt needed for blood pressure regulation" — backwards; salt suppresses bitterness
+- "Citrus = Vitamin C your body craves" — actual mechanism is citric acid contrast
+
+### EIE Key Data Points (for future games)
+Food efficiency (cal/$):
+- Flour: 4,464 | Rice: 2,320 | Oats: 2,148 | Ramen: 1,949
+- Pasta: 1,600 | PB: 1,487 | Lentils: 929 | Beans: 880
+- Eggs: 802 | Potatoes: 780 | Chicken: 239
+
+Protein efficiency (g/$):
+- Beans: 80 | Lentils: 73 | Eggs: 70 | Pasta: 56 | Tuna: 55
+
+Time savings:
+- Biphasic sleep: 624 hrs/yr | 2x video: 200 hrs/yr
+- Meal prep: 150 hrs/yr | Morning routine: 100 hrs/yr
+- Packed lunch: 80 hrs/yr | IF (skip meal): 60 hrs/yr
+
+Money comparisons:
+- Caffeine pills $0.03/200mg vs Starbucks $5/150mg = 150x markup
+- Cooking at home saves $3,000+/yr vs restaurants
+- Bulk buying saves 30-50% on staples
+- Tap water $0.004/gal vs bottled $1-2 = 4000% markup
+
+Cooking cheat codes: Salt early, acid at end, MSG for umami, fat carries flavor, high heat sear
+
+### Version History
+- v1.0: Initial 10 games (2026-03-27)
+- v1.1-pre-overhaul: Snapshot before changes (2026-03-29)
+- v2.0: Major overhaul of all 10 games (2026-03-29)
+- v2.1: Fixes for Optimizer Quest, more education, 5 new games (2026-03-29)
+
+### Architecture Notes
+- Deploy script: Deploy-Pages.ps1 (auto-snapshot + git commit + push)
+- Snapshots in versions/ folder (.gitignored)
+- index.html is the game hub linking all games
+- All games use localStorage for save data (high scores, progress)
+- GitHub repo: KirkAutomations/eie-games (public)

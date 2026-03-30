@@ -236,6 +236,11 @@
             font-size: 1rem;
         }
 
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.08); }
+        }
+
         @media (max-width: 640px) {
             .game-wrapper { flex-direction: column; align-items: center; gap: 10px; padding: 8px; }
             .side-panel { flex-direction: row; flex-wrap: wrap; width: 100%; justify-content: center; }
@@ -255,6 +260,10 @@
 
     <div class="game-wrapper">
         <div class="side-panel" id="leftPanel">
+            <div class="panel-box">
+                <h3>Hold <span style="font-size:0.5rem;color:rgba(255,255,255,0.4)">[C]</span></h3>
+                <canvas id="holdCanvas" style="width:100%;aspect-ratio:4/4;display:block;border-radius:4px;background:rgba(0,0,0,0.3);"></canvas>
+            </div>
             <div class="panel-box">
                 <h3>Score</h3>
                 <div class="value" id="scoreVal">0</div>
@@ -280,13 +289,20 @@
                 <p>Stack food blocks to build efficient meals. Complete rows to score!</p>
                 <p style="font-size:0.75rem; color:var(--neon-yellow)">Green = Cheap calories<br>Blue = High protein<br>Yellow = Balanced<br>Pink = Junk food penalty!</p>
                 <button class="btn" id="startBtn">START GAME</button>
-                <div class="controls-hint">Arrow keys to move/rotate | Space = hard drop</div>
+                <div class="controls-hint">Arrow keys to move/rotate | Space = hard drop | C = hold</div>
             </div>
             <div class="overlay hidden" id="gameOverOverlay">
                 <h2 style="color:var(--neon-pink)">GAME OVER</h2>
                 <div class="score-display" id="finalScore">0</div>
                 <p id="finalStats"></p>
                 <button class="btn" id="restartBtn">PLAY AGAIN</button>
+            </div>
+            <div class="overlay hidden" id="junkRejectOverlay" style="background:rgba(255,0,110,0.25);cursor:pointer;" onclick="if(typeof resolveJunkRejectClick==='function')resolveJunkRejectClick()">
+                <h2 style="color:var(--neon-pink);font-size:1.4rem;animation:pulse 0.3s infinite alternate;">⚠ REJECT JUNK! ⚠</h2>
+                <p style="color:#fff;font-size:1.1rem;">Press <b>SPACE</b> or <b>CLICK</b> to reject!</p>
+                <div id="rejectTimerBar" style="width:80%;height:6px;background:rgba(255,255,255,0.15);border-radius:3px;overflow:hidden;margin-top:8px;">
+                    <div id="rejectTimerFill" style="width:100%;height:100%;background:var(--neon-pink);border-radius:3px;transition:width 1.5s linear;"></div>
+                </div>
             </div>
             <div class="overlay hidden" id="pauseOverlay">
                 <h2 style="color:var(--neon-yellow)">PAUSED</h2>
@@ -311,6 +327,15 @@
                 <div id="dailyProtein" class="value" style="color:var(--neon-blue); font-size:1rem; margin-top:4px;">0 g/$</div>
                 <div class="sub-value">protein per dollar</div>
             </div>
+            <div class="panel-box">
+                <h3>Efficiency Tiers</h3>
+                <div style="font-family:'Space Mono',monospace;font-size:0.7rem;line-height:1.6;">
+                    <div><span style="color:var(--neon-green);font-weight:bold;">S:</span> <span style="color:var(--neon-green);">&gt;1500 cal/$</span></div>
+                    <div><span style="color:var(--neon-blue);font-weight:bold;">A:</span> <span style="color:var(--neon-blue);">800-1500</span></div>
+                    <div><span style="color:var(--neon-yellow);font-weight:bold;">B:</span> <span style="color:var(--neon-yellow);">200-800</span></div>
+                    <div><span style="color:var(--neon-pink);font-weight:bold;">F:</span> <span style="color:var(--neon-pink);">&lt;200 (junk)</span></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -330,6 +355,10 @@
     const nctx = nextCanvas.getContext('2d');
     nextCanvas.width = 120;
     nextCanvas.height = 120;
+    const holdCanvas = document.getElementById('holdCanvas');
+    const hctx = holdCanvas.getContext('2d');
+    holdCanvas.width = 120;
+    holdCanvas.height = 120;
 
     // --- FOOD DATA ---
     const FOODS = {
@@ -344,7 +373,7 @@
         blue: [
             { name: 'Lentils', emoji: '\u{1F372}', cal: 929, prot: 73 },
             { name: 'Eggs', emoji: '\u{1F95A}', cal: 802, prot: 70 },
-            { name: 'Beans', emoji: '\u{1FAD8}', cal: 880, prot: 80 },
+            { name: 'Beans', emoji: '\u{1F330}', cal: 880, prot: 80 },
             { name: 'Milk', emoji: '\u{1F95B}', cal: 350, prot: 56 },
             { name: 'Tuna', emoji: '\u{1F41F}', cal: 300, prot: 55 },
         ],
@@ -356,7 +385,7 @@
         pink: [
             { name: 'Takeout', emoji: '\u{1F4B8}', cal: 80, prot: 5 },
             { name: 'Starbux', emoji: '\u{2615}', cal: 50, prot: 2 },
-            { name: 'DlvyFee', emoji: '\u{1F6D1}', cal: 0, prot: 0 },
+            { name: 'DlvyFee', emoji: '\u{274C}', cal: 0, prot: 0 },
         ]
     };
 
@@ -383,16 +412,30 @@
     const SHAPE_KEYS_PINK = ['S','Z','T','Z','S'];
 
     const EFFICIENCY_FACTS = [
-        "Flour gives you 4,464 calories per dollar - the cheapest energy source!",
-        "Beans provide 80g of protein per dollar - the best budget protein!",
+        "Flour: 4,464 cal/$ — the #1 most efficient food on Earth!",
+        "Beans provide 80g of protein per dollar — the best budget protein!",
         "A $5 Starbucks drink could buy 10 lbs of rice instead.",
-        "Lentils cost about $0.15 per serving with 18g of protein.",
+        "Lentils: 73g protein/$ AND 929 cal/$ — dual powerhouse!",
         "Delivery fees can double your food cost for zero nutrition.",
-        "Oats give 2,148 cal/$ and 72g protein/$ - one of the best overall.",
+        "Oats give 2,148 cal/$ and 72g protein/$ — one of the best overall.",
         "Eggs cost about $0.20 each and pack 6g of protein.",
         "Peanut butter: 1,487 cal/$ with healthy fats and 52g protein/$.",
-        "Ramen noodles: 1,949 cal/$ - cheap but lacks micronutrients.",
-        "Cooking at home saves the average American $3,000+ per year."
+        "Ramen noodles: 1,949 cal/$ — cheap but lacks micronutrients.",
+        "Cooking at home saves $3,000+/yr vs eating out.",
+        "Caffeine pills: $0.03 for 200mg. Starbucks: $5 for 150mg. 150x markup!",
+        "Rice + beans = complete protein for under $0.50/meal.",
+        "Meal prepping saves 150+ hours per year — time IS money.",
+        "Biphasic sleep saves 624 hours per year — efficiency beyond food.",
+        "The Maillard reaction makes cheap food taste gourmet — high heat sear!",
+        "MSG is FDA-approved and makes $0.50 meals taste like $15 ones.",
+        "Watching videos at 2x speed saves 200+ hours per year.",
+        "Bananas: 554 cal/$ and loaded with potassium — nature's energy bar.",
+        "Whole chicken: $1.50/lb with bones for free bone broth — zero waste.",
+        "Frozen veggies retain 95% of nutrients and cost 50% less than fresh.",
+        "Cabbage: 30+ day shelf life, pennies per serving, loaded with vitamin C.",
+        "Potatoes: 1,872 cal/$ — nearly complete nutrition for pennies.",
+        "Whey protein: cheapest protein per gram after beans and lentils.",
+        "Bulk buying saves 20-40% — your pantry is your portfolio."
     ];
 
     // --- GAME STATE ---
@@ -406,9 +449,14 @@
     let lastDrop = 0;
     let totalCalCleared = 0, totalProtCleared = 0, rowsWithStats = 0;
     let qualitySum = 0;
+    let heldPiece = null;
+    let holdUsed = false;
     let particles = [];
+    let cursorParticles = [];
+    let mouseX = -100, mouseY = -100;
     let flashRows = [];
     let flashTimer = 0;
+    let junkRejectPending = null;
     let factIndex = 0;
     let animFrame = 0;
     let lockDelay = 0;
@@ -504,6 +552,7 @@
         current = nextPiece || createPiece();
         nextPiece = createPiece();
         lockDelay = 0;
+        holdUsed = false;
         if (collides(current, 0, 0)) {
             gameOver();
         }
@@ -564,8 +613,16 @@
         const basePoints = [0, 100, 300, 500, 800];
         let pts = basePoints[fullRows.length] * level;
         if (allGreenBlue) pts = Math.round(pts * 1.5);
-        if (hasPink) pts = Math.round(pts * 0.7);
-        score += pts;
+
+        if (hasPink) {
+            // Defer pink penalty — give player chance to reject
+            const fullPts = pts;
+            const penalizedPts = Math.round(pts * 0.7);
+            score += penalizedPts; // Add penalized for now
+            startJunkReject(fullPts - penalizedPts); // Bonus if they reject in time
+        } else {
+            score += pts;
+        }
 
         lines += fullRows.length;
         level = Math.floor(lines / 10) + 1;
@@ -620,23 +677,27 @@
             flashRows = [];
         }, 350);
 
-        // Fact every 10 lines
-        if (Math.floor((lines - fullRows.length) / 10) < Math.floor(lines / 10)) {
-            showFact();
-        }
+        // Fact on every row clear
+        showFact();
 
         updateUI();
     }
 
-    function showMealToast(row, cal, prot, bonus, count) {
+    function showMealToast(row, cal, prot, bonus, count, customMsg) {
         const toast = document.createElement('div');
         toast.className = 'meal-toast';
         toast.style.top = (row * BLOCK) + 'px';
-        const bonusTxt = bonus ? ' EFFICIENT MEAL BONUS!' : '';
-        const label = count > 1 ? `${count}x MEAL COMPLETE!` : 'MEAL COMPLETE!';
-        toast.innerHTML = `<span style="color:${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}">${label}</span><br><span style="font-family:'Space Mono'; font-size:0.65rem; color:#fff">${cal} cal/$ | ${prot}g prot/$${bonusTxt}</span>`;
-        toast.style.background = bonus ? 'rgba(57,255,20,0.15)' : 'rgba(255,230,0,0.1)';
-        toast.style.border = `1px solid ${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}`;
+        if (customMsg) {
+            toast.innerHTML = `<span style="color:var(--neon-green)">${customMsg}</span>`;
+            toast.style.background = 'rgba(57,255,20,0.15)';
+            toast.style.border = '1px solid var(--neon-green)';
+        } else {
+            const bonusTxt = bonus ? ' EFFICIENT MEAL BONUS!' : '';
+            const label = count > 1 ? `${count}x MEAL COMPLETE!` : 'MEAL COMPLETE!';
+            toast.innerHTML = `<span style="color:${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}">${label}</span><br><span style="font-family:'Space Mono'; font-size:0.65rem; color:#fff">${cal} cal/$ | ${prot}g prot/$${bonusTxt}</span>`;
+            toast.style.background = bonus ? 'rgba(57,255,20,0.15)' : 'rgba(255,230,0,0.1)';
+            toast.style.border = `1px solid ${bonus ? 'var(--neon-green)' : 'var(--neon-yellow)'}`;
+        }
         document.getElementById('canvasContainer').appendChild(toast);
         setTimeout(() => { toast.style.opacity = '0'; toast.style.top = (row * BLOCK - 40) + 'px'; }, 100);
         setTimeout(() => toast.remove(), 1200);
@@ -695,13 +756,13 @@
         context.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
 
         // Food text
-        if (!ghost && size >= 24) {
+        if (!ghost && size >= 20) {
             context.fillStyle = '#fff';
-            context.font = `bold ${Math.floor(size * 0.3)}px 'Rajdhani', sans-serif`;
+            context.font = `bold ${Math.floor(size * 0.5)}px 'Rajdhani', sans-serif`;
             context.textAlign = 'center';
             context.textBaseline = 'top';
             context.fillText(cell.food.emoji, x + size / 2, y + 2);
-            context.font = `bold ${Math.floor(size * 0.28)}px 'Rajdhani', sans-serif`;
+            context.font = `bold ${Math.floor(size * 0.38)}px 'Rajdhani', sans-serif`;
             context.fillText(cell.food.name, x + size / 2, y + size * 0.55);
         }
         context.globalAlpha = 1;
@@ -808,6 +869,78 @@
         }
     }
 
+    function drawHeldPiece() {
+        hctx.clearRect(0, 0, 120, 120);
+        if (!heldPiece) return;
+        const blocks = heldPiece.rotations[0];
+        let minX = 99, minY = 99, maxX = 0, maxY = 0;
+        for (const b of blocks) {
+            if (b[0] < minX) minX = b[0];
+            if (b[1] < minY) minY = b[1];
+            if (b[0] > maxX) maxX = b[0];
+            if (b[1] > maxY) maxY = b[1];
+        }
+        const pw = (maxX - minX + 1), ph = (maxY - minY + 1);
+        const bs = Math.min(24, Math.floor(100 / Math.max(pw, ph)));
+        const ox = (120 - pw * bs) / 2 - minX * bs;
+        const oy = (120 - ph * bs) / 2 - minY * bs;
+        for (const b of blocks) {
+            drawBlock(hctx, ox + b[0] * bs, oy + b[1] * bs, bs, heldPiece, false);
+        }
+    }
+
+    function startJunkReject(bonusPts) {
+        // Show overlay, wait 1.5s for player to press Space/click
+        junkRejectPending = { bonus: bonusPts, timer: 1500 };
+        const el = document.getElementById('junkRejectOverlay');
+        if (el) el.classList.remove('hidden');
+    }
+
+    function resolveJunkReject(success) {
+        if (!junkRejectPending) return;
+        if (success) {
+            score += junkRejectPending.bonus;
+            // Flash green briefly
+            showMealToast(5, 0, 0, false, 0, 'JUNK REJECTED! +' + junkRejectPending.bonus);
+        }
+        junkRejectPending = null;
+        const el = document.getElementById('junkRejectOverlay');
+        if (el) el.classList.add('hidden');
+        updateUI();
+    }
+
+    function holdCurrentPiece() {
+        if (holdUsed || !current) return;
+        holdUsed = true;
+        const saved = {
+            blocks: current.rotations[0].map(b => [...b]),
+            rotations: current.rotations,
+            rotIdx: 0,
+            x: 0, y: 0,
+            cat: current.cat,
+            food: current.food,
+            color: current.color
+        };
+        if (heldPiece) {
+            const restore = heldPiece;
+            heldPiece = saved;
+            // Re-center the restored piece
+            let maxX = 0;
+            for (const b of restore.rotations[0]) if (b[0] > maxX) maxX = b[0];
+            restore.x = Math.floor((COLS - maxX - 1) / 2);
+            restore.y = 0;
+            restore.blocks = restore.rotations[0].map(b => [...b]);
+            restore.rotIdx = 0;
+            current = restore;
+            lockDelay = 0;
+            lastDrop = 0;
+        } else {
+            heldPiece = saved;
+            spawnNext();
+        }
+        drawHeldPiece();
+    }
+
     // --- GAME LOOP ---
     let lastTime = 0;
 
@@ -837,11 +970,25 @@
             lockDelay = 0;
         }
 
+        // Junk reject timer
+        if (junkRejectPending) {
+            junkRejectPending.timer -= dt;
+            const fill = document.getElementById('rejectTimerFill');
+            if (fill) fill.style.width = Math.max(0, (junkRejectPending.timer / 1500) * 100) + '%';
+            if (junkRejectPending.timer <= 0) {
+                resolveJunkReject(false);
+            }
+        }
+
+        // Update cursor particles
+        updateCursorParticles(dt || 16);
+
         // Draw
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid();
         drawCurrentPiece();
         drawParticles(dt || 16);
+        drawCursorParticles();
     }
 
     // --- CONTROLS ---
@@ -879,6 +1026,11 @@
                 e.preventDefault();
                 break;
             case ' ':
+                if (junkRejectPending) {
+                    resolveJunkReject(true);
+                    e.preventDefault();
+                    break;
+                }
                 let drops = 0;
                 while (!collides(current, 0, 1)) {
                     current.y++;
@@ -891,11 +1043,17 @@
                 updateUI();
                 e.preventDefault();
                 break;
+            case 'c':
+            case 'C':
+                holdCurrentPiece();
+                e.preventDefault();
+                break;
         }
     });
 
     // --- TOUCH CONTROLS ---
     let touchStartX = 0, touchStartY = 0, touchStartTime = 0, touchMoved = false;
+    let lastTapTime = 0;
 
     canvas.addEventListener('touchstart', e => {
         if (!gameRunning || paused) return;
@@ -937,11 +1095,19 @@
 
     canvas.addEventListener('touchend', e => {
         if (!gameRunning || paused) return;
-        const elapsed = Date.now() - touchStartTime;
+        const now = Date.now();
+        const elapsed = now - touchStartTime;
         if (!touchMoved && elapsed < 300) {
-            // Tap = rotate
-            rotate();
-            lockDelay = 0;
+            // Check for double-tap (hold piece)
+            if (now - lastTapTime < 350) {
+                holdCurrentPiece();
+                lastTapTime = 0;
+            } else {
+                // Single tap = rotate
+                rotate();
+                lockDelay = 0;
+                lastTapTime = now;
+            }
         }
         e.preventDefault();
     }, { passive: false });
@@ -953,11 +1119,15 @@
         totalCalCleared = 0; totalProtCleared = 0; rowsWithStats = 0; qualitySum = 0;
         dropInterval = 800;
         particles = [];
+        cursorParticles = [];
         flashRows = [];
         lastDrop = 0;
         lockDelay = 0;
         current = null;
         nextPiece = null;
+        heldPiece = null;
+        holdUsed = false;
+        junkRejectPending = null;
 
         qualityEl.textContent = '---';
         qualityMeter.style.width = '0%';
@@ -967,6 +1137,8 @@
         startOverlay.classList.add('hidden');
         gameOverOverlay.classList.add('hidden');
         pauseOverlay.classList.add('hidden');
+        document.getElementById('junkRejectOverlay').classList.add('hidden');
+        hctx.clearRect(0, 0, 120, 120);
 
         gameRunning = true;
         paused = false;
@@ -985,6 +1157,70 @@
         paused = false;
         pauseOverlay.classList.add('hidden');
     });
+
+    // Junk reject click handler (exposed globally for inline onclick)
+    window.resolveJunkRejectClick = function() {
+        resolveJunkReject(true);
+    };
+
+    // Also handle click on canvas for junk reject
+    canvas.addEventListener('click', () => {
+        if (junkRejectPending) resolveJunkReject(true);
+    });
+
+    // --- CURSOR PARTICLES (Fix 5) ---
+    const MAX_CURSOR_PARTICLES = 15;
+
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        mouseX = -100; mouseY = -100;
+    });
+
+    function updateCursorParticles(dt) {
+        // Spawn new particles if under limit
+        if (mouseX > 0 && mouseY > 0 && cursorParticles.length < MAX_CURSOR_PARTICLES && gameRunning && !paused) {
+            cursorParticles.push({
+                x: mouseX + (Math.random() - 0.5) * 60,
+                y: mouseY + (Math.random() - 0.5) * 60,
+                size: 1.5 + Math.random() * 2.5,
+                life: 800 + Math.random() * 600,
+                maxLife: 1400,
+                hue: Math.random() * 360
+            });
+        }
+        // Update
+        for (let i = cursorParticles.length - 1; i >= 0; i--) {
+            const p = cursorParticles[i];
+            // Drift toward mouse
+            const dx = mouseX - p.x;
+            const dy = mouseY - p.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            p.x += (dx / dist) * 1.2 * (dt / 16);
+            p.y += (dy / dist) * 1.2 * (dt / 16);
+            p.life -= dt;
+            if (p.life <= 0) { cursorParticles.splice(i, 1); }
+        }
+    }
+
+    function drawCursorParticles() {
+        for (const p of cursorParticles) {
+            const alpha = Math.max(0, p.life / p.maxLife) * 0.6;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = `hsl(${p.hue}, 100%, 70%)`;
+            ctx.shadowColor = `hsl(${p.hue}, 100%, 70%)`;
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    }
 
     // Initial draw
     ctx.fillStyle = '#0a0a1a';

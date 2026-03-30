@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Reclaimer — Calculate Your Saved Hours</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:20px}
+.back-link{display:inline-block;margin-bottom:15px;color:#00e5ff;text-decoration:none;font-size:.9rem;opacity:.8;transition:opacity .3s}
+.back-link:hover{opacity:1;text-shadow:0 0 10px #00e5ff}
+h1{font-family:'Orbitron',sans-serif;text-align:center;font-size:2rem;background:linear-gradient(135deg,#00e5ff,#76ff03);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}
+.subtitle{text-align:center;color:#aaa;margin-bottom:25px;font-size:.95rem}
+.counters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:30px}
+.counter{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;text-align:center;transition:all .3s}
+.counter.active{border-color:rgba(0,229,255,.4);box-shadow:0 0 20px rgba(0,229,255,.1)}
+.counter-label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.counter-value{font-family:'Orbitron',sans-serif;font-size:2rem;transition:all .3s}
+.counter-value.hours{color:#00e5ff}
+.counter-value.days{color:#76ff03}
+.counter-value.weeks{color:#ffab00}
+.counter-value.money{color:#ff4081}
+.counter-sub{font-size:.75rem;color:#666;margin-top:4px}
+.habits{display:flex;flex-direction:column;gap:10px;margin-bottom:25px}
+.habit{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .3s;user-select:none}
+.habit:hover{border-color:rgba(0,229,255,.3);background:rgba(255,255,255,.05)}
+.habit.checked{border-color:rgba(118,255,3,.4);background:rgba(118,255,3,.05)}
+.habit input{display:none}
+.habit-check{width:26px;height:26px;border-radius:8px;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;font-size:1rem}
+.habit.checked .habit-check{border-color:#76ff03;background:rgba(118,255,3,.2);color:#76ff03}
+.habit-info{flex:1}
+.habit-name{font-weight:700;font-size:.95rem;margin-bottom:3px}
+.habit-desc{font-size:.75rem;color:#888}
+.habit-stats{text-align:right;flex-shrink:0}
+.habit-hours{font-family:'Orbitron',sans-serif;font-size:.85rem;color:#00e5ff}
+.habit-money{font-size:.75rem;color:#76ff03;margin-top:2px}
+.summary-box{background:linear-gradient(135deg,rgba(0,229,255,.08),rgba(118,255,3,.08));border:1px solid rgba(0,229,255,.3);border-radius:16px;padding:24px;text-align:center;margin-bottom:20px;display:none}
+.summary-box h3{font-family:'Orbitron',sans-serif;font-size:1rem;color:#00e5ff;margin-bottom:12px}
+.summary-text{color:#ccc;line-height:1.7;font-size:.95rem}
+.summary-text strong{color:#76ff03}
+.progress-ring{margin:15px auto;width:120px;height:120px;position:relative}
+.progress-ring svg{transform:rotate(-90deg)}
+.progress-ring circle{fill:none;stroke-width:8}
+.progress-ring .bg{stroke:rgba(255,255,255,.1)}
+.progress-ring .fg{stroke:#00e5ff;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.progress-ring .pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:1.1rem;color:#00e5ff}
+.select-all-bar{display:flex;justify-content:center;gap:15px;margin-bottom:15px}
+.select-all-bar button{padding:8px 20px;border-radius:8px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.1);color:#00e5ff;font-family:'Orbitron',sans-serif;font-size:.75rem;cursor:pointer;transition:all .2s}
+.select-all-bar button:hover{background:#00e5ff;color:#0a0a0f}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="container">
+<a href="index.html" class="back-link">← Back to Hub</a>
+<h1>⏱️ TIME RECLAIMER</h1>
+<p class="subtitle">Calculate Your Saved Hours — Check the Habits You'll Adopt</p>
+
+<div class="counters">
+<div class="counter" id="cHours"><div class="counter-label">Hours Saved / Year</div><div class="counter-value hours" id="vHours">0</div><div class="counter-sub">reclaimed from inefficiency</div></div>
+<div class="counter" id="cDays"><div class="counter-label">Extra Vacation Days</div><div class="counter-value days" id="vDays">0</div><div class="counter-sub">at 8 hours per day</div></div>
+<div class="counter" id="cWeeks"><div class="counter-label">Extra Weeks</div><div class="counter-value weeks" id="vWeeks">0.0</div><div class="counter-sub">at 40 hours per week</div></div>
+<div class="counter" id="cMoney"><div class="counter-label">Money Saved / Year</div><div class="counter-value money" id="vMoney">$0</div><div class="counter-sub">back in your pocket</div></div>
+</div>
+
+<div class="progress-ring">
+<svg width="120" height="120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" id="ringFg" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg>
+<div class="pct" id="ringPct">0%</div>
+</div>
+
+<div class="select-all-bar">
+<button onclick="selectAll()">SELECT ALL</button>
+<button onclick="clearAll()">CLEAR ALL</button>
+</div>
+
+<div class="habits" id="habitList"></div>
+
+<div class="summary-box" id="summaryBox">
+<h3>📊 YOUR EFFICIENCY PROFILE</h3>
+<p class="summary-text" id="summaryText"></p>
+</div>
+</div>
+
+<script>
+const HABITS=[
+{name:"Biphasic Sleep",desc:"Sleep in two phases — 6hrs night + 20min nap. Fully rested, fewer hours.",hours:624,money:0,emoji:"😴"},
+{name:"2x Video Speed",desc:"Watch all videos, lectures, and podcasts at double speed.",hours:200,money:0,emoji:"⏩"},
+{name:"Meal Prep Sundays",desc:"Batch cook for the week. No daily cooking or takeout decisions.",hours:150,money:2500,emoji:"🍱"},
+{name:"Morning Routine Map",desc:"Eliminate decision fatigue with a scripted morning sequence.",hours:100,money:0,emoji:"🗺️"},
+{name:"Pareto Appearance",desc:"Capsule wardrobe + minimal grooming. 80/20 rule for looks.",hours:100,money:200,emoji:"👔"},
+{name:"Pack Lunch",desc:"Bring lunch from home instead of buying out every day.",hours:80,money:2500,emoji:"🥪"},
+{name:"Intermittent Fasting",desc:"Skip breakfast. One fewer meal to prepare, buy, and eat.",hours:60,money:600,emoji:"⏰"},
+{name:"Shower Optimization",desc:"Navy showers + streamlined routine. 5 minutes, done.",hours:50,money:50,emoji:"🚿"},
+{name:"Commute Audiobooks",desc:"Turn dead commute time into learning. Zero extra hours, pure ROI.",hours:0,money:500,emoji:"🎧"},
+{name:"Caffeine Pills vs Coffee Shop",desc:"Same caffeine, no line, no drive, no $5 lattes.",hours:50,money:1500,emoji:"💊"},
+{name:"Bulk Grocery Buying",desc:"One big trip per month instead of weekly shopping runs.",hours:30,money:800,emoji:"🛒"},
+{name:"Subscription Audit",desc:"Cancel unused subscriptions. Audit quarterly.",hours:20,money:2400,emoji:"📋"}
+];
+
+const MAX_HOURS=HABITS.reduce((a,h)=>a+h.hours,0);
+const MAX_MONEY=HABITS.reduce((a,h)=>a+h.money,0);
+let checked=new Array(HABITS.length).fill(false);
+let animTargets={hours:0,days:0,weeks:0,money:0};
+let animCurrent={hours:0,days:0,weeks:0,money:0};
+
+function buildHabits(){
+const list=document.getElementById('habitList');list.innerHTML='';
+HABITS.forEach((h,i)=>{
+list.innerHTML+=`<div class="habit${checked[i]?' checked':''}" onclick="toggle(${i})" id="hab${i}">
+<div class="habit-check">${checked[i]?'✓':''}</div>
+<div class="habit-info"><div class="habit-name">${h.emoji} ${h.name}</div><div class="habit-desc">${h.desc}</div></div>
+<div class="habit-stats"><div class="habit-hours">${h.hours>0?'+'+h.hours+'h':''}</div><div class="habit-money">${h.money>0?'+$'+h.money.toLocaleString():''}</div></div>
+</div>`;
+});
+}
+
+function toggle(i){
+checked[i]=!checked[i];
+const el=document.getElementById('hab'+i);
+el.classList.toggle('checked',checked[i]);
+el.querySelector('.habit-check').textContent=checked[i]?'✓':'';
+recalc();
+}
+
+function selectAll(){checked.fill(true);buildHabits();recalc();}
+function clearAll(){checked.fill(false);buildHabits();recalc();}
+
+function recalc(){
+let h=0,m=0;
+checked.forEach((c,i)=>{if(c){h+=HABITS[i].hours;m+=HABITS[i].money;}});
+animTargets={hours:h,days:Math.floor(h/8),weeks:parseFloat((h/40).toFixed(1)),money:m};
+// ring
+const pct=MAX_HOURS>0?Math.round((h/MAX_HOURS)*100):0;
+const circ=326.73;
+document.getElementById('ringFg').style.strokeDashoffset=circ-(circ*pct/100);
+document.getElementById('ringPct').textContent=pct+'%';
+// summary
+const sb=document.getElementById('summaryBox');
+const count=checked.filter(Boolean).length;
+if(count>0){
+sb.style.display='block';
+let msg='';
+if(count>=10)msg=`With <strong>${h} hours</strong> and <strong>$${m.toLocaleString()}</strong> saved yearly, you're operating at peak efficiency. That's <strong>${(h/40).toFixed(1)} extra weeks</strong> of life back. Most people will never reclaim even half of this.`;
+else if(count>=6)msg=`<strong>${h} hours</strong> reclaimed and <strong>$${m.toLocaleString()}</strong> saved per year. You're ahead of 90% of people. Each habit stacks — keep going.`;
+else if(count>=3)msg=`A solid start: <strong>${h} hours</strong> and <strong>$${m.toLocaleString()}</strong> back annually. The compounding effect gets real once you add more habits.`;
+else msg=`Every journey starts somewhere. <strong>${h} hours</strong> and <strong>$${m.toLocaleString()}</strong> saved is still better than 0. Check more habits to see the full potential.`;
+document.getElementById('summaryText').innerHTML=msg;
+}else{sb.style.display='none';}
+}
+
+// Animated counters
+function animateCounters(){
+const speed=.12;
+let changed=false;
+['hours','days','weeks','money'].forEach(k=>{
+if(Math.abs(animCurrent[k]-animTargets[k])>.5){
+animCurrent[k]+=(animTargets[k]-animCurrent[k])*speed;
+changed=true;
+}else{animCurrent[k]=animTargets[k];}
+});
+document.getElementById('vHours').textContent=Math.round(animCurrent.hours).toLocaleString();
+document.getElementById('vDays').textContent=Math.round(animCurrent.days);
+document.getElementById('vWeeks').textContent=animCurrent.weeks.toFixed(1);
+document.getElementById('vMoney').textContent='$'+Math.round(animCurrent.money).toLocaleString();
+// highlight active counters
+['cHours','cDays','cWeeks','cMoney'].forEach(id=>{
+document.getElementById(id).classList.toggle('active',animTargets.hours>0);
+});
+requestAnimationFrame(animateCounters);
+}
+
+buildHabits();recalc();animateCounters();
+
+// Particles
+(function(){
+const c=document.getElementById('particles'),ctx=c.getContext('2d');
+let w,h,pts=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}
+resize();window.addEventListener('resize',resize);
+for(let i=0;i<40;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*2+.5,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,a:Math.random()*.3+.1});
+function draw(){ctx.clearRect(0,0,w,h);for(let p of pts){p.x+=p.dx;p.y+=p.dy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${p.a})`;ctx.fill();}requestAnimationFrame(draw);}
+draw();
+})();
+</script>
+</body>
+</html>

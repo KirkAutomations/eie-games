@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Price Is Efficient | Efficiency Is Everything</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --neon-green: #39ff14;
+  --neon-blue: #00f0ff;
+  --dark-bg: #0a0a1a;
+  --card-bg: #111128;
+  --text: #e0e0e0;
+  --accent-pink: #ff2d75;
+  --gold: #ffd700;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--dark-bg); color: var(--text); font-family: 'Rajdhani', sans-serif; min-height:100vh; overflow-x:hidden; }
+a { color: var(--neon-blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.back-link { position:fixed; top:18px; left:18px; font-family:'Space Mono',monospace; font-size:.85rem; z-index:100; background:rgba(10,10,26,.85); padding:6px 14px; border:1px solid var(--neon-blue); border-radius:6px; }
+h1 { font-family:'Orbitron',sans-serif; color:var(--neon-green); text-align:center; font-size:2rem; margin:60px 0 10px; text-shadow:0 0 20px rgba(57,255,20,.4); }
+.subtitle { text-align:center; font-size:1.1rem; color:var(--neon-blue); margin-bottom:30px; font-family:'Space Mono',monospace; }
+.container { max-width:650px; margin:0 auto; padding:0 20px 60px; }
+.hud { display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:.95rem; margin-bottom:24px; padding:12px 18px; background:var(--card-bg); border:1px solid #222; border-radius:10px; }
+.hud span { display:flex; align-items:center; gap:6px; }
+.hud .round-num { color:var(--neon-green); }
+.hud .score-num { color:var(--gold); }
+.game-card { background:var(--card-bg); border:1px solid #222; border-radius:16px; padding:36px 28px; text-align:center; position:relative; overflow:hidden; }
+.food-emoji { font-size:4rem; margin-bottom:12px; animation:bounce 1s ease infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.food-name { font-family:'Orbitron',sans-serif; font-size:1.5rem; color:var(--neon-blue); margin-bottom:6px; }
+.food-detail { font-size:.95rem; color:#888; margin-bottom:24px; }
+.question { font-size:1.15rem; margin-bottom:18px; }
+.question strong { color:var(--neon-green); }
+.input-row { display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
+.input-row input { width:160px; padding:12px 16px; font-size:1.2rem; font-family:'Space Mono',monospace; background:#0d0d24; border:2px solid var(--neon-green); color:var(--neon-green); border-radius:8px; text-align:center; outline:none; }
+.input-row input:focus { box-shadow:0 0 15px rgba(57,255,20,.3); }
+.btn { padding:12px 28px; font-size:1rem; font-family:'Orbitron',sans-serif; border:none; border-radius:8px; cursor:pointer; transition:all .2s; }
+.btn-primary { background:var(--neon-green); color:var(--dark-bg); }
+.btn-primary:hover { box-shadow:0 0 20px rgba(57,255,20,.5); transform:scale(1.03); }
+.btn-blue { background:var(--neon-blue); color:var(--dark-bg); }
+.btn-blue:hover { box-shadow:0 0 20px rgba(0,240,255,.5); transform:scale(1.03); }
+.result { display:none; margin-top:20px; padding:20px; border-radius:12px; }
+.result.show { display:block; animation:fadeIn .5s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.result-perfect { background:rgba(57,255,20,.1); border:1px solid var(--neon-green); }
+.result-close { background:rgba(0,240,255,.1); border:1px solid var(--neon-blue); }
+.result-far { background:rgba(255,45,117,.1); border:1px solid var(--accent-pink); }
+.result-label { font-family:'Orbitron',sans-serif; font-size:1.3rem; margin-bottom:8px; }
+.result-perfect .result-label { color:var(--neon-green); }
+.result-close .result-label { color:var(--neon-blue); }
+.result-far .result-label { color:var(--accent-pink); }
+.result .answer-line { font-family:'Space Mono',monospace; font-size:1rem; margin:6px 0; }
+.result .fun-fact { font-style:italic; color:#aaa; margin-top:10px; font-size:.9rem; }
+.points-popup { position:absolute; top:30%; left:50%; transform:translateX(-50%); font-family:'Orbitron',sans-serif; font-size:2.5rem; color:var(--gold); pointer-events:none; opacity:0; }
+.points-popup.animate { animation:popUp 1.2s ease forwards; }
+@keyframes popUp { 0%{opacity:1;transform:translate(-50%,0) scale(.5)} 50%{opacity:1;transform:translate(-50%,-40px) scale(1.2)} 100%{opacity:0;transform:translate(-50%,-80px) scale(1)} }
+.accuracy-bar { height:8px; background:#222; border-radius:4px; margin:10px 0; overflow:hidden; }
+.accuracy-fill { height:100%; border-radius:4px; transition:width .6s ease; }
+.final-screen { text-align:center; }
+.final-screen h2 { font-family:'Orbitron',sans-serif; font-size:2rem; color:var(--gold); margin-bottom:16px; }
+.final-score { font-size:3.5rem; font-family:'Orbitron',sans-serif; color:var(--neon-green); text-shadow:0 0 30px rgba(57,255,20,.5); margin:20px 0; }
+.final-grade { font-size:1.5rem; font-family:'Orbitron',sans-serif; margin-bottom:20px; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:20px 0; }
+.stat-box { background:#0d0d24; padding:14px; border-radius:10px; border:1px solid #222; }
+.stat-box .label { font-size:.8rem; color:#888; font-family:'Space Mono',monospace; }
+.stat-box .value { font-size:1.4rem; font-family:'Orbitron',sans-serif; color:var(--neon-blue); margin-top:4px; }
+.start-screen { text-align:center; padding:40px 20px; }
+.start-screen p { font-size:1.05rem; margin:12px 0; line-height:1.6; }
+.start-screen .rules { text-align:left; background:#0d0d24; padding:20px; border-radius:10px; margin:20px 0; }
+.start-screen .rules li { margin:8px 0; }
+@media(max-width:600px){ h1{font-size:1.5rem;margin-top:70px} .food-emoji{font-size:3rem} .stats-grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-link">← Back to Hub</a>
+<h1>🎰 THE PRICE IS EFFICIENT</h1>
+<p class="subtitle">Guess the Calories Per Dollar</p>
+<div class="container" id="app"></div>
+
+<script>
+const FOODS = [
+  { name:"White Rice (dry)", emoji:"🍚", serving:"1 lb bag", calPerDollar:3240, fact:"Rice is one of the most calorie-dense foods per dollar on Earth. A 20lb bag can feed you for weeks." },
+  { name:"Dried Pinto Beans", emoji:"🫘", serving:"1 lb bag", calPerDollar:2520, fact:"Beans + rice = complete protein. This combo has sustained civilizations for millennia." },
+  { name:"All-Purpose Flour", emoji:"🌾", serving:"5 lb bag", calPerDollar:3400, fact:"Flour is the backbone of cheap eating. Bread, tortillas, pasta — all start here." },
+  { name:"Vegetable Oil", emoji:"🫗", serving:"48 oz bottle", calPerDollar:2880, fact:"Pure fat is incredibly calorie-dense. A bottle of oil packs ~17,000 calories." },
+  { name:"Whole Milk", emoji:"🥛", serving:"1 gallon", calPerDollar:630, fact:"Milk provides complete protein plus calcium, but the cal/$ is modest compared to staples." },
+  { name:"Eggs (large)", emoji:"🥚", serving:"1 dozen", calPerDollar:540, fact:"Eggs are often called the 'perfect protein' — cheap and nutritionally complete." },
+  { name:"White Bread", emoji:"🍞", serving:"20 oz loaf", calPerDollar:1080, fact:"Store-brand bread is sneaky efficient. About 1,200 calories per $1 loaf." },
+  { name:"Bananas", emoji:"🍌", serving:"1 lb", calPerDollar:560, fact:"Bananas are the most efficient fresh fruit by cal/$. Nature's energy bar." },
+  { name:"Pasta (dry)", emoji:"🍝", serving:"1 lb box", calPerDollar:1500, fact:"Dry pasta stores forever and delivers massive calories per dollar." },
+  { name:"Oats (rolled)", emoji:"🥣", serving:"42 oz canister", calPerDollar:1800, fact:"Oats are a nutritional powerhouse — fiber, protein, and absurdly cheap per calorie." },
+  { name:"Peanut Butter", emoji:"🥜", serving:"16 oz jar", calPerDollar:1050, fact:"PB packs protein, healthy fats, and nearly 3,000 calories per jar." },
+  { name:"Chicken Thighs", emoji:"🍗", serving:"per lb", calPerDollar:420, fact:"Thighs beat breasts on cal/$ every time. More fat = more energy per dollar." },
+  { name:"Potatoes", emoji:"🥔", serving:"5 lb bag", calPerDollar:780, fact:"Potatoes are surprisingly nutritious — you could survive on them plus butter." },
+  { name:"Cabbage", emoji:"🥬", serving:"1 head", calPerDollar:340, fact:"Cabbage is the cheapest vegetable per pound in most US stores." },
+  { name:"Ramen (instant)", emoji:"🍜", serving:"pack", calPerDollar:2400, fact:"At ~$0.15/pack and 380 cal, ramen is infamous for its cal/$ ratio." },
+  { name:"Sugar", emoji:"🍬", serving:"4 lb bag", calPerDollar:2700, fact:"Pure sugar is just empty calories — incredibly cheap energy, zero nutrition." },
+  { name:"Canned Tuna", emoji:"🐟", serving:"5 oz can", calPerDollar:200, fact:"Tuna is amazing for protein-per-dollar but modest on pure calories." },
+  { name:"Avocado", emoji:"🥑", serving:"1 medium", calPerDollar:190, fact:"Avocados are nutritious but expensive per calorie. A luxury item by EIE standards." },
+  { name:"Ground Beef (80/20)", emoji:"🥩", serving:"1 lb", calPerDollar:280, fact:"Fattier beef is more efficient per dollar — that fat carries serious calories." },
+  { name:"Lentils (dry)", emoji:"🫘", serving:"1 lb bag", calPerDollar:2200, fact:"Lentils cook faster than beans, pack similar nutrition, and cost almost nothing." }
+];
+
+let state = { screen:'start', round:0, score:0, totalRounds:10, used:[], answers:[], currentFood:null };
+
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]} return arr; }
+
+function pickFood(){
+  if(state.used.length>=FOODS.length) state.used=[];
+  let available=FOODS.filter((_,i)=>!state.used.includes(i));
+  let idx=FOODS.indexOf(available[Math.floor(Math.random()*available.length)]);
+  state.used.push(idx);
+  return FOODS[idx];
+}
+
+function calcPoints(guess, actual){
+  let pct=Math.abs(guess-actual)/actual;
+  if(pct<=0.05) return 1000;
+  if(pct<=0.10) return 800;
+  if(pct<=0.20) return 600;
+  if(pct<=0.35) return 400;
+  if(pct<=0.50) return 200;
+  return Math.max(0, Math.round(100*(1-pct)));
+}
+
+function getGrade(score){
+  let max=state.totalRounds*1000;
+  let pct=score/max;
+  if(pct>=0.9) return {grade:'S',color:var_='var(--gold)',text:'EFFICIENCY MASTER'};
+  if(pct>=0.75) return {grade:'A',color:'var(--neon-green)',text:'Calorie Savant'};
+  if(pct>=0.6) return {grade:'B',color:'var(--neon-blue)',text:'Smart Shopper'};
+  if(pct>=0.4) return {grade:'C',color:'var(--text)',text:'Getting There'};
+  return {grade:'D',color:'var(--accent-pink)',text:'Needs More EIE'};
+}
+
+function render(){
+  const app=document.getElementById('app');
+  if(state.screen==='start'){
+    app.innerHTML=`
+      <div class="start-screen">
+        <p>How well do you know the <strong style="color:var(--neon-green)">caloric efficiency</strong> of everyday foods?</p>
+        <div class="rules">
+          <ul>
+            <li>You'll see <strong>${state.totalRounds} food items</strong> one at a time</li>
+            <li>Guess how many <strong>calories per dollar</strong> each food provides</li>
+            <li>Closer guesses = more points (up to 1,000 per round)</li>
+            <li>Within 5%? That's a <span style="color:var(--neon-green)">PERFECT</span> guess!</li>
+          </ul>
+        </div>
+        <button class="btn btn-primary" onclick="startGame()">START GAME</button>
+      </div>`;
+  } else if(state.screen==='play'){
+    let f=state.currentFood;
+    app.innerHTML=`
+      <div class="hud">
+        <span>Round <span class="round-num">${state.round}/${state.totalRounds}</span></span>
+        <span>Score <span class="score-num">${state.score.toLocaleString()}</span></span>
+      </div>
+      <div class="game-card" id="gameCard">
+        <div class="food-emoji">${f.emoji}</div>
+        <div class="food-name">${f.name}</div>
+        <div class="food-detail">${f.serving}</div>
+        <p class="question">How many <strong>calories per dollar</strong> does this provide?</p>
+        <div class="input-row">
+          <input type="number" id="guessInput" placeholder="e.g. 1500" min="0" max="10000" autofocus>
+          <button class="btn btn-primary" id="guessBtn" onclick="submitGuess()">GUESS</button>
+        </div>
+        <div class="result" id="result"></div>
+        <div class="points-popup" id="pointsPopup"></div>
+      </div>`;
+    document.getElementById('guessInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitGuess()});
+    document.getElementById('guessInput').focus();
+  } else if(state.screen==='final'){
+    let g=getGrade(state.score);
+    let max=state.totalRounds*1000;
+    let avgAcc=state.answers.length?Math.round(state.answers.reduce((a,b)=>a+b,0)/state.answers.length):0;
+    let perfects=state.answers.filter(a=>a>=1000).length;
+    app.innerHTML=`
+      <div class="final-screen game-card">
+        <h2>🏆 GAME OVER</h2>
+        <div class="final-score">${state.score.toLocaleString()}</div>
+        <p style="color:#888;font-family:'Space Mono',monospace">out of ${max.toLocaleString()} possible</p>
+        <div class="final-grade" style="color:${g.color}">Grade: ${g.grade} — ${g.text}</div>
+        <div class="accuracy-bar"><div class="accuracy-fill" style="width:${(state.score/max*100)}%;background:${g.color}"></div></div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="label">AVG POINTS/ROUND</div><div class="value">${Math.round(state.score/state.totalRounds)}</div></div>
+          <div class="stat-box"><div class="label">PERFECT GUESSES</div><div class="value" style="color:var(--neon-green)">${perfects}</div></div>
+          <div class="stat-box"><div class="label">BEST ROUND</div><div class="value">${Math.max(...state.answers).toLocaleString()}</div></div>
+          <div class="stat-box"><div class="label">WORST ROUND</div><div class="value" style="color:var(--accent-pink)">${Math.min(...state.answers).toLocaleString()}</div></div>
+        </div>
+        <button class="btn btn-primary" onclick="startGame()" style="margin-top:20px">PLAY AGAIN</button>
+      </div>`;
+  }
+}
+
+function startGame(){
+  state={screen:'play',round:1,score:0,totalRounds:10,used:[],answers:[],currentFood:pickFood()};
+  shuffle(FOODS);
+  state.currentFood=pickFood();
+  render();
+}
+
+function submitGuess(){
+  let input=document.getElementById('guessInput');
+  let btn=document.getElementById('guessBtn');
+  if(btn.disabled) return;
+  let guess=parseInt(input.value);
+  if(isNaN(guess)||guess<0){ input.style.borderColor='var(--accent-pink)'; return; }
+  btn.disabled=true;
+  input.disabled=true;
+
+  let actual=state.currentFood.calPerDollar;
+  let pts=calcPoints(guess,actual);
+  state.score+=pts;
+  state.answers.push(pts);
+
+  let pct=Math.abs(guess-actual)/actual;
+  let cls=pct<=0.1?'result-perfect':pct<=0.35?'result-close':'result-far';
+  let lbl=pct<=0.05?'🎯 PERFECT!':pct<=0.1?'🔥 INCREDIBLY CLOSE!':pct<=0.2?'👍 NICE GUESS!':pct<=0.35?'😅 NOT BAD':pct<=0.5?'😬 KEEP TRYING':'💀 WAY OFF';
+
+  let r=document.getElementById('result');
+  r.className='result show '+cls;
+  r.innerHTML=`
+    <div class="result-label">${lbl}</div>
+    <div class="answer-line">Your guess: <strong>${guess.toLocaleString()}</strong> cal/$</div>
+    <div class="answer-line">Actual: <strong style="color:var(--neon-green)">${actual.toLocaleString()}</strong> cal/$</div>
+    <div class="answer-line">Points: <strong style="color:var(--gold)">+${pts.toLocaleString()}</strong></div>
+    <div class="fun-fact">💡 ${state.currentFood.fact}</div>
+    <button class="btn btn-blue" onclick="nextRound()" style="margin-top:16px">${state.round>=state.totalRounds?'SEE RESULTS':'NEXT FOOD →'}</button>
+  `;
+
+  let popup=document.getElementById('pointsPopup');
+  popup.textContent='+'+pts;
+  popup.classList.remove('animate');
+  void popup.offsetWidth;
+  popup.classList.add('animate');
+
+  document.querySelector('.score-num').textContent=state.score.toLocaleString();
+}
+
+function nextRound(){
+  if(state.round>=state.totalRounds){ state.screen='final'; render(); return; }
+  state.round++;
+  state.currentFood=pickFood();
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

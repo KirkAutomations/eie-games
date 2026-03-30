@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meal Match Madness - Efficiency Is Everything</title>
+<title>Efficiency Sorter - Efficiency Is Everything</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono&display=swap');
 
@@ -16,6 +16,10 @@
   --dark-bg: #0a0a1a;
   --card-bg: #12122a;
   --card-hover: #1a1a3a;
+  --tier-s: #39ff14;
+  --tier-a: #00f0ff;
+  --tier-b: #ffe600;
+  --tier-c: #ff006e;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,6 +30,7 @@ body {
   font-family: 'Rajdhani', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  cursor: none;
 }
 
 body::before {
@@ -40,8 +45,46 @@ body::before {
   z-index: 0;
 }
 
-a { color: var(--neon-blue); text-decoration: none; }
+a { color: var(--neon-blue); text-decoration: none; cursor: none; }
 a:hover { text-shadow: 0 0 10px var(--neon-blue); }
+
+/* ── CUSTOM CURSOR ── */
+#cursor-dot {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+  transition: transform 0.05s;
+  transform: translate(-50%, -50%);
+}
+
+#cursor-ring {
+  position: fixed;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(57, 255, 20, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  transition: transform 0.15s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
+  transform: translate(-50%, -50%);
+}
+
+.cursor-trail {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.6;
+  transition: opacity 0.5s, transform 0.5s;
+}
 
 .back-link {
   position: fixed;
@@ -55,6 +98,7 @@ a:hover { text-shadow: 0 0 10px var(--neon-blue); }
   border: 1px solid var(--neon-blue);
   border-radius: 4px;
   transition: all 0.3s;
+  cursor: none;
 }
 .back-link:hover {
   background: rgba(0,240,255,0.1);
@@ -98,7 +142,7 @@ a:hover { text-shadow: 0 0 10px var(--neon-blue); }
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 12px;
   padding: 28px 24px;
-  cursor: pointer;
+  cursor: none;
   transition: all 0.35s;
   text-align: center;
   position: relative;
@@ -149,840 +193,1627 @@ a:hover { text-shadow: 0 0 10px var(--neon-blue); }
   margin-top: 10px;
 }
 
-/* ── GAME SCREEN ── */
-#game-screen { padding-top: 60px; min-height: 100vh; }
+/* ── GAME HUD ── */
+#game-screen { min-height: 100vh; padding-top: 60px; }
 
-.game-header {
+.game-hud {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
-  max-width: 860px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.game-header h2 {
+  max-width: 900px;
+  padding: 10px 20px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.3rem;
-  color: var(--neon-green);
-}
-.game-controls { display: flex; gap: 10px; }
-.game-controls button {
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 6px 16px;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.game-controls button:hover {
-  border-color: var(--neon-blue);
-  box-shadow: 0 0 12px rgba(0,240,255,0.2);
+  font-size: 0.95rem;
+  position: relative;
 }
 
-.stats-bar {
+.hud-item {
   display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
-.stat-item {
-  text-align: center;
-  min-width: 80px;
-}
-.stat-item .label {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
+
+.hud-label {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
   text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.hud-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.hud-score { color: var(--neon-green); }
+.hud-combo { color: var(--neon-orange); }
+.hud-streak { color: var(--neon-yellow); }
+.hud-lives { color: var(--neon-pink); }
+.hud-timer { color: var(--neon-blue); }
+
+/* ── FOOD ITEM DISPLAY ── */
+.food-zone {
+  width: 100%;
+  max-width: 900px;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin: 20px 0;
+}
+
+.food-card {
+  background: var(--card-bg);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 30px 50px;
+  text-align: center;
+  animation: foodAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  min-width: 220px;
+}
+
+@keyframes foodAppear {
+  0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.food-card .food-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+}
+
+.food-card .food-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
   letter-spacing: 1px;
 }
-.stat-item .value {
-  font-family: 'Space Mono', monospace;
-  font-size: 1.4rem;
-  color: var(--neon-blue);
-}
-.stat-item .value.timer-warn { color: var(--neon-orange); }
-.stat-item .value.timer-danger { color: var(--neon-pink); animation: pulse-text 0.5s infinite alternate; }
-@keyframes pulse-text { to { opacity: 0.5; } }
 
-.combo-display {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  height: 28px;
-  margin-bottom: 12px;
-  color: var(--neon-yellow);
-  text-shadow: 0 0 12px rgba(255,230,0,0.5);
-  transition: all 0.3s;
+.food-card .food-hint {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 6px;
 }
 
-/* ── CARD GRID ── */
-.card-grid {
-  display: grid;
-  gap: 14px;
+/* ── CONVEYOR BELT ── */
+.conveyor-zone {
   width: 100%;
-  max-width: 860px;
-  justify-items: center;
-  perspective: 1200px;
-}
-.card-grid.grid-4x4 { grid-template-columns: repeat(4, 1fr); }
-.card-grid.grid-6x4 { grid-template-columns: repeat(6, 1fr); }
-
-.card-cell {
-  width: 100%;
-  max-width: 180px;
-  aspect-ratio: 3/4;
-  perspective: 800px;
-  cursor: pointer;
-}
-
-.card-inner {
+  max-width: 900px;
+  height: 160px;
   position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
-  transform-style: preserve-3d;
-}
-.card-cell.flipped .card-inner,
-.card-cell.matched .card-inner {
-  transform: rotateY(180deg);
+  overflow: hidden;
+  border-top: 3px solid rgba(255,255,255,0.1);
+  border-bottom: 3px solid rgba(255,255,255,0.1);
+  background: linear-gradient(90deg, rgba(255,0,110,0.1) 0%, transparent 10%, transparent 90%, rgba(255,0,110,0.1) 100%);
+  margin: 20px 0;
 }
 
-.card-face {
+.conveyor-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 20px, transparent 20px, transparent 40px);
+  animation: conveyorScroll 1s linear infinite;
+}
+
+@keyframes conveyorScroll {
+  0% { background-position: 0 0; }
+  100% { background-position: -40px 0; }
+}
+
+.conveyor-item {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--card-bg);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+  white-space: nowrap;
+  transition: border-color 0.2s;
+}
+
+.conveyor-item .food-emoji { font-size: 2rem; }
+.conveyor-item .food-name { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+
+.danger-zone-left, .danger-zone-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 2;
+}
+.danger-zone-right {
+  right: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,0,110,0.3));
+}
+
+/* ── TIER BUCKETS ── */
+.bucket-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.tier-bucket {
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+  padding: 18px 10px;
+  border-radius: 12px;
+  text-align: center;
+  cursor: none;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.tier-bucket::before {
+  content: '';
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
   border-radius: 12px;
+  opacity: 0.08;
+  transition: opacity 0.25s;
+}
+
+.tier-bucket:hover::before { opacity: 0.2; }
+.tier-bucket:hover { transform: scale(1.05); }
+.tier-bucket:active { transform: scale(0.97); }
+
+.tier-bucket.tier-s { border-color: var(--tier-s); background: rgba(57,255,20,0.05); }
+.tier-bucket.tier-s::before { background: var(--tier-s); }
+.tier-bucket.tier-s:hover { box-shadow: 0 0 30px rgba(57,255,20,0.3), inset 0 0 30px rgba(57,255,20,0.05); }
+
+.tier-bucket.tier-a { border-color: var(--tier-a); background: rgba(0,240,255,0.05); }
+.tier-bucket.tier-a::before { background: var(--tier-a); }
+.tier-bucket.tier-a:hover { box-shadow: 0 0 30px rgba(0,240,255,0.3), inset 0 0 30px rgba(0,240,255,0.05); }
+
+.tier-bucket.tier-b { border-color: var(--tier-b); background: rgba(255,230,0,0.05); }
+.tier-bucket.tier-b::before { background: var(--tier-b); }
+.tier-bucket.tier-b:hover { box-shadow: 0 0 30px rgba(255,230,0,0.3), inset 0 0 30px rgba(255,230,0,0.05); }
+
+.tier-bucket.tier-c { border-color: var(--tier-c); background: rgba(255,0,110,0.05); }
+.tier-bucket.tier-c::before { background: var(--tier-c); }
+.tier-bucket.tier-c:hover { box-shadow: 0 0 30px rgba(255,0,110,0.3), inset 0 0 30px rgba(255,0,110,0.05); }
+
+.tier-bucket .tier-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.tier-bucket.tier-s .tier-label { color: var(--tier-s); text-shadow: 0 0 15px var(--tier-s); }
+.tier-bucket.tier-a .tier-label { color: var(--tier-a); text-shadow: 0 0 15px var(--tier-a); }
+.tier-bucket.tier-b .tier-label { color: var(--tier-b); text-shadow: 0 0 15px var(--tier-b); }
+.tier-bucket.tier-c .tier-label { color: var(--tier-c); text-shadow: 0 0 15px var(--tier-c); }
+
+.tier-bucket .tier-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+}
+
+.tier-bucket .tier-range {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 4px;
+}
+
+/* Expert mode dual buckets */
+.expert-section {
+  width: 100%;
+  max-width: 900px;
+}
+
+.expert-section h4 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+/* ── KEYBOARD HINTS ── */
+.key-hints {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.key-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.key-hint kbd {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ── FEEDBACK TOAST ── */
+.feedback-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 500;
+  opacity: 0;
+  transition: none;
+}
+
+.feedback-toast.show {
+  animation: toastPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes toastPop {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -70%) scale(1); opacity: 0; }
+}
+
+.feedback-toast.correct {
+  color: var(--neon-green);
+  text-shadow: 0 0 30px var(--neon-green), 0 0 60px rgba(57,255,20,0.4);
+}
+
+.feedback-toast.wrong {
+  color: var(--neon-pink);
+  text-shadow: 0 0 30px var(--neon-pink), 0 0 60px rgba(255,0,110,0.4);
+}
+
+/* ── COMBO DISPLAY ── */
+.combo-display {
+  position: fixed;
+  top: 15%;
+  right: 30px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--neon-orange);
+  text-shadow: 0 0 20px var(--neon-orange);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 400;
+  text-align: right;
+}
+
+.combo-display.visible { opacity: 1; }
+
+.combo-display .combo-count {
+  font-size: 2.5rem;
+  display: block;
+}
+
+.combo-display .combo-label {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: rgba(255,165,0,0.6);
+}
+
+/* ── STAT REVEAL AFTER SORT ── */
+.stat-reveal {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  z-index: 400;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  text-align: center;
+  pointer-events: none;
+  max-width: 90vw;
+}
+
+.stat-reveal.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+.stat-reveal .stat-food { font-family: 'Orbitron', sans-serif; font-weight: 700; }
+.stat-reveal .stat-value { color: var(--neon-green); font-family: 'Space Mono', monospace; }
+.stat-reveal .stat-tier { font-weight: 700; }
+
+/* ── RESULTS SCREEN ── */
+#results-screen { justify-content: flex-start; min-height: 100vh; padding-top: 80px; gap: 20px; }
+
+.results-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  text-align: center;
+}
+
+.results-stats {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.result-stat {
+  text-align: center;
+}
+
+.result-stat .val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--neon-green);
+}
+
+.result-stat .lbl {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ── TIER LIST ── */
+.tier-list {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tier-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 60px;
+}
+
+.tier-row-label {
+  width: 90px;
+  min-width: 90px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  overflow: hidden;
-}
-
-/* ── CARD BACK ── */
-.card-back {
-  background: var(--card-bg);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.card-cell:hover .card-back {
-  border-color: rgba(0,240,255,0.3);
-  box-shadow: 0 0 20px rgba(0,240,255,0.1);
-}
-.card-back .question {
   font-family: 'Orbitron', sans-serif;
-  font-size: 2.5rem;
+  font-size: 1.3rem;
   font-weight: 900;
-  color: var(--neon-blue);
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-@keyframes glow-pulse {
-  0%, 100% { text-shadow: 0 0 10px rgba(0,240,255,0.4), 0 0 30px rgba(0,240,255,0.2); }
-  50% { text-shadow: 0 0 20px rgba(0,240,255,0.8), 0 0 50px rgba(0,240,255,0.4); }
+  border-radius: 8px 0 0 8px;
+  padding: 8px;
 }
 
-/* shimmer on hover */
-.card-back::after {
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
-  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
-  transition: transform 0.6s;
-  transform: translateX(-100%);
-}
-.card-cell:hover .card-back::after { transform: translateX(100%); }
+.tier-row.s .tier-row-label { background: rgba(57,255,20,0.15); color: var(--tier-s); }
+.tier-row.a .tier-row-label { background: rgba(0,240,255,0.15); color: var(--tier-a); }
+.tier-row.b .tier-row-label { background: rgba(255,230,0,0.15); color: var(--tier-b); }
+.tier-row.c .tier-row-label { background: rgba(255,0,110,0.15); color: var(--tier-c); }
 
-/* ── CARD FRONT ── */
-.card-front {
-  background: var(--card-bg);
-  transform: rotateY(180deg);
-}
-.card-front .emoji { font-size: 1.8rem; margin-bottom: 4px; }
-.card-front .food-name {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(0.65rem, 1.8vw, 0.9rem);
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.2;
-  color: var(--neon-green);
-  text-shadow: 0 0 8px rgba(57,255,20,0.4);
-}
-.card-front .stat-text {
+.tier-row-label small {
+  font-size: 0.55rem;
   font-family: 'Space Mono', monospace;
-  font-size: clamp(0.6rem, 1.6vw, 0.85rem);
-  text-align: center;
-  line-height: 1.35;
-  color: var(--neon-yellow);
-  text-shadow: 0 0 8px rgba(255,230,0,0.3);
-}
-.card-front .stat-label {
-  font-size: 0.65rem;
-  color: rgba(255,255,255,0.4);
-  margin-top: 2px;
+  opacity: 0.6;
+  font-weight: 400;
 }
 
-/* ── MATCHED / WRONG ── */
-.card-cell.matched .card-front {
-  border-color: var(--neon-green);
-  box-shadow: 0 0 20px rgba(57,255,20,0.3);
-  animation: match-glow 1.5s ease-in-out infinite alternate;
-}
-@keyframes match-glow {
-  from { box-shadow: 0 0 15px rgba(57,255,20,0.2); }
-  to { box-shadow: 0 0 25px rgba(57,255,20,0.45); }
-}
-
-.card-cell.wrong .card-front {
-  border-color: var(--neon-pink);
-  box-shadow: 0 0 25px rgba(255,0,110,0.5);
-  animation: wrong-flash 0.15s ease-in-out 3;
-}
-@keyframes wrong-flash {
-  50% { transform: rotateY(180deg) scale(1.04); }
-}
-
-/* ── TIP TOAST ── */
-.tip-toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--card-bg);
-  border: 1px solid var(--neon-green);
-  border-radius: 12px;
-  padding: 14px 24px;
-  max-width: 420px;
-  width: 90%;
-  text-align: center;
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.85);
-  box-shadow: 0 0 30px rgba(57,255,20,0.2);
-  z-index: 200;
-  transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s;
-  opacity: 0;
-  pointer-events: none;
-}
-.tip-toast.show {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-.tip-toast .tip-food {
-  font-family: 'Orbitron', sans-serif;
-  color: var(--neon-green);
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-}
-
-/* ── PARTICLES ── */
-.particle {
-  position: fixed;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 300;
-  animation: particle-fly 0.8s ease-out forwards;
-}
-@keyframes particle-fly {
-  0% { opacity: 1; transform: translate(0, 0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
-}
-
-/* ── COMPLETION SCREEN ── */
-#complete-screen { justify-content: center; min-height: 100vh; gap: 20px; }
-
-.complete-box {
-  background: var(--card-bg);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 36px 40px;
-  max-width: 560px;
-  width: 90%;
-  text-align: center;
-}
-.complete-box h2 {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.8rem;
-  color: var(--neon-green);
-  margin-bottom: 6px;
-}
-.stars { font-size: 2.5rem; margin: 10px 0; }
-.star { color: rgba(255,255,255,0.15); }
-.star.earned { color: var(--neon-yellow); filter: drop-shadow(0 0 6px rgba(255,230,0,0.5)); }
-
-.final-stats {
+.tier-row-items {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin: 16px 0;
   flex-wrap: wrap;
-}
-.final-stat .num {
-  font-family: 'Space Mono', monospace;
-  font-size: 1.6rem;
-  color: var(--neon-blue);
-}
-.final-stat .lbl {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 0 8px 8px 0;
+  min-height: 60px;
 }
 
-.bonus-line {
-  font-size: 1rem;
-  color: var(--neon-orange);
-  margin: 8px 0;
-}
-
-.ranking-table {
-  width: 100%;
-  margin: 20px 0 10px;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-.ranking-table th {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 6px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  text-align: center;
-}
-.ranking-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  text-align: center;
-  color: rgba(255,255,255,0.7);
-}
-.ranking-table td:first-child { text-align: left; color: var(--neon-green); font-weight: 600; }
-.ranking-table .highlight-row td { color: #fff; background: rgba(57,255,20,0.06); }
-
-.shopping-tip {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: rgba(57,255,20,0.05);
-  border: 1px solid rgba(57,255,20,0.15);
+.tier-item {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px;
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.5;
+  padding: 6px 12px;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.3;
 }
-.shopping-tip strong { color: var(--neon-green); }
 
-.complete-buttons {
+.tier-item .ti-emoji { font-size: 1.3rem; }
+.tier-item .ti-name { font-weight: 600; font-size: 0.75rem; }
+.tier-item .ti-stat { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(255,255,255,0.5); }
+
+.tier-item.wrong-sort {
+  border-color: rgba(255,0,110,0.4);
+  background: rgba(255,0,110,0.08);
+}
+
+/* ── BUTTONS ── */
+.btn-row {
   display: flex;
-  gap: 12px;
+  gap: 15px;
+  flex-wrap: wrap;
   justify-content: center;
   margin-top: 20px;
-  flex-wrap: wrap;
 }
 
 .btn {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
   font-weight: 700;
-  font-size: 1rem;
-  padding: 10px 28px;
+  padding: 12px 28px;
   border-radius: 8px;
-  border: none;
-  cursor: pointer;
+  border: 2px solid var(--neon-green);
+  background: transparent;
+  color: var(--neon-green);
+  cursor: none;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn:hover {
+  background: rgba(57,255,20,0.1);
+  box-shadow: 0 0 20px rgba(57,255,20,0.3);
+  transform: translateY(-2px);
+}
+
+.btn.secondary {
+  border-color: var(--neon-blue);
+  color: var(--neon-blue);
+}
+
+.btn.secondary:hover {
+  background: rgba(0,240,255,0.1);
+  box-shadow: 0 0 20px rgba(0,240,255,0.3);
+}
+
+/* ── PARTICLES CANVAS ── */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9000;
+}
+
+/* ── SCREEN SHAKE ── */
+.shake {
+  animation: screenShake 0.3s ease;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-2px, 4px); }
+  80% { transform: translate(2px, -4px); }
+}
+
+/* ── PROGRESS BAR (conveyor timer) ── */
+.progress-bar-wrap {
+  width: 100%;
+  max-width: 900px;
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 600px) {
+  .food-card { padding: 20px 30px; }
+  .food-card .food-emoji { font-size: 3rem; }
+  .food-card .food-name { font-size: 1.2rem; }
+  .tier-bucket { min-width: 80px; padding: 14px 6px; }
+  .tier-bucket .tier-label { font-size: 1.2rem; }
+  .tier-bucket .tier-name { font-size: 0.75rem; }
+  .tier-bucket .tier-range { font-size: 0.6rem; }
+  .game-hud { font-size: 0.8rem; padding: 10px; }
+  .hud-value { font-size: 1.1rem; }
+  .combo-display { top: 10%; right: 10px; font-size: 1rem; }
+  .combo-display .combo-count { font-size: 1.8rem; }
+  .key-hints { display: none; }
+  body { cursor: auto; }
+  #cursor-dot, #cursor-ring { display: none; }
+  .conveyor-zone { height: 130px; }
+  .tier-row-label { width: 60px; min-width: 60px; font-size: 1rem; }
+}
+
+/* ── LIVES VISUAL ── */
+.lives-display {
+  display: flex;
+  gap: 4px;
+}
+
+.life-heart {
+  font-size: 1.2rem;
   transition: all 0.3s;
 }
-.btn-primary {
-  background: linear-gradient(135deg, var(--neon-green), #20c700);
-  color: #000;
-}
-.btn-primary:hover { box-shadow: 0 0 25px rgba(57,255,20,0.4); transform: translateY(-2px); }
-.btn-secondary {
-  background: transparent;
-  color: var(--neon-blue);
-  border: 1px solid var(--neon-blue);
-}
-.btn-secondary:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.2); }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 700px) {
-  .card-grid.grid-6x4 { grid-template-columns: repeat(4, 1fr); }
-  .card-cell { max-width: 140px; }
-  .stats-bar { gap: 14px; }
-  .game-header { justify-content: center; }
-}
-@media (max-width: 480px) {
-  .card-grid.grid-4x4 { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .card-grid.grid-6x4 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .card-cell { max-width: 120px; }
-  .mode-grid { grid-template-columns: 1fr; }
+.life-heart.lost {
+  opacity: 0.2;
+  transform: scale(0.8);
+  filter: grayscale(1);
 }
 </style>
 </head>
 <body>
 
-<a href="index.html" class="back-link">&larr; Back to Hub</a>
+<a href="index.html" class="back-link">← Back to Hub</a>
 
-<!-- ── MODE SELECT ── -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+<canvas id="particles-canvas"></canvas>
+
+<!-- ── FEEDBACK TOAST ── -->
+<div id="feedback-toast" class="feedback-toast"></div>
+
+<!-- ── COMBO DISPLAY ── -->
+<div id="combo-display" class="combo-display">
+  <span class="combo-count" id="combo-count">0</span>
+  <span class="combo-label">COMBO</span>
+</div>
+
+<!-- ── STAT REVEAL ── -->
+<div id="stat-reveal" class="stat-reveal"></div>
+
+<!-- ══════════════════════ MODE SELECT ══════════════════════ -->
 <div id="mode-select" class="screen active">
   <div class="title-block">
-    <h1>Meal Match Madness</h1>
-    <p>Match foods with their efficiency stats &mdash; learn while you play!</p>
+    <h1>⚡ EFFICIENCY SORTER</h1>
+    <p>Sort food into efficiency tiers — how well do you know your cal/$?</p>
   </div>
+
   <div class="mode-grid">
     <div class="mode-card" onclick="startGame('classic')">
-      <div class="icon">&#127828;</div>
-      <h3>Classic Match</h3>
-      <p>Match foods with their Calories/$ rating. 4&times;4 grid, 8 pairs.</p>
-      <span class="badge">BEGINNER</span>
-      <div class="high-score-note" id="hs-classic"></div>
+      <div class="icon">🎯</div>
+      <h3>Classic Sort</h3>
+      <p>One item at a time. Sort correctly. Speed increases as you go.</p>
+      <span class="badge">LEARN</span>
     </div>
-    <div class="mode-card" onclick="startGame('protein')">
-      <div class="icon">&#128170;</div>
-      <h3>Protein Match</h3>
-      <p>Match foods with their Protein/$ rating. 4&times;4 grid, 8 pairs.</p>
-      <span class="badge">INTERMEDIATE</span>
-      <div class="high-score-note" id="hs-protein"></div>
-    </div>
-    <div class="mode-card" onclick="startGame('expert')">
-      <div class="icon">&#129504;</div>
-      <h3>Expert Mode</h3>
-      <p>Match foods with both Cal/$ AND Protein/$. 6&times;4 grid, 12 pairs.</p>
-      <span class="badge">ADVANCED</span>
-      <div class="high-score-note" id="hs-expert"></div>
+    <div class="mode-card" onclick="startGame('conveyor')">
+      <div class="icon">🏭</div>
+      <h3>Conveyor Belt</h3>
+      <p>Items scroll across — sort them before they fall off the edge!</p>
+      <span class="badge">REACT</span>
     </div>
     <div class="mode-card" onclick="startGame('speed')">
-      <div class="icon">&#9889;</div>
+      <div class="icon">⏱️</div>
       <h3>Speed Round</h3>
-      <p>Classic match rules but you only have 60 seconds. Go!</p>
-      <span class="badge">CHALLENGE</span>
-      <div class="high-score-note" id="hs-speed"></div>
+      <p>30 seconds. Sort as many as possible. Go fast or go home.</p>
+      <span class="badge">RUSH</span>
+    </div>
+    <div class="mode-card" onclick="startGame('expert')">
+      <div class="icon">🧠</div>
+      <h3>Expert Mode</h3>
+      <p>Sort by BOTH cal/$ AND protein/$. Some items will surprise you.</p>
+      <span class="badge">HARD</span>
     </div>
   </div>
+
+  <p class="high-score-note" id="high-score-note"></p>
 </div>
 
-<!-- ── GAME SCREEN ── -->
+<!-- ══════════════════════ GAME SCREEN ══════════════════════ -->
 <div id="game-screen" class="screen">
-  <div class="game-header">
-    <h2 id="mode-title">Classic Match</h2>
-    <div class="game-controls">
-      <button onclick="restartGame()">Restart</button>
-      <button onclick="backToMenu()">Menu</button>
+  <div class="game-hud">
+    <div class="hud-item">
+      <span class="hud-label">Score</span>
+      <span class="hud-value hud-score" id="hud-score">0</span>
+    </div>
+    <div class="hud-item" id="hud-combo-wrap">
+      <span class="hud-label">Combo</span>
+      <span class="hud-value hud-combo" id="hud-combo">x1</span>
+    </div>
+    <div class="hud-item" id="hud-streak-wrap">
+      <span class="hud-label">Streak</span>
+      <span class="hud-value hud-streak" id="hud-streak">0</span>
+    </div>
+    <div class="hud-item" id="hud-lives-wrap">
+      <span class="hud-label">Lives</span>
+      <div class="lives-display" id="hud-lives"></div>
+    </div>
+    <div class="hud-item" id="hud-timer-wrap" style="display:none;">
+      <span class="hud-label">Time</span>
+      <span class="hud-value hud-timer" id="hud-timer">30</span>
+    </div>
+    <div class="hud-item" id="hud-round-wrap">
+      <span class="hud-label">Round</span>
+      <span class="hud-value" id="hud-round" style="color:rgba(255,255,255,0.6);">1</span>
     </div>
   </div>
-  <div class="stats-bar">
-    <div class="stat-item"><div class="label">Moves</div><div class="value" id="stat-moves">0</div></div>
-    <div class="stat-item"><div class="label">Time</div><div class="value" id="stat-time">0:00</div></div>
-    <div class="stat-item"><div class="label">Matches</div><div class="value" id="stat-matches">0 / 0</div></div>
-    <div class="stat-item"><div class="label">Accuracy</div><div class="value" id="stat-accuracy">100%</div></div>
-    <div class="stat-item" id="timer-container" style="display:none"><div class="label">Remaining</div><div class="value" id="stat-remaining">1:00</div></div>
-    <div class="stat-item"><div class="label">Score</div><div class="value" id="stat-score">0</div></div>
+
+  <!-- Progress bar for conveyor/speed -->
+  <div class="progress-bar-wrap" id="progress-bar-wrap" style="display:none;">
+    <div class="progress-bar-fill" id="progress-bar-fill" style="width:100%;"></div>
   </div>
-  <div class="combo-display" id="combo-display"></div>
-  <div class="card-grid" id="card-grid"></div>
+
+  <!-- Classic + Speed food display -->
+  <div class="food-zone" id="food-zone"></div>
+
+  <!-- Conveyor belt display -->
+  <div class="conveyor-zone" id="conveyor-zone" style="display:none;">
+    <div class="conveyor-track"></div>
+  </div>
+
+  <!-- Cal/$ Buckets -->
+  <div id="cal-bucket-section">
+    <div class="bucket-row" id="bucket-row">
+      <div class="tier-bucket tier-s" onclick="sortFood('S')" data-tier="S">
+        <div class="tier-label">S</div>
+        <div class="tier-name">God Tier</div>
+        <div class="tier-range">&gt;1500 cal/$</div>
+      </div>
+      <div class="tier-bucket tier-a" onclick="sortFood('A')" data-tier="A">
+        <div class="tier-label">A</div>
+        <div class="tier-name">High</div>
+        <div class="tier-range">800–1500 cal/$</div>
+      </div>
+      <div class="tier-bucket tier-b" onclick="sortFood('B')" data-tier="B">
+        <div class="tier-label">B</div>
+        <div class="tier-name">Medium</div>
+        <div class="tier-range">200–800 cal/$</div>
+      </div>
+      <div class="tier-bucket tier-c" onclick="sortFood('C')" data-tier="C">
+        <div class="tier-label">C</div>
+        <div class="tier-name">Bad</div>
+        <div class="tier-range">&lt;200 cal/$</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expert: Protein/$ Buckets -->
+  <div id="prot-bucket-section" class="expert-section" style="display:none; margin-top: 16px;">
+    <h4>⚡ PROTEIN / $ TIER</h4>
+    <div class="bucket-row" id="prot-bucket-row">
+      <div class="tier-bucket tier-s" onclick="sortProtein('S')" data-tier="S">
+        <div class="tier-label">S</div>
+        <div class="tier-name">God Tier</div>
+        <div class="tier-range">&gt;60g prot/$</div>
+      </div>
+      <div class="tier-bucket tier-a" onclick="sortProtein('A')" data-tier="A">
+        <div class="tier-label">A</div>
+        <div class="tier-name">High</div>
+        <div class="tier-range">30–60g prot/$</div>
+      </div>
+      <div class="tier-bucket tier-b" onclick="sortProtein('B')" data-tier="B">
+        <div class="tier-label">B</div>
+        <div class="tier-name">Medium</div>
+        <div class="tier-range">10–30g prot/$</div>
+      </div>
+      <div class="tier-bucket tier-c" onclick="sortProtein('C')" data-tier="C">
+        <div class="tier-label">C</div>
+        <div class="tier-name">Bad</div>
+        <div class="tier-range">&lt;10g prot/$</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="key-hints" id="key-hints">
+    <div class="key-hint"><kbd>1</kbd> S-Tier</div>
+    <div class="key-hint"><kbd>2</kbd> A-Tier</div>
+    <div class="key-hint"><kbd>3</kbd> B-Tier</div>
+    <div class="key-hint"><kbd>4</kbd> C-Tier</div>
+  </div>
 </div>
 
-<!-- ── COMPLETE SCREEN ── -->
-<div id="complete-screen" class="screen">
-  <div class="complete-box" id="complete-box"></div>
-</div>
+<!-- ══════════════════════ RESULTS SCREEN ══════════════════════ -->
+<div id="results-screen" class="screen">
+  <div class="results-title" id="results-title">ROUND COMPLETE</div>
 
-<div class="tip-toast" id="tip-toast">
-  <div class="tip-food" id="tip-food"></div>
-  <div id="tip-text"></div>
+  <div class="results-stats" id="results-stats"></div>
+
+  <div class="tier-list" id="results-tier-list"></div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="restartSameMode()">Play Again</button>
+    <button class="btn secondary" onclick="showScreen('mode-select')">Mode Select</button>
+  </div>
 </div>
 
 <script>
-/* ── DATA ── */
+// ═══════════════════════════════════════════
+//  FOOD DATA
+// ═══════════════════════════════════════════
 const FOODS = [
-  { name: 'Flour', emoji: '\uD83C\uDF5E', cal: 4464, protein: 80, tip: 'Flour is the king of calories-per-dollar. Make bread, tortillas, and pizza dough for pennies!' },
-  { name: 'Rice', emoji: '\uD83C\uDF5A', cal: 2320, protein: 42, tip: 'Buy rice in 20-lb bags for the best price. A staple that feeds billions for a reason.' },
-  { name: 'Oats', emoji: '\uD83E\uDD63', cal: 2148, protein: 72, tip: 'Oats are a protein powerhouse. Overnight oats take 2 minutes to prep the night before.' },
-  { name: 'Ramen', emoji: '\uD83C\uDF5C', cal: 1949, protein: 45, tip: 'Upgrade instant ramen with an egg and frozen veggies for a complete cheap meal.' },
-  { name: 'Pasta', emoji: '\uD83C\uDF5D', cal: 1600, protein: 56, tip: 'Store-brand pasta is basically identical to name-brand. Save 40% easy.' },
-  { name: 'Peanut Butter', emoji: '\uD83E\uDD5C', cal: 1487, protein: 52, tip: 'Peanut butter needs no refrigeration and lasts forever. Great emergency food.' },
-  { name: 'Lentils', emoji: '\uD83E\uDED8', cal: 929, protein: 73, tip: 'Lentils cook in 20 min with no soaking. One of the cheapest protein sources on Earth.' },
-  { name: 'Eggs (Costco)', emoji: '\uD83E\uDD5A', cal: 802, protein: 70, tip: 'Eggs from Costco are only about $3.59 for 24! Hard-boil a batch for grab-and-go protein.' },
-  { name: 'Pinto Beans', emoji: '\uD83E\uDED8', cal: 880, protein: 80, tip: 'Dried pinto beans cost ~$1/lb and expand 2.5x when cooked. Incredible protein-per-dollar.' },
-  { name: 'Potatoes', emoji: '\uD83E\uDD54', cal: 780, protein: 20, tip: 'Potatoes have more potassium than bananas and cost a fraction of the price.' },
-  { name: 'Chicken', emoji: '\uD83C\uDF57', cal: 239, protein: 38, tip: 'Buy whole chickens or bone-in thighs for the best price per pound of meat.' },
-  { name: 'Canned Tuna', emoji: '\uD83D\uDC1F', cal: 300, protein: 55, tip: 'Canned tuna is shelf-stable, high-protein, and versatile. Stock up when on sale.' }
+  { name: 'Flour',        emoji: '🌾', calPerDollar: 4464, protPerDollar: null },
+  { name: 'Rice',         emoji: '🍚', calPerDollar: 2320, protPerDollar: null },
+  { name: 'Oats',         emoji: '🥣', calPerDollar: 2148, protPerDollar: null },
+  { name: 'Ramen',        emoji: '🍜', calPerDollar: 1949, protPerDollar: null },
+  { name: 'Pasta',        emoji: '🍝', calPerDollar: 1600, protPerDollar: null },
+  { name: 'Peanut Butter',emoji: '🥜', calPerDollar: 1487, protPerDollar: 38 },
+  { name: 'Lentils',      emoji: '🫘', calPerDollar: 929,  protPerDollar: 73 },
+  { name: 'Beans',        emoji: '🫛', calPerDollar: 880,  protPerDollar: 80 },
+  { name: 'Eggs',         emoji: '🥚', calPerDollar: 802,  protPerDollar: 70 },
+  { name: 'Potatoes',     emoji: '🥔', calPerDollar: 780,  protPerDollar: null },
+  { name: 'Banana',       emoji: '🍌', calPerDollar: 500,  protPerDollar: null },
+  { name: 'Milk',         emoji: '🥛', calPerDollar: 350,  protPerDollar: 25 },
+  { name: 'Tuna',         emoji: '🐟', calPerDollar: 300,  protPerDollar: 55 },
+  { name: 'Chicken',      emoji: '🍗', calPerDollar: 239,  protPerDollar: 38 },
+  { name: 'Greek Yogurt', emoji: '🥄', calPerDollar: 161,  protPerDollar: 15 },
+  { name: 'Restaurant Meal', emoji: '🍽️', calPerDollar: 100, protPerDollar: 8 },
+  { name: 'Energy Drink', emoji: '⚡', calPerDollar: 80,   protPerDollar: null },
+  { name: 'Starbucks',    emoji: '☕', calPerDollar: 50,    protPerDollar: 2 },
 ];
 
-const MODE_CONFIG = {
-  classic:  { title: 'Classic Match', pairs: 8, gridClass: 'grid-4x4', statType: 'cal', timed: false },
-  protein:  { title: 'Protein Match', pairs: 8, gridClass: 'grid-4x4', statType: 'protein', timed: false },
-  expert:   { title: 'Expert Mode',   pairs: 12, gridClass: 'grid-6x4', statType: 'both', timed: false },
-  speed:    { title: 'Speed Round',   pairs: 8, gridClass: 'grid-4x4', statType: 'cal', timed: true, timeLimit: 60 }
+function getCalTier(calPerDollar) {
+  if (calPerDollar > 1500) return 'S';
+  if (calPerDollar >= 800) return 'A';
+  if (calPerDollar >= 200) return 'B';
+  return 'C';
+}
+
+function getProtTier(protPerDollar) {
+  if (protPerDollar === null) return null;
+  if (protPerDollar > 60) return 'S';
+  if (protPerDollar >= 30) return 'A';
+  if (protPerDollar >= 10) return 'B';
+  return 'C';
+}
+
+const TIER_NAMES = { S: 'God Tier', A: 'High', B: 'Medium', C: 'Bad' };
+const TIER_COLORS = { S: '#39ff14', A: '#00f0ff', B: '#ffe600', C: '#ff006e' };
+
+// ═══════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════
+let state = {
+  mode: 'classic',
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  streak: 0,
+  lives: 5,
+  maxLives: 5,
+  round: 0,
+  totalRounds: 0,
+  correct: 0,
+  wrong: 0,
+  currentFood: null,
+  queue: [],
+  history: [],       // { food, playerTier, correct }
+  timerLeft: 30,
+  timerId: null,
+  conveyorItems: [],
+  conveyorSpeed: 1.2,
+  conveyorTimerId: null,
+  gameActive: false,
+  waitingForProtein: false,
+  calAnswer: null,
+  speedInterval: 2000,  // ms between items in classic
 };
 
-/* ── STATE ── */
-let currentMode = null;
-let cards = [];
-let flippedCards = [];
-let matchedCount = 0;
-let totalPairs = 0;
-let moves = 0;
-let correctMoves = 0;
-let timerInterval = null;
-let elapsedSeconds = 0;
-let remainingSeconds = 60;
-let isLocked = false;
-let combo = 0;
-let maxCombo = 0;
-let score = 0;
-let gameActive = false;
-let usedFoods = [];
+// ═══════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let cursorTrailParticles = [];
+let mouseX = 0, mouseY = 0;
 
-/* ── HELPERS ── */
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+  constructor(x, y, color, size, vx, vy, life) {
+    this.x = x; this.y = y;
+    this.color = color;
+    this.size = size;
+    this.vx = vx; this.vy = vy;
+    this.life = life;
+    this.maxLife = life;
+    this.gravity = 0.05;
   }
-  return arr;
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += this.gravity;
+    this.life--;
+    this.vx *= 0.99;
+  }
+  draw() {
+    const alpha = Math.max(0, this.life / this.maxLife);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 }
 
-function formatTime(s) {
-  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+function spawnParticles(x, y, color, count = 20) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push(new Particle(
+      x, y, color,
+      2 + Math.random() * 4,
+      Math.cos(angle) * speed,
+      Math.sin(angle) * speed - 2,
+      30 + Math.random() * 30
+    ));
+  }
 }
 
+function spawnBurstAt(el, color) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  spawnParticles(cx, cy, color, 30);
+}
+
+// Cursor trail
+function spawnCursorTrail() {
+  if (Math.random() > 0.4) return;
+  particles.push(new Particle(
+    mouseX + (Math.random() - 0.5) * 10,
+    mouseY + (Math.random() - 0.5) * 10,
+    'rgba(57,255,20,0.6)',
+    1 + Math.random() * 2,
+    (Math.random() - 0.5) * 0.5,
+    (Math.random() - 0.5) * 0.5 - 0.3,
+    15 + Math.random() * 15
+  ));
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  spawnCursorTrail();
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ── Custom Cursor ──
+const cursorDot = document.getElementById('cursor-dot');
+const cursorRing = document.getElementById('cursor-ring');
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  cursorDot.style.left = e.clientX + 'px';
+  cursorDot.style.top = e.clientY + 'px';
+  cursorRing.style.left = e.clientX + 'px';
+  cursorRing.style.top = e.clientY + 'px';
+});
+
+// ═══════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ═══════════════════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  cleanup();
 }
 
-function getHighScores() {
-  try { return JSON.parse(localStorage.getItem('mealMatchScores') || '{}'); } catch { return {}; }
-}
-function saveHighScore(mode, data) {
-  const scores = getHighScores();
-  if (!scores[mode] || data.score > scores[mode].score) {
-    scores[mode] = data;
-    localStorage.setItem('mealMatchScores', JSON.stringify(scores));
-  }
+function cleanup() {
+  clearInterval(state.timerId);
+  clearInterval(state.conveyorTimerId);
+  cancelAnimationFrame(state.conveyorAnimId);
+  state.gameActive = false;
 }
 
-function refreshHighScoreDisplay() {
-  const scores = getHighScores();
-  for (const mode of ['classic', 'protein', 'expert', 'speed']) {
-    const el = document.getElementById('hs-' + mode);
-    if (scores[mode]) {
-      el.textContent = 'Best: ' + scores[mode].score + ' pts | ' + formatTime(scores[mode].time);
-    } else {
-      el.textContent = '';
-    }
-  }
-}
-
-/* ── CARD GENERATION ── */
-function buildCards(mode) {
-  const cfg = MODE_CONFIG[mode];
-  const foods = shuffle([...FOODS]).slice(0, cfg.pairs);
-  usedFoods = foods;
-  const pairs = [];
-
-  foods.forEach((food, i) => {
-    // Food name card
-    pairs.push({ pairId: i, type: 'name', food });
-    // Stat card
-    pairs.push({ pairId: i, type: 'stat', food, statType: cfg.statType });
-  });
-
-  return shuffle(pairs);
-}
-
-function renderCardFront(card) {
-  if (card.type === 'name') {
-    return `<div class="emoji">${card.food.emoji}</div><div class="food-name">${card.food.name}</div>`;
-  }
-  if (card.statType === 'cal') {
-    return `<div class="stat-text">${card.food.cal.toLocaleString()}</div><div class="stat-label">cal/$</div>`;
-  }
-  if (card.statType === 'protein') {
-    return `<div class="stat-text">${card.food.protein}g</div><div class="stat-label">protein/$</div>`;
-  }
-  // both
-  return `<div class="stat-text">${card.food.cal.toLocaleString()} cal/$</div><div class="stat-text" style="margin-top:2px">${card.food.protein}g prot/$</div>`;
-}
-
-/* ── START GAME ── */
+// ═══════════════════════════════════════════
+//  START GAME
+// ═══════════════════════════════════════════
 function startGame(mode) {
-  currentMode = mode;
-  const cfg = MODE_CONFIG[mode];
-
-  // Reset state
-  cards = buildCards(mode);
-  flippedCards = [];
-  matchedCount = 0;
-  totalPairs = cfg.pairs;
-  moves = 0;
-  correctMoves = 0;
-  combo = 0;
-  maxCombo = 0;
-  score = 0;
-  elapsedSeconds = 0;
-  remainingSeconds = cfg.timed ? cfg.timeLimit : 0;
-  isLocked = false;
-  gameActive = true;
-  clearInterval(timerInterval);
-
-  // UI
-  document.getElementById('mode-title').textContent = cfg.title;
-  document.getElementById('stat-moves').textContent = '0';
-  document.getElementById('stat-time').textContent = '0:00';
-  document.getElementById('stat-matches').textContent = '0 / ' + totalPairs;
-  document.getElementById('stat-accuracy').textContent = '100%';
-  document.getElementById('stat-score').textContent = '0';
-  document.getElementById('combo-display').textContent = '';
-
-  const timerCont = document.getElementById('timer-container');
-  timerCont.style.display = cfg.timed ? '' : 'none';
-  if (cfg.timed) document.getElementById('stat-remaining').textContent = formatTime(cfg.timeLimit);
-
-  // Build grid
-  const grid = document.getElementById('card-grid');
-  grid.className = 'card-grid ' + cfg.gridClass;
-  grid.innerHTML = '';
-
-  cards.forEach((card, idx) => {
-    const cell = document.createElement('div');
-    cell.className = 'card-cell';
-    cell.dataset.index = idx;
-    cell.innerHTML = `
-      <div class="card-inner">
-        <div class="card-face card-back"><span class="question">?</span></div>
-        <div class="card-face card-front">${renderCardFront(card)}</div>
-      </div>`;
-    cell.addEventListener('click', () => onCardClick(idx, cell));
-    grid.appendChild(cell);
-  });
-
-  // Start timer
-  timerInterval = setInterval(() => {
-    if (!gameActive) return;
-    elapsedSeconds++;
-    document.getElementById('stat-time').textContent = formatTime(elapsedSeconds);
-    if (cfg.timed) {
-      remainingSeconds = cfg.timeLimit - elapsedSeconds;
-      if (remainingSeconds <= 0) {
-        remainingSeconds = 0;
-        gameActive = false;
-        clearInterval(timerInterval);
-        endGame(false);
-      }
-      const remEl = document.getElementById('stat-remaining');
-      remEl.textContent = formatTime(Math.max(0, remainingSeconds));
-      remEl.className = 'value' + (remainingSeconds <= 10 ? ' timer-danger' : remainingSeconds <= 20 ? ' timer-warn' : '');
-    }
-  }, 1000);
+  state = {
+    mode,
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    streak: 0,
+    lives: mode === 'speed' ? 999 : 5,
+    maxLives: mode === 'speed' ? 999 : 5,
+    round: 0,
+    totalRounds: 0,
+    correct: 0,
+    wrong: 0,
+    currentFood: null,
+    queue: shuffle([...FOODS]),
+    history: [],
+    timerLeft: 30,
+    timerId: null,
+    conveyorItems: [],
+    conveyorSpeed: 1.2,
+    conveyorTimerId: null,
+    conveyorAnimId: null,
+    gameActive: true,
+    waitingForProtein: false,
+    calAnswer: null,
+    speedInterval: 2000,
+  };
 
   showScreen('game-screen');
+  updateHUD();
+  renderLives();
+
+  // Mode-specific setup
+  const conveyorZone = document.getElementById('conveyor-zone');
+  const foodZone = document.getElementById('food-zone');
+  const progressWrap = document.getElementById('progress-bar-wrap');
+  const timerWrap = document.getElementById('hud-timer-wrap');
+  const protSection = document.getElementById('prot-bucket-section');
+  const livesWrap = document.getElementById('hud-lives-wrap');
+  const keyHints = document.getElementById('key-hints');
+
+  conveyorZone.style.display = 'none';
+  foodZone.style.display = 'flex';
+  progressWrap.style.display = 'none';
+  timerWrap.style.display = 'none';
+  protSection.style.display = 'none';
+  livesWrap.style.display = '';
+
+  if (mode === 'expert') {
+    protSection.style.display = '';
+    keyHints.innerHTML = `
+      <div class="key-hint"><kbd>1</kbd> Cal S</div>
+      <div class="key-hint"><kbd>2</kbd> Cal A</div>
+      <div class="key-hint"><kbd>3</kbd> Cal B</div>
+      <div class="key-hint"><kbd>4</kbd> Cal C</div>
+      <div class="key-hint" style="margin-left:10px;"><kbd>Q</kbd> Prot S</div>
+      <div class="key-hint"><kbd>W</kbd> Prot A</div>
+      <div class="key-hint"><kbd>E</kbd> Prot B</div>
+      <div class="key-hint"><kbd>R</kbd> Prot C</div>
+    `;
+    // Only use foods with protein data in expert mode
+    state.queue = shuffle(FOODS.filter(f => f.protPerDollar !== null));
+  } else {
+    keyHints.innerHTML = `
+      <div class="key-hint"><kbd>1</kbd> S-Tier</div>
+      <div class="key-hint"><kbd>2</kbd> A-Tier</div>
+      <div class="key-hint"><kbd>3</kbd> B-Tier</div>
+      <div class="key-hint"><kbd>4</kbd> C-Tier</div>
+    `;
+  }
+
+  if (mode === 'speed') {
+    timerWrap.style.display = '';
+    progressWrap.style.display = '';
+    livesWrap.style.display = 'none';
+    startSpeedTimer();
+  }
+
+  if (mode === 'conveyor') {
+    foodZone.style.display = 'none';
+    conveyorZone.style.display = '';
+    progressWrap.style.display = '';
+    startConveyor();
+  } else {
+    nextFood();
+  }
 }
 
-/* ── CARD CLICK ── */
-function onCardClick(idx, cell) {
-  if (isLocked || !gameActive) return;
-  if (cell.classList.contains('flipped') || cell.classList.contains('matched')) return;
-  if (flippedCards.length >= 2) return;
+function restartSameMode() {
+  startGame(state.mode);
+}
 
-  cell.classList.add('flipped');
-  flippedCards.push({ idx, cell });
+// ═══════════════════════════════════════════
+//  QUEUE & FOOD MANAGEMENT
+// ═══════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
-  if (flippedCards.length === 2) {
-    moves++;
-    document.getElementById('stat-moves').textContent = moves;
-    isLocked = true;
-
-    const [a, b] = flippedCards;
-    const cardA = cards[a.idx];
-    const cardB = cards[b.idx];
-
-    if (cardA.pairId === cardB.pairId && a.idx !== b.idx) {
-      // Match!
-      correctMoves++;
-      matchedCount++;
-      combo++;
-      if (combo > maxCombo) maxCombo = combo;
-
-      const comboBonus = combo > 1 ? (combo - 1) * 50 : 0;
-      const basePoints = 100;
-      score += basePoints + comboBonus;
-      document.getElementById('stat-score').textContent = score;
-
-      document.getElementById('stat-matches').textContent = matchedCount + ' / ' + totalPairs;
-      updateAccuracy();
-      updateCombo();
-
-      setTimeout(() => {
-        a.cell.classList.add('matched');
-        b.cell.classList.add('matched');
-        spawnParticles(a.cell);
-        spawnParticles(b.cell);
-        showTip(cardA.food);
-        flippedCards = [];
-        isLocked = false;
-
-        if (matchedCount === totalPairs) {
-          gameActive = false;
-          clearInterval(timerInterval);
-          setTimeout(() => endGame(true), 800);
-        }
-      }, 400);
-    } else {
-      // Wrong
-      combo = 0;
-      updateCombo();
-      updateAccuracy();
-
-      setTimeout(() => {
-        a.cell.classList.add('wrong');
-        b.cell.classList.add('wrong');
-      }, 200);
-
-      setTimeout(() => {
-        a.cell.classList.remove('flipped', 'wrong');
-        b.cell.classList.remove('flipped', 'wrong');
-        flippedCards = [];
-        isLocked = false;
-      }, 1100);
+function getNextFood() {
+  if (state.queue.length === 0) {
+    state.queue = shuffle([...FOODS]);
+    if (state.mode === 'expert') {
+      state.queue = shuffle(FOODS.filter(f => f.protPerDollar !== null));
     }
   }
+  return state.queue.pop();
 }
 
-function updateAccuracy() {
-  const pct = moves > 0 ? Math.round((correctMoves / moves) * 100) : 100;
-  document.getElementById('stat-accuracy').textContent = pct + '%';
+function nextFood() {
+  if (!state.gameActive) return;
+
+  state.currentFood = getNextFood();
+  state.round++;
+  state.totalRounds++;
+  state.waitingForProtein = false;
+  state.calAnswer = null;
+
+  const zone = document.getElementById('food-zone');
+  zone.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'food-card';
+  card.innerHTML = `
+    <span class="food-emoji">${state.currentFood.emoji}</span>
+    <span class="food-name">${state.currentFood.name}</span>
+    ${state.mode === 'expert' ? '<span class="food-hint">Sort by Cal/$ first, then Protein/$</span>' : ''}
+  `;
+  zone.appendChild(card);
+
+  updateHUD();
 }
 
-function updateCombo() {
-  const el = document.getElementById('combo-display');
-  if (combo > 1) {
-    el.textContent = 'COMBO x' + combo + '!  (+' + ((combo - 1) * 50) + ' bonus)';
-    el.style.transform = 'scale(1.15)';
-    setTimeout(() => el.style.transform = 'scale(1)', 200);
+// ═══════════════════════════════════════════
+//  SORTING LOGIC
+// ═══════════════════════════════════════════
+function sortFood(tier, fromConveyor = null) {
+  if (!state.gameActive) return;
+
+  let food;
+  if (fromConveyor) {
+    food = fromConveyor;
   } else {
-    el.textContent = '';
+    if (!state.currentFood) return;
+    food = state.currentFood;
+  }
+
+  // In expert mode, first click goes to cal bucket
+  if (state.mode === 'expert' && !state.waitingForProtein) {
+    const correctTier = getCalTier(food.calPerDollar);
+    const isCorrect = tier === correctTier;
+
+    if (isCorrect) {
+      state.calAnswer = tier;
+      state.waitingForProtein = true;
+      showToast('NOW SORT PROTEIN →', 'correct');
+      // Highlight that we're waiting for protein
+      document.getElementById('prot-bucket-section').style.opacity = '1';
+      document.getElementById('cal-bucket-section').style.opacity = '0.3';
+      return;
+    } else {
+      handleWrong(food, correctTier, 'cal');
+      return;
+    }
+  }
+
+  const correctTier = getCalTier(food.calPerDollar);
+  const isCorrect = tier === correctTier;
+
+  if (isCorrect) {
+    handleCorrect(food, tier, fromConveyor);
+  } else {
+    handleWrong(food, correctTier, 'cal', fromConveyor);
   }
 }
 
-/* ── TIPS ── */
-function showTip(food) {
-  const toast = document.getElementById('tip-toast');
-  document.getElementById('tip-food').textContent = food.emoji + ' ' + food.name;
-  document.getElementById('tip-text').textContent = food.tip;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
+function sortProtein(tier) {
+  if (!state.gameActive || state.mode !== 'expert' || !state.waitingForProtein) return;
 
-/* ── PARTICLES ── */
-function spawnParticles(cell) {
-  const rect = cell.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  const colors = ['var(--neon-green)', 'var(--neon-blue)', 'var(--neon-yellow)', 'var(--neon-pink)'];
+  const food = state.currentFood;
+  const correctTier = getProtTier(food.protPerDollar);
+  const isCorrect = tier === correctTier;
 
-  for (let i = 0; i < 14; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 40 + Math.random() * 80;
-    p.style.left = cx + 'px';
-    p.style.top = cy + 'px';
-    p.style.background = colors[Math.floor(Math.random() * colors.length)];
-    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
-    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
-    p.style.width = (3 + Math.random() * 5) + 'px';
-    p.style.height = p.style.width;
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 850);
+  // Reset opacity
+  document.getElementById('prot-bucket-section').style.opacity = '1';
+  document.getElementById('cal-bucket-section').style.opacity = '1';
+
+  if (isCorrect) {
+    // Both correct in expert mode - bonus points
+    handleCorrect(food, state.calAnswer, null, true);
+  } else {
+    handleWrong(food, correctTier, 'prot');
   }
 }
 
-/* ── END GAME ── */
-function endGame(won) {
-  const cfg = MODE_CONFIG[currentMode];
-  const box = document.getElementById('complete-box');
+function handleCorrect(food, tier, fromConveyor = null, expertBonus = false) {
+  state.combo++;
+  state.streak++;
+  if (state.combo > state.maxCombo) state.maxCombo = state.combo;
 
-  // Star rating (based on moves relative to pairs)
-  const perfectMoves = totalPairs;
-  let stars = 1;
-  if (moves <= perfectMoves + 2) stars = 3;
-  else if (moves <= perfectMoves + 6) stars = 2;
+  const points = (10 + state.combo * 5) * (expertBonus ? 2 : 1);
+  state.score += points;
+  state.correct++;
 
-  if (!won) stars = 0;
+  state.history.push({
+    food: { ...food },
+    playerCalTier: tier,
+    playerProtTier: state.mode === 'expert' ? tier : null,
+    correct: true
+  });
 
-  // Build stars HTML
-  const starsHtml = [1, 2, 3].map(i =>
-    `<span class="star ${i <= stars ? 'earned' : ''}">\u2605</span>`
-  ).join('');
+  showToast(getComboText(), 'correct');
+  updateComboDisplay();
 
-  // Time bonus
-  const timeBonus = won ? Math.max(0, (cfg.timed ? cfg.timeLimit : 120) - elapsedSeconds) * 5 : 0;
-  const finalScore = score + timeBonus;
+  // Particles
+  const color = TIER_COLORS[tier];
+  const bucket = fromConveyor
+    ? document.querySelector(`.tier-bucket[data-tier="${tier}"]`)
+    : document.querySelector(`#cal-bucket-section .tier-bucket[data-tier="${tier}"]`);
+  if (bucket) spawnBurstAt(bucket, color);
+  spawnParticles(window.innerWidth / 2, window.innerHeight / 2, color, 15);
 
-  // Save high score
-  if (won) {
-    saveHighScore(currentMode, { score: finalScore, time: elapsedSeconds, moves, stars });
+  showStatReveal(food, tier, true);
+
+  // Speed increase
+  if (state.mode === 'classic') {
+    state.speedInterval = Math.max(600, state.speedInterval - 50);
   }
 
-  // Ranking table
-  const sorted = [...FOODS].sort((a, b) => b.cal - a.cal);
-  let tableRows = sorted.map(f => {
-    const isUsed = usedFoods.find(uf => uf.name === f.name);
-    return `<tr class="${isUsed ? 'highlight-row' : ''}">
-      <td>${f.emoji} ${f.name}</td>
-      <td>${f.cal.toLocaleString()}</td>
-      <td>${f.protein}g</td>
-    </tr>`;
-  }).join('');
+  updateHUD();
 
-  box.innerHTML = `
-    <h2>${won ? 'You Did It!' : 'Time\'s Up!'}</h2>
-    <div class="stars">${starsHtml}</div>
-    <div class="final-stats">
-      <div class="final-stat"><div class="num">${finalScore}</div><div class="lbl">Score</div></div>
-      <div class="final-stat"><div class="num">${moves}</div><div class="lbl">Moves</div></div>
-      <div class="final-stat"><div class="num">${formatTime(elapsedSeconds)}</div><div class="lbl">Time</div></div>
-      <div class="final-stat"><div class="num">${Math.round((correctMoves / Math.max(moves, 1)) * 100)}%</div><div class="lbl">Accuracy</div></div>
-    </div>
-    ${timeBonus > 0 ? `<div class="bonus-line">Time bonus: +${timeBonus} pts | Max combo: x${maxCombo}</div>` : `<div class="bonus-line">Max combo: x${maxCombo}</div>`}
-    <table class="ranking-table">
-      <tr><th>Food</th><th>Cal/$</th><th>Protein/$</th></tr>
-      ${tableRows}
-    </table>
-    <div class="shopping-tip">
-      <strong>Shopping Tip:</strong> Buy staples like flour, rice, and oats in bulk. Pair cheap calorie sources with protein-dense foods like eggs, lentils, and pinto beans for balanced, budget-friendly meals.
-    </div>
-    <div class="complete-buttons">
-      <button class="btn btn-primary" onclick="startGame('${currentMode}')">Play Again</button>
-      <button class="btn btn-secondary" onclick="backToMenu()">Back to Modes</button>
-    </div>
+  if (fromConveyor) {
+    removeConveyorItem(fromConveyor);
+  } else {
+    setTimeout(() => nextFood(), 600);
+  }
+}
+
+function handleWrong(food, correctTier, type = 'cal', fromConveyor = null) {
+  state.combo = 0;
+  state.wrong++;
+  state.lives--;
+
+  state.history.push({
+    food: { ...food },
+    playerCalTier: type === 'cal' ? null : state.calAnswer,
+    playerProtTier: type === 'prot' ? null : null,
+    correct: false,
+    correctCalTier: getCalTier(food.calPerDollar),
+    correctProtTier: food.protPerDollar !== null ? getProtTier(food.protPerDollar) : null,
+  });
+
+  showToast(`WRONG — ${correctTier}-Tier`, 'wrong');
+  updateComboDisplay();
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 300);
+
+  // Reset expert mode state
+  if (state.mode === 'expert') {
+    document.getElementById('prot-bucket-section').style.opacity = '1';
+    document.getElementById('cal-bucket-section').style.opacity = '1';
+    state.waitingForProtein = false;
+    state.calAnswer = null;
+  }
+
+  const statText = type === 'prot'
+    ? `${food.protPerDollar}g prot/$`
+    : `${food.calPerDollar} cal/$`;
+  showStatReveal(food, correctTier, false, statText);
+
+  renderLives();
+  updateHUD();
+
+  if (state.lives <= 0 && state.mode !== 'speed') {
+    setTimeout(() => endGame(), 800);
+    return;
+  }
+
+  if (fromConveyor) {
+    removeConveyorItem(food);
+  } else {
+    setTimeout(() => nextFood(), 1000);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CONVEYOR BELT MODE
+// ═══════════════════════════════════════════
+let conveyorAnimRunning = false;
+
+function startConveyor() {
+  state.conveyorSpeed = 1.2;
+  let spawnInterval = 3000;
+  let itemsSpawned = 0;
+
+  // Spawn first item
+  spawnConveyorItem();
+  itemsSpawned++;
+
+  state.conveyorTimerId = setInterval(() => {
+    if (!state.gameActive) return;
+    spawnConveyorItem();
+    itemsSpawned++;
+
+    // Increase speed over time
+    if (itemsSpawned % 5 === 0) {
+      state.conveyorSpeed += 0.2;
+      clearInterval(state.conveyorTimerId);
+      spawnInterval = Math.max(1200, spawnInterval - 200);
+      state.conveyorTimerId = setInterval(() => {
+        if (!state.gameActive) return;
+        spawnConveyorItem();
+        itemsSpawned++;
+      }, spawnInterval);
+    }
+  }, spawnInterval);
+
+  // Start animation loop
+  if (!conveyorAnimRunning) {
+    conveyorAnimRunning = true;
+    animateConveyor();
+  }
+
+  // Update progress bar as a speed indicator
+  updateConveyorProgress();
+}
+
+function spawnConveyorItem() {
+  const food = getNextFood();
+  state.round++;
+  state.totalRounds++;
+
+  const zone = document.getElementById('conveyor-zone');
+  const el = document.createElement('div');
+  el.className = 'conveyor-item';
+  el.innerHTML = `<span class="food-emoji">${food.emoji}</span><br><span class="food-name">${food.name}</span>`;
+  el.style.left = '-160px';
+
+  zone.appendChild(el);
+  state.conveyorItems.push({ food, el, x: -160 });
+
+  // Click on conveyor item to select it
+  el.addEventListener('click', () => {
+    state.currentFood = food;
+    // Highlight selected item
+    document.querySelectorAll('.conveyor-item').forEach(i => i.style.borderColor = 'rgba(255,255,255,0.15)');
+    el.style.borderColor = 'var(--neon-green)';
+  });
+
+  // Auto-select if it's the only item
+  if (state.conveyorItems.length === 1) {
+    state.currentFood = food;
+    el.style.borderColor = 'var(--neon-green)';
+  }
+}
+
+function animateConveyor() {
+  if (!state.gameActive) { conveyorAnimRunning = false; return; }
+
+  const zone = document.getElementById('conveyor-zone');
+  const zoneWidth = zone.offsetWidth;
+
+  state.conveyorItems.forEach(item => {
+    item.x += state.conveyorSpeed;
+    item.el.style.left = item.x + 'px';
+  });
+
+  // Check for items falling off
+  const fallen = state.conveyorItems.filter(item => item.x > zoneWidth + 10);
+  fallen.forEach(item => {
+    // Missed item = wrong
+    state.combo = 0;
+    state.wrong++;
+    state.lives--;
+    state.history.push({
+      food: { ...item.food },
+      correct: false,
+      correctCalTier: getCalTier(item.food.calPerDollar),
+      missed: true
+    });
+    showToast('MISSED!', 'wrong');
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 300);
+    renderLives();
+    updateHUD();
+
+    item.el.remove();
+    state.conveyorItems = state.conveyorItems.filter(i => i !== item);
+
+    // Auto-select next item
+    if (state.conveyorItems.length > 0) {
+      state.currentFood = state.conveyorItems[0].food;
+      state.conveyorItems[0].el.style.borderColor = 'var(--neon-green)';
+    }
+
+    if (state.lives <= 0) {
+      setTimeout(() => endGame(), 500);
+    }
+  });
+
+  state.conveyorAnimId = requestAnimationFrame(animateConveyor);
+}
+
+function removeConveyorItem(food) {
+  const idx = state.conveyorItems.findIndex(i => i.food === food);
+  if (idx >= 0) {
+    state.conveyorItems[idx].el.remove();
+    state.conveyorItems.splice(idx, 1);
+  }
+  // Auto-select first remaining
+  if (state.conveyorItems.length > 0) {
+    state.currentFood = state.conveyorItems[0].food;
+    document.querySelectorAll('.conveyor-item').forEach(i => i.style.borderColor = 'rgba(255,255,255,0.15)');
+    state.conveyorItems[0].el.style.borderColor = 'var(--neon-green)';
+  } else {
+    state.currentFood = null;
+  }
+}
+
+function updateConveyorProgress() {
+  // Show speed as progress
+  const fill = document.getElementById('progress-bar-fill');
+  const pct = Math.min(100, (state.conveyorSpeed / 4) * 100);
+  fill.style.width = pct + '%';
+  if (state.gameActive && state.mode === 'conveyor') {
+    setTimeout(updateConveyorProgress, 500);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  SPEED ROUND MODE
+// ═══════════════════════════════════════════
+function startSpeedTimer() {
+  state.timerLeft = 30;
+  updateHUD();
+  state.timerId = setInterval(() => {
+    state.timerLeft--;
+    updateHUD();
+    const fill = document.getElementById('progress-bar-fill');
+    fill.style.width = ((state.timerLeft / 30) * 100) + '%';
+
+    if (state.timerLeft <= 10) {
+      fill.style.background = 'linear-gradient(90deg, var(--neon-pink), var(--neon-orange))';
+    }
+
+    if (state.timerLeft <= 0) {
+      endGame();
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════
+//  END GAME
+// ═══════════════════════════════════════════
+function endGame() {
+  state.gameActive = false;
+  cleanup();
+
+  showScreen('results-screen');
+
+  const accuracy = state.correct + state.wrong > 0
+    ? Math.round((state.correct / (state.correct + state.wrong)) * 100)
+    : 0;
+
+  // Title
+  const titleEl = document.getElementById('results-title');
+  if (accuracy >= 90) {
+    titleEl.textContent = '🏆 EFFICIENCY MASTER';
+    titleEl.style.color = 'var(--neon-green)';
+  } else if (accuracy >= 70) {
+    titleEl.textContent = '⚡ SOLID SORTING';
+    titleEl.style.color = 'var(--neon-blue)';
+  } else if (accuracy >= 50) {
+    titleEl.textContent = '🤷 NEEDS WORK';
+    titleEl.style.color = 'var(--neon-yellow)';
+  } else {
+    titleEl.textContent = '💸 BUDGET DISASTER';
+    titleEl.style.color = 'var(--neon-pink)';
+  }
+
+  // Stats
+  const statsEl = document.getElementById('results-stats');
+  statsEl.innerHTML = `
+    <div class="result-stat"><div class="val">${state.score}</div><div class="lbl">Score</div></div>
+    <div class="result-stat"><div class="val">${accuracy}%</div><div class="lbl">Accuracy</div></div>
+    <div class="result-stat"><div class="val">${state.correct}/${state.correct + state.wrong}</div><div class="lbl">Correct</div></div>
+    <div class="result-stat"><div class="val" style="color:var(--neon-orange);">${state.maxCombo}x</div><div class="lbl">Max Combo</div></div>
   `;
 
-  showScreen('complete-screen');
+  // Build tier list from history
+  buildTierList();
+
+  // Save high score
+  saveHighScore();
 }
 
-/* ── CONTROLS ── */
-function restartGame() {
-  clearInterval(timerInterval);
-  startGame(currentMode);
+function buildTierList() {
+  const container = document.getElementById('results-tier-list');
+  container.innerHTML = '';
+
+  const tiers = { S: [], A: [], B: [], C: [] };
+  const seen = new Set();
+
+  state.history.forEach(h => {
+    const key = h.food.name;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    const correctTier = getCalTier(h.food.calPerDollar);
+    tiers[correctTier].push({
+      food: h.food,
+      wasCorrect: h.correct,
+    });
+  });
+
+  ['S', 'A', 'B', 'C'].forEach(t => {
+    const row = document.createElement('div');
+    row.className = `tier-row ${t.toLowerCase()}`;
+
+    const label = document.createElement('div');
+    label.className = 'tier-row-label';
+    label.innerHTML = `${t}<small>${TIER_NAMES[t]}</small>`;
+
+    const items = document.createElement('div');
+    items.className = 'tier-row-items';
+
+    tiers[t].forEach(entry => {
+      const el = document.createElement('div');
+      el.className = `tier-item ${entry.wasCorrect ? '' : 'wrong-sort'}`;
+      el.innerHTML = `
+        <div class="ti-emoji">${entry.food.emoji}</div>
+        <div class="ti-name">${entry.food.name}</div>
+        <div class="ti-stat">${entry.food.calPerDollar} cal/$${entry.food.protPerDollar ? ' · ' + entry.food.protPerDollar + 'g prot/$' : ''}</div>
+      `;
+      items.appendChild(el);
+    });
+
+    if (tiers[t].length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'color:rgba(255,255,255,0.15); font-size:0.8rem; padding:10px;';
+      empty.textContent = '—';
+      items.appendChild(empty);
+    }
+
+    row.appendChild(label);
+    row.appendChild(items);
+    container.appendChild(row);
+  });
 }
 
-function backToMenu() {
-  clearInterval(timerInterval);
-  gameActive = false;
-  refreshHighScoreDisplay();
-  showScreen('mode-select');
+// ═══════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('hud-score').textContent = state.score;
+  document.getElementById('hud-combo').textContent = 'x' + Math.max(1, state.combo);
+  document.getElementById('hud-streak').textContent = state.streak;
+  document.getElementById('hud-timer').textContent = state.timerLeft;
+  document.getElementById('hud-round').textContent = state.totalRounds;
 }
 
-/* ── INIT ── */
-refreshHighScoreDisplay();
+function renderLives() {
+  const el = document.getElementById('hud-lives');
+  let html = '';
+  for (let i = 0; i < state.maxLives; i++) {
+    html += `<span class="life-heart ${i >= state.lives ? 'lost' : ''}">❤️</span>`;
+  }
+  el.innerHTML = html;
+}
+
+function showToast(text, type) {
+  const toast = document.getElementById('feedback-toast');
+  toast.textContent = text;
+  toast.className = `feedback-toast ${type} show`;
+  setTimeout(() => toast.className = 'feedback-toast', 800);
+}
+
+function getComboText() {
+  if (state.combo >= 15) return '🔥 UNSTOPPABLE ' + state.combo + 'x';
+  if (state.combo >= 10) return '⚡ ON FIRE ' + state.combo + 'x';
+  if (state.combo >= 7) return '💥 AMAZING ' + state.combo + 'x';
+  if (state.combo >= 5) return '✨ GREAT ' + state.combo + 'x';
+  if (state.combo >= 3) return '👍 NICE ' + state.combo + 'x';
+  return '✓ CORRECT';
+}
+
+function updateComboDisplay() {
+  const el = document.getElementById('combo-display');
+  const countEl = document.getElementById('combo-count');
+  if (state.combo >= 2) {
+    el.classList.add('visible');
+    countEl.textContent = state.combo + 'x';
+  } else {
+    el.classList.remove('visible');
+  }
+}
+
+function showStatReveal(food, correctTier, wasCorrect, overrideStat = null) {
+  const el = document.getElementById('stat-reveal');
+  const stat = overrideStat || `${food.calPerDollar} cal/$`;
+  const protStat = food.protPerDollar ? ` · ${food.protPerDollar}g prot/$` : '';
+
+  el.innerHTML = `
+    <span class="stat-food">${food.emoji} ${food.name}</span> —
+    <span class="stat-value">${stat}${protStat}</span> →
+    <span class="stat-tier" style="color:${TIER_COLORS[correctTier]}">${correctTier}-Tier (${TIER_NAMES[correctTier]})</span>
+    ${wasCorrect ? '' : ' ✗'}
+  `;
+  el.className = 'stat-reveal show';
+  setTimeout(() => el.className = 'stat-reveal', 2000);
+}
+
+// ═══════════════════════════════════════════
+//  HIGH SCORES (localStorage)
+// ═══════════════════════════════════════════
+function saveHighScore() {
+  const key = `eie-sorter-${state.mode}`;
+  const prev = localStorage.getItem(key) || 0;
+  if (state.score > parseInt(prev)) {
+    localStorage.setItem(key, state.score);
+  }
+}
+
+function loadHighScores() {
+  const modes = ['classic', 'conveyor', 'speed', 'expert'];
+  const scores = modes.map(m => {
+    const s = localStorage.getItem(`eie-sorter-${m}`);
+    return s ? `${m[0].toUpperCase() + m.slice(1)}: ${s}` : null;
+  }).filter(Boolean);
+
+  const note = document.getElementById('high-score-note');
+  if (scores.length) {
+    note.textContent = '🏆 High Scores — ' + scores.join(' | ');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  KEYBOARD CONTROLS
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (!state.gameActive) return;
+
+  // Cal/$ tiers: 1-4
+  if (e.key === '1') sortFood('S');
+  if (e.key === '2') sortFood('A');
+  if (e.key === '3') sortFood('B');
+  if (e.key === '4') sortFood('C');
+
+  // Expert protein tiers: Q W E R
+  if (state.mode === 'expert') {
+    if (e.key === 'q' || e.key === 'Q') sortProtein('S');
+    if (e.key === 'w' || e.key === 'W') sortProtein('A');
+    if (e.key === 'e' || e.key === 'E') sortProtein('B');
+    if (e.key === 'r' || e.key === 'R') sortProtein('C');
+  }
+});
+
+// Handle conveyor mode bucket clicks — sort currently selected food
+const origSortFood = sortFood;
+// We override sortFood to handle conveyor mode properly
+// (already handled — conveyorItems auto-select currentFood)
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+loadHighScores();
 </script>
 </body>
 </html>

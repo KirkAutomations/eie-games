@@ -175,6 +175,49 @@ canvas {
     color: var(--neon-orange);
     margin-top: 15px;
 }
+#quizResult {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 18px;
+    min-height: 36px;
+    transition: opacity 0.3s;
+}
+#quizResult.correct {
+    color: var(--neon-green);
+    text-shadow: 0 0 20px var(--neon-green);
+}
+#quizResult.wrong {
+    color: var(--neon-pink);
+    text-shadow: 0 0 20px var(--neon-pink);
+}
+#quizExplanation {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: #ccc;
+    margin-top: 10px;
+    max-width: 500px;
+    line-height: 1.4;
+    min-height: 24px;
+}
+#quizOverlay .quiz-btn.btn-correct {
+    border-color: var(--neon-green) !important;
+    color: var(--neon-green) !important;
+    background: rgba(57,255,20,0.15) !important;
+    box-shadow: 0 0 20px rgba(57,255,20,0.4) !important;
+    cursor: default !important;
+}
+#quizOverlay .quiz-btn.btn-wrong {
+    border-color: var(--neon-pink) !important;
+    color: var(--neon-pink) !important;
+    background: rgba(255,0,110,0.15) !important;
+    cursor: default !important;
+}
+#quizOverlay .quiz-btn.btn-dim {
+    opacity: 0.4;
+    cursor: default !important;
+}
 .back-link {
     position: fixed;
     top: 15px;
@@ -243,6 +286,8 @@ canvas {
         <div class="quiz-question" id="quizQuestion"></div>
         <div id="quizOptions"></div>
         <div class="quiz-timer" id="quizTimer"></div>
+        <div id="quizResult"></div>
+        <div id="quizExplanation"></div>
     </div>
 </div>
 
@@ -283,14 +328,42 @@ const POWERUPS = [
 const OBSTACLE_EMOJI = '🛒';
 
 const QUIZZES = [
-    {q:'Which has more cal/$?',a:'Rice (2320)',b:'Fancy Cheese (~400)',correct:'a'},
-    {q:'Better bulk buy?',a:'Flour (4464 cal/$)',b:'Energy Drink',correct:'a'},
-    {q:'Cheaper caffeine source?',a:'Coffee grounds',b:'Starbucks latte',correct:'a'},
-    {q:'More efficient protein?',a:'Lentils & Eggs',b:'Pre-cut deli meat',correct:'a'},
-    {q:'Better breakfast deal?',a:'Oats (2148 cal/$)',b:'Cereal brand ($8/box)',correct:'a'},
-    {q:'Smart carb choice?',a:'Pasta (1600 cal/$)',b:'Organic quinoa ($6/lb)',correct:'a'},
-    {q:'Which is the savings trap?',a:'Bulk rice bag',b:'Pre-cut fruit cups',correct:'b'},
-    {q:'Better snack value?',a:'Peanut Butter (1487)',b:'Protein bars ($3 each)',correct:'a'},
+    {q:'Which has more cal/$?',a:'Rice (2,320 cal/$)',b:'Fancy Cheese (~400 cal/$)',correct:'a',
+     explanation:'Rice delivers 2,320 cal/$ vs Fancy Cheese at ~400 cal/$ — nearly 6x more efficient.'},
+    {q:'Better bulk buy?',a:'Flour (4,464 cal/$)',b:'Energy Drink (~250 cal/$)',correct:'a',
+     explanation:'Flour crushes it at 4,464 cal/$ — the single most calorie-efficient grocery item.'},
+    {q:'Cheaper caffeine source?',a:'Coffee grounds',b:'Starbucks latte',correct:'a',
+     explanation:'Coffee grounds deliver ~1,200mg caffeine/$ vs ~30mg/$ at Starbucks — 40x more efficient.'},
+    {q:'More efficient protein?',a:'Lentils & Eggs',b:'Pre-cut deli meat',correct:'a',
+     explanation:'Lentils (929 cal/$) and Eggs (802 cal/$) crush deli meat at ~200 cal/$ with markup.'},
+    {q:'Better breakfast deal?',a:'Oats (2,148 cal/$)',b:'Cereal brand ($8/box)',correct:'a',
+     explanation:'Oats at 2,148 cal/$ beats any cereal brand at 400-600 cal/$.'},
+    {q:'Smart carb choice?',a:'Pasta (1,600 cal/$)',b:'Organic quinoa ($6/lb)',correct:'a',
+     explanation:'Pasta delivers 1,600 cal/$ while organic quinoa manages ~500 cal/$ at best.'},
+    {q:'Which is the savings trap?',a:'Bulk rice bag',b:'Pre-cut fruit cups',correct:'b',
+     explanation:'Pre-cut fruit cups charge 3-4x markup for the "convenience" of someone else using a knife.'},
+    {q:'Better snack value?',a:'Peanut Butter (1,487 cal/$)',b:'Protein bars ($3 each)',correct:'a',
+     explanation:'PB at 1,487 cal/$ vs protein bars at ~300 cal/$ — you\'re paying for packaging and marketing.'},
+    {q:'Which costs more per calorie?',a:'Ramen (1,949 cal/$)',b:'Frozen pizza (~600 cal/$)',correct:'b',
+     explanation:'Frozen pizza at ~600 cal/$ costs over 3x more per calorie than ramen at 1,949 cal/$.'},
+    {q:'Better value legume?',a:'Dry beans (880 cal/$)',b:'Canned organic beans (~350 cal/$)',correct:'a',
+     explanation:'Dry beans at 880 cal/$ — you\'re paying for water and a can with the organic version.'},
+    {q:'Smarter potato pick?',a:'Bag of potatoes (780 cal/$)',b:'Frozen potato skins ($5/box)',correct:'a',
+     explanation:'A bag of potatoes at 780 cal/$ crushes frozen potato skins at ~200 cal/$.'},
+    {q:'Which vitamin C source is cheaper?',a:'Cabbage (~$1/lb)',b:'Fresh berries (~$5/lb)',correct:'a',
+     explanation:'Cabbage gives solid vitamin C at a fraction of the cost — berries taste better but cost 5x more.'},
+    {q:'What\'s the real cost of convenience?',a:'Instant oatmeal packets',b:'Bulk rolled oats',correct:'a',
+     explanation:'Instant oatmeal packets cost 3-5x more per serving than bulk rolled oats for the same food.'},
+    {q:'Better cooking oil value?',a:'Vegetable oil (8,800 cal/$)',b:'Olive oil (~3,000 cal/$)',correct:'a',
+     explanation:'Vegetable oil at 8,800 cal/$ is the calorie king — olive oil is great but costs nearly 3x more.'},
+    {q:'Which drink is the bigger waste?',a:'Tap water (~free)',b:'Bottled water ($2/bottle)',correct:'b',
+     explanation:'Bottled water costs ~2,000x more than tap water. The ultimate markup scam.'},
+    {q:'Better banana buy?',a:'Loose bananas (~$0.59/lb)',b:'Organic pre-packaged ($1.29/lb)',correct:'a',
+     explanation:'Bananas already have a natural wrapper. Paying 2x for organic packaging is peak waste.'},
+    {q:'Cheaper way to season food?',a:'Bulk spices ($3/bag)',b:'Spice rack jars ($7 each)',correct:'a',
+     explanation:'Bulk spices from ethnic grocery stores cost 50-80% less than branded spice rack jars.'},
+    {q:'Which milk alternative wins on cost?',a:'Powdered milk (~900 cal/$)',b:'Oat milk carton (~200 cal/$)',correct:'a',
+     explanation:'Powdered milk at ~900 cal/$ delivers 4-5x more value than trendy oat milk cartons.'},
 ];
 
 let game = null;
@@ -466,14 +539,18 @@ class Game {
         let q=QUIZZES[Math.floor(Math.random()*QUIZZES.length)];
         this.currentQuiz=q;
         this.quizTime=8;
+        this.quizAnswered=false;
         document.getElementById('quizQuestion').textContent=q.q;
+        document.getElementById('quizResult').textContent='';
+        document.getElementById('quizResult').className='';
+        document.getElementById('quizExplanation').textContent='';
         let opts=document.getElementById('quizOptions');
         opts.innerHTML='';
         let btnA=document.createElement('button');
-        btnA.className='quiz-btn';btnA.textContent=q.a;
+        btnA.className='quiz-btn';btnA.textContent=q.a;btnA.id='quizBtnA';
         btnA.onclick=()=>this.answerQuiz('a');
         let btnB=document.createElement('button');
-        btnB.className='quiz-btn';btnB.textContent=q.b;
+        btnB.className='quiz-btn';btnB.textContent=q.b;btnB.id='quizBtnB';
         btnB.onclick=()=>this.answerQuiz('b');
         opts.appendChild(btnA);opts.appendChild(btnB);
         quizOverlay.classList.remove('hidden');
@@ -487,17 +564,51 @@ class Game {
         document.getElementById('quizTimer').textContent=`Time: ${this.quizTime}s`;
     }
     answerQuiz(answer){
+        if(this.quizAnswered)return;
+        this.quizAnswered=true;
         clearInterval(this.quizInterval);
-        quizOverlay.classList.add('hidden');
-        if(answer===this.currentQuiz.correct){
-            this.savings+=10*this.multiplier;
-            this.addFloatingText(W/2,H/2-50,'+$10 BONUS!','#ffe600');
-            this.addParticles(W/2,H/2,'#ffe600',20);
-        } else {
-            this.addFloatingText(W/2,H/2-50,'Wrong!','#ff006e');
+        let q=this.currentQuiz;
+        let isCorrect=answer===q.correct;
+        let correctText=q.correct==='a'?q.a:q.b;
+        let resultEl=document.getElementById('quizResult');
+        let explainEl=document.getElementById('quizExplanation');
+        let btnA=document.getElementById('quizBtnA');
+        let btnB=document.getElementById('quizBtnB');
+
+        // Highlight correct button green
+        if(q.correct==='a'){btnA.classList.add('btn-correct');btnB.classList.add('btn-dim');}
+        else{btnB.classList.add('btn-correct');btnA.classList.add('btn-dim');}
+        // If wrong, also mark the wrong choice
+        if(!isCorrect && answer!=='timeout'){
+            if(answer==='a')btnA.classList.remove('btn-dim'),btnA.classList.add('btn-wrong');
+            else btnB.classList.remove('btn-dim'),btnB.classList.add('btn-wrong');
         }
-        this.paused=false;
-        this.quizDistance=this.distance+500;
+
+        // Disable buttons
+        btnA.onclick=null;btnB.onclick=null;
+        btnA.style.pointerEvents='none';btnB.style.pointerEvents='none';
+
+        if(isCorrect){
+            resultEl.textContent='✓ CORRECT!';
+            resultEl.className='correct';
+            this.savings+=10*this.multiplier;
+        } else {
+            resultEl.textContent='✗ WRONG — Correct: '+correctText;
+            resultEl.className='wrong';
+        }
+        explainEl.textContent=q.explanation||'';
+        document.getElementById('quizTimer').textContent='';
+
+        // Resume after 2.5 seconds
+        setTimeout(()=>{
+            quizOverlay.classList.add('hidden');
+            if(isCorrect){
+                this.addFloatingText(W/2,H/2-50,'+$10 BONUS!','#ffe600');
+                this.addParticles(W/2,H/2,'#ffe600',20);
+            }
+            this.paused=false;
+            this.quizDistance=this.distance+500;
+        },2500);
     }
     update(dt){
         if(!this.running||this.paused)return;
@@ -946,6 +1057,68 @@ canvas.addEventListener('touchend',(e)=>{
 // Initial draw
 ctx.fillStyle='#0a0a1a';
 ctx.fillRect(0,0,W,H);
+
+// --- Cursor-follow particles ---
+(function(){
+    const MAX_CURSOR_PARTICLES = 15;
+    const cursorParticles = [];
+    let mouseX = -100, mouseY = -100;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    function spawnCursorParticle() {
+        if (cursorParticles.length >= MAX_CURSOR_PARTICLES) return;
+        cursorParticles.push({
+            x: mouseX + (Math.random() - 0.5) * 8,
+            y: mouseY + (Math.random() - 0.5) * 8,
+            vx: (Math.random() - 0.5) * 20,
+            vy: (Math.random() - 0.5) * 20 - 10,
+            life: 1,
+            size: Math.random() * 3 + 1.5
+        });
+    }
+
+    const cursorCanvas = document.createElement('canvas');
+    cursorCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;';
+    document.body.appendChild(cursorCanvas);
+    const cCtx = cursorCanvas.getContext('2d');
+
+    function resizeCursorCanvas() {
+        cursorCanvas.width = window.innerWidth;
+        cursorCanvas.height = window.innerHeight;
+    }
+    resizeCursorCanvas();
+    window.addEventListener('resize', resizeCursorCanvas);
+
+    function updateCursorParticles() {
+        cCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+        spawnCursorParticle();
+
+        for (let i = cursorParticles.length - 1; i >= 0; i--) {
+            const p = cursorParticles[i];
+            p.x += p.vx * 0.016;
+            p.y += p.vy * 0.016;
+            p.vy += 30 * 0.016;
+            p.life -= 0.025;
+            if (p.life <= 0) { cursorParticles.splice(i, 1); continue; }
+
+            cCtx.globalAlpha = p.life * 0.7;
+            cCtx.fillStyle = '#39ff14';
+            cCtx.shadowColor = '#39ff14';
+            cCtx.shadowBlur = 4;
+            cCtx.beginPath();
+            cCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            cCtx.fill();
+        }
+        cCtx.globalAlpha = 1;
+        cCtx.shadowBlur = 0;
+        requestAnimationFrame(updateCursorParticles);
+    }
+    requestAnimationFrame(updateCursorParticles);
+})();
 </script>
 </body>
 </html>

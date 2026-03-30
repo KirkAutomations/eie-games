@@ -930,18 +930,18 @@ const TECHNIQUES = [
   { id: 'add_acid', name: 'Add Acid (end)', icon: '🍋💥', desc: 'Brighten at end' },
   { id: 'add_fat', name: 'Add Fat', icon: '🧈✨', desc: 'Carry flavor' },
   { id: 'add_msg', name: 'Add MSG', icon: '⚡', desc: 'Umami boost' },
-  { id: 'cold_temp', name: 'Serve Cold', icon: '❄️', desc: 'Lower ethanol vapor' },
+  { id: 'cold_temp', name: 'Serve Cold', icon: '❄️', desc: 'Cleaner, crisper taste' },
 ];
 
 const CHEAT_CODES = [
-  { id: 'msg', name: 'MSG - Umami Bomb', icon: '⚡', desc: 'Safe despite myths. Enhances savory flavor 10x. The secret weapon of restaurant chefs worldwide.' },
+  { id: 'msg', name: 'MSG - Umami Bomb', icon: '⚡', desc: 'Safe despite myths — the FDA classifies it as Generally Recognized As Safe. Dramatically enhances savory (umami) flavor. The secret weapon of restaurant chefs worldwide.' },
   { id: 'acid', name: 'Acid (Vinegar/Citrus)', icon: '🍋', desc: 'Brightens everything. Add at the end of cooking to preserve its punch. The missing element in most home cooking.' },
   { id: 'salt_early', name: 'Salt Early', icon: '🧂', desc: 'Season while cooking, not after. Flavors penetrate deeper, creating evenly seasoned food from the inside out.' },
   { id: 'fat_flavor', name: 'Fat = Flavor', icon: '🧈', desc: 'Olive oil, butter, etc. Fat carries flavor molecules to your taste buds. This is why restaurant food tastes better.' },
   { id: 'high_heat', name: 'High Heat Sear', icon: '🔥', desc: 'Maillard reaction = complex flavors. Don\'t crowd the pan. The golden-brown crust is where the magic happens.' },
-  { id: 'cold_temp', name: 'Cold Temperature', icon: '❄️', desc: 'Lowers ethanol vapor pressure - less alcohol smell/burn. Makes drinks taste smoother and more refreshing.' },
-  { id: 'citrus', name: 'Citrus Power', icon: '🍊', desc: 'Vitamin C - your body craves it, makes anything taste better. A squeeze of lemon transforms a dish.' },
-  { id: 'salt_taste', name: 'Salt (Taste Factor)', icon: '🧂', desc: 'Sodium needed for blood pressure regulation - enhances all flavors. Your body wants it for a reason.' },
+  { id: 'cold_temp', name: 'Cold Temperature', icon: '❄️', desc: 'Cold suppresses our perception of sweetness and bitterness, making drinks taste cleaner and more refreshing. In alcoholic drinks, it also lowers ethanol vapor pressure — less burn, smoother sip.' },
+  { id: 'citrus', name: 'Citrus Power', icon: '🍊', desc: 'Citric acid brightens and balances flavors by adding a contrasting sour note that makes other tastes pop. A squeeze of lemon transforms a dish.' },
+  { id: 'salt_taste', name: 'Salt (Taste Factor)', icon: '🧂', desc: 'Salt suppresses bitterness and enhances sweetness and umami, making all other flavors taste more vivid. A little goes a long way.' },
   { id: 'sugar', name: 'Sugar (Energy Signal)', icon: '🍬', desc: 'Rapid energy signal - the brain\'s favorite reward. A pinch of sugar balances savory dishes too.' },
 ];
 
@@ -994,7 +994,7 @@ const CHALLENGES = [
     optimalTechniques: ['cold_temp'],
     scoring: { cold_temp: 25, water: 5, lemon: 25, sugar: 20, ice: 15, salt: 5 },
     maxFlavor: 100, budgetTarget: 0.20,
-    explanation: 'Cold temperature makes drinks taste smoother by reducing ethanol vapor. Citrus (lemon) provides Vitamin C that your body craves. Sugar signals quick energy to your brain. Together these hit 3 of the 4 taste factors, creating a drink that feels premium for pennies.',
+    explanation: 'Cold temperature makes drinks taste cleaner by suppressing our perception of sweetness and bitterness, so flavors feel more balanced. Citrus (lemon) adds bright acidity that livens up plain water. Sugar adds just enough sweetness that the acid doesn\'t dominate. Together these create a refreshing drink that feels premium for pennies.',
     unlocks: ['cold_temp', 'citrus', 'sugar'],
     pot: '🥤'
   },
@@ -1046,7 +1046,7 @@ const CHALLENGES = [
     optimalTechniques: ['add_acid'],
     scoring: { add_acid: 35, potatoes: 30, water: 10, vinegar: 10, lemon: 8, sugar: 5 },
     maxFlavor: 100, budgetTarget: 0.50,
-    explanation: 'Acid (vinegar/citrus) counteracts the perception of saltiness on your tongue. Potatoes absorb excess salt from the liquid as they cook. Adding water dilutes the concentration. This is the classic chef rescue technique.',
+    explanation: 'Acid (vinegar/citrus) counteracts the perception of saltiness on your palate by adding a competing flavor. Adding water or unsalted stock dilutes the salt concentration directly. Potatoes add starchy bulk that makes each spoonful less salty (though studies show they don\'t selectively absorb salt — they just absorb liquid like any food would). The real rescue is dilution + balancing flavors.',
     unlocks: [],
     pot: '🥣'
   },
@@ -1502,6 +1502,121 @@ function retryChallenge() {
   document.getElementById('result-modal').classList.remove('active');
   startChallenge(currentChallenge.id);
 }
+
+// ============ CURSOR SPARKLE PARTICLES ============
+(function() {
+  const MAX_SPARKLES = 15;
+  const sparkles = [];
+  let mouseX = 0, mouseY = 0;
+
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  function createSparkle() {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--neon-yellow);
+      box-shadow: 0 0 6px var(--neon-yellow), 0 0 2px #fff;
+      opacity: 1;
+      transition: none;
+    `;
+    document.body.appendChild(el);
+    return { el, x: 0, y: 0, life: 0, vx: 0, vy: 0, active: false };
+  }
+
+  for (let i = 0; i < MAX_SPARKLES; i++) {
+    sparkles.push(createSparkle());
+  }
+
+  let spawnTimer = 0;
+  function tick() {
+    spawnTimer++;
+    if (spawnTimer % 3 === 0) {
+      const idle = sparkles.find(s => !s.active);
+      if (idle) {
+        idle.active = true;
+        idle.x = mouseX + (Math.random() - 0.5) * 8;
+        idle.y = mouseY + (Math.random() - 0.5) * 8;
+        idle.vx = (Math.random() - 0.5) * 1.5;
+        idle.vy = (Math.random() - 0.5) * 1.5 - 0.5;
+        idle.life = 1;
+      }
+    }
+    sparkles.forEach(s => {
+      if (!s.active) { s.el.style.opacity = '0'; return; }
+      s.life -= 0.025;
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vy += 0.02;
+      if (s.life <= 0) { s.active = false; s.el.style.opacity = '0'; return; }
+      s.el.style.left = s.x + 'px';
+      s.el.style.top = s.y + 'px';
+      s.el.style.opacity = s.life;
+      s.el.style.transform = `scale(${s.life})`;
+    });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+// ============ POT BUBBLES ANIMATION ============
+(function() {
+  const potZoneEl = document.getElementById('pot-zone');
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:60%;pointer-events:none;border-radius:0 0 16px 16px;z-index:0;';
+  canvas.width = 400;
+  canvas.height = 200;
+  potZoneEl.style.position = 'relative';
+  potZoneEl.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const bubbles = [];
+  const MAX_BUBBLES = 12;
+
+  function spawnBubble() {
+    bubbles.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height + 10,
+      r: 2 + Math.random() * 4,
+      speed: 0.3 + Math.random() * 0.6,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.02 + Math.random() * 0.02,
+      opacity: 0.2 + Math.random() * 0.3
+    });
+  }
+
+  function animateBubbles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Only animate when game screen is visible
+    if (document.getElementById('game-screen').style.display !== 'none') {
+      if (bubbles.length < MAX_BUBBLES && Math.random() < 0.08) spawnBubble();
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        b.y -= b.speed;
+        b.wobble += b.wobbleSpeed;
+        b.x += Math.sin(b.wobble) * 0.4;
+        b.opacity -= 0.001;
+        if (b.y < 0 || b.opacity <= 0) { bubbles.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,106,0,${b.opacity})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(255,200,100,${b.opacity * 0.5})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+    requestAnimationFrame(animateBubbles);
+  }
+  requestAnimationFrame(animateBubbles);
+})();
 
 // ============ INIT ============
 updateTitleStats();
